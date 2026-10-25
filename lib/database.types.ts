@@ -174,12 +174,14 @@ export type Database = {
           duration_ms: number | null
           explanation_text: string | null
           from_mix: boolean
+          gave_up: boolean
           generator_key: string | null
           generator_seed: number | null
           id: string
           level: number
           moment_id: string
           task_id: string | null
+          used_hint: boolean
           user_id: string
         }
         Insert: {
@@ -189,12 +191,14 @@ export type Database = {
           duration_ms?: number | null
           explanation_text?: string | null
           from_mix?: boolean
+          gave_up?: boolean
           generator_key?: string | null
           generator_seed?: number | null
           id?: string
           level: number
           moment_id: string
           task_id?: string | null
+          used_hint?: boolean
           user_id: string
         }
         Update: {
@@ -204,12 +208,14 @@ export type Database = {
           duration_ms?: number | null
           explanation_text?: string | null
           from_mix?: boolean
+          gave_up?: boolean
           generator_key?: string | null
           generator_seed?: number | null
           id?: string
           level?: number
           moment_id?: string
           task_id?: string | null
+          used_hint?: boolean
           user_id?: string
         }
         Relationships: [
@@ -608,6 +614,7 @@ export type Database = {
           answer: Json
           choices: Json | null
           created_at: string
+          hint_md: string | null
           id: string
           level: number
           moment_id: string
@@ -623,6 +630,7 @@ export type Database = {
           answer: Json
           choices?: Json | null
           created_at?: string
+          hint_md?: string | null
           id?: string
           level: number
           moment_id: string
@@ -638,6 +646,7 @@ export type Database = {
           answer?: Json
           choices?: Json | null
           created_at?: string
+          hint_md?: string | null
           id?: string
           level?: number
           moment_id?: string

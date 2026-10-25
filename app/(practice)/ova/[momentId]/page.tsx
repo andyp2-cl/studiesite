@@ -1,13 +1,15 @@
 import { notFound, redirect } from "next/navigation";
 import { PracticeSession } from "@/components/practice/practice-session";
+import { ROUND_SIZES } from "@/lib/practice/ref";
 import { isLevel, type Level } from "@/lib/generators/types";
 import { nextTask } from "@/lib/practice/actions";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function PracticePage({ params, searchParams }: PageProps<"/ova/[momentId]">) {
   const { momentId } = await params;
-  const { niva } = await searchParams;
+  const { niva, antal } = await searchParams;
   const level: Level = isLevel(Number(niva)) ? (Number(niva) as Level) : 1;
+  const roundSize = ROUND_SIZES.find((n) => n === Number(antal)) ?? 10;
 
   const supabase = await createClient();
   const { data: moment } = await supabase
@@ -18,7 +20,7 @@ export default async function PracticePage({ params, searchParams }: PageProps<"
   if (!moment?.areas?.subjects) notFound();
 
   const momentHref = `/amnen/${moment.areas.subjects.slug}/${moment.areas.slug}/${moment.slug}`;
-  // nextTask also enforces that the level is unlocked and the moment has a generator.
+  // nextTask returns null if the moment has no generator or no published tasks at this level.
   const firstTask = await nextTask(moment.id, level);
   if (!firstTask) redirect(momentHref);
 
@@ -30,6 +32,7 @@ export default async function PracticePage({ params, searchParams }: PageProps<"
       areaColor={moment.areas.color}
       momentHref={momentHref}
       firstTask={firstTask}
+      roundSize={roundSize}
     />
   );
 }

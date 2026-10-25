@@ -42,10 +42,11 @@ export default async function AdminTaskPage({
         type: task.type as TaskType,
         promptMd: task.prompt_md,
         solutionMd: task.solution_md ?? "",
+        hintMd: task.hint_md ?? "",
         published: task.status === "published",
         draft: draftFrom(task.answer as unknown as TaskAnswer, task.choices as string[] | null),
       }
-    : { level: 1, type: "numeric", promptMd: "", solutionMd: "", published: true, draft: {} };
+    : { level: 1, type: "numeric", promptMd: "", solutionMd: "", hintMd: "", published: true, draft: {} };
 
   return (
     <main>

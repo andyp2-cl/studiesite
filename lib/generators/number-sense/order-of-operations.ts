@@ -7,6 +7,8 @@ import { createRng, type Rng } from "@/lib/random";
 
 type Built = { tex: string; value: number; steps: SolutionStep[] };
 
+const ORDER = "Ordningen är: parenteser, potenser, gånger och delat, sist plus och minus.";
+
 const step = (text: string, tex: string): SolutionStep => ({ text, tex });
 
 // Lätt: a + b·c, a·b - c, a - b·c (positive result)
@@ -150,6 +152,8 @@ export const generator: Generator = {
     return {
       prompt: `Räkna ut. ${$(built.tex)}`,
       answer: { kind: "number", value: built.value, display: num(built.value) },
+      // The first step names what to do first – a nudge, not the answer.
+      hint: `${built.steps[0].text} ${ORDER}`,
       solutionSteps: built.steps,
     };
   },

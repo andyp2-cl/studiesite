@@ -22,6 +22,7 @@ export type TaskEditorValues = {
   type: TaskType;
   promptMd: string;
   solutionMd: string;
+  hintMd: string;
   published: boolean;
   draft: AnswerDraft;
 };
@@ -50,7 +51,7 @@ export function TaskEditor({
       const result = await saveTask({ ...values, momentId });
       if (!result.ok) return setMessage({ kind: "error", text: result.error });
       if (andNew) {
-        setValues({ ...initial, id: undefined, level: values.level, type: values.type, published: values.published, promptMd: "", solutionMd: "", draft: {} });
+        setValues({ ...initial, id: undefined, level: values.level, type: values.type, published: values.published, promptMd: "", solutionMd: "", hintMd: "", draft: {} });
         setMessage({ kind: "success", text: t.savedNew });
         router.replace(`${momentHref}/uppgift/ny`);
       } else {
@@ -238,6 +239,10 @@ export function TaskEditor({
           </div>
         )}
       </section>
+
+      <Field label={t.hint} hint={t.hintHelp}>
+        <MarkdownEditor id="task-hint" value={values.hintMd} onChange={(hintMd) => set({ hintMd })} rows={3} placeholder={t.hintPlaceholder} />
+      </Field>
 
       <Field label={t.solution} hint={t.solutionHelp}>
         <MarkdownEditor id="task-solution" value={values.solutionMd} onChange={(solutionMd) => set({ solutionMd })} rows={6} />

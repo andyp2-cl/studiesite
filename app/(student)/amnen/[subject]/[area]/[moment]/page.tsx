@@ -1,16 +1,15 @@
-import { ArrowRight, Check, ChevronDown, Lock } from "lucide-react";
-import Link from "next/link";
+import { ChevronDown, Lock } from "lucide-react";
 import { notFound } from "next/navigation";
 import { MathMarkdown } from "@/components/math/markdown";
 import { PageHeader } from "@/components/study/page-header";
-import { BlockBar, SectionLabel, Stars, readable } from "@/components/study/visuals";
+import { StartPanel } from "@/components/practice/start-panel";
+import { SectionLabel, Stars, readable } from "@/components/study/visuals";
 import { requireProfile } from "@/lib/auth/session";
 import { getMoment } from "@/lib/data/content";
 import { getGenerator } from "@/lib/generators";
-import { LEVELS, type Level } from "@/lib/generators/types";
-import { isLevelUnlocked, REQUIRED_CORRECT, suggestedLevel } from "@/lib/progress";
+import type { Level } from "@/lib/generators/types";
+import { suggestedLevel } from "@/lib/progress";
 import { strings } from "@/lib/strings";
-import { cn } from "@/lib/utils";
 
 const t = strings.moment;
 
@@ -21,12 +20,9 @@ export default async function MomentPage({ params }: PageProps<"/amnen/[subject]
   if (!data) notFound();
 
   const { subject, area, moment, intro, deepenings, stars, levelStats } = data;
-  const startLevel = suggestedLevel(stars);
   // Generator moments can always be practised; task-bank moments need published tasks at the level.
   const hasTasks = (level: Level) =>
     data.source === "generator" ? Boolean(getGenerator(data.generatorKey)) : data.taskCounts[level] > 0;
-  const canPractise = hasTasks(startLevel);
-  const practiseHref = (level: number) => `/ova/${moment.id}?niva=${level}`;
 
   return (
     <main>
@@ -43,66 +39,15 @@ export default async function MomentPage({ params }: PageProps<"/amnen/[subject]
       <div className="mx-auto flex max-w-3xl flex-col gap-12 px-4 py-10 sm:px-8">
         <section>
           <SectionLabel>{t.levels}</SectionLabel>
-          <div className="hairline-grid grid grid-cols-3 gap-px">
-            {LEVELS.map((level) => {
-              const done = stars >= level;
-              const unlocked = isLevelUnlocked(level, stars);
-              const stats = levelStats[level];
-              const card = (
-                <>
-                  <span className="flex items-center justify-between">
-                    <span className="font-mono text-[10px] text-muted-foreground">0{level}</span>
-                    {done && <Check className="size-4 text-success" />}
-                    {!unlocked && <Lock className="size-3.5" />}
-                  </span>
-                  <span className="font-semibold">{strings.levels[level]}</span>
-                  <BlockBar
-                    value={done ? REQUIRED_CORRECT : stats.correct}
-                    max={REQUIRED_CORRECT}
-                    cells={REQUIRED_CORRECT}
-                    color={done ? "var(--success)" : undefined}
-                    className={cn(!unlocked && "opacity-40")}
-                  />
-                  <span className="font-mono text-[11px] leading-tight text-muted-foreground">
-                    {done
-                      ? t.levelDone
-                      : !unlocked
-                        ? t.levelLocked
-                        : hasTasks(level)
-                          ? `${stats.correct}/${REQUIRED_CORRECT} rätt`
-                          : t.noTasksAtLevel}
-                  </span>
-                </>
-              );
-              const className = cn(
-                "flex flex-col gap-3 p-3 sm:p-4",
-                level === startLevel && !done && "bg-primary/[0.07] outline outline-1 -outline-offset-1 outline-primary",
-                !unlocked && "text-muted-foreground",
-              );
-              return unlocked && hasTasks(level) ? (
-                <Link key={level} href={practiseHref(level)} className={cn(className, "transition-colors hover:bg-card")}>
-                  {card}
-                </Link>
-              ) : (
-                <div key={level} className={className}>
-                  {card}
-                </div>
-              );
-            })}
-          </div>
-          <p className="mt-3 font-mono text-[11px] text-muted-foreground">{t.levelRule}</p>
-          {canPractise ? (
-            <Link
-              href={practiseHref(startLevel)}
-              className="mt-6 flex w-full items-center justify-center gap-2 bg-primary py-3.5 font-mono text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 sm:w-fit sm:px-8"
-            >
-              {t.start(strings.levels[startLevel])} <ArrowRight className="size-4" />
-            </Link>
-          ) : (
-            <p className="mt-6 border border-dashed border-border p-4 text-sm text-muted-foreground">
-              {strings.practice.noTasks}
-            </p>
-          )}
+          <StartPanel
+            momentId={moment.id}
+            suggested={suggestedLevel(stars)}
+            levels={{
+              1: { done: stars >= 1, correct: levelStats[1].correct, hasTasks: hasTasks(1) },
+              2: { done: stars >= 2, correct: levelStats[2].correct, hasTasks: hasTasks(2) },
+              3: { done: stars >= 3, correct: levelStats[3].correct, hasTasks: hasTasks(3) },
+            }}
+          />
         </section>
 
         {intro && (

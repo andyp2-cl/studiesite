@@ -11,12 +11,7 @@ export function levelProgress(recent: readonly boolean[]) {
   return { correct, attempts: window.length, cleared: correct >= REQUIRED_CORRECT };
 }
 
-/** Levels up to stars + 1 are open (Lätt is always open). */
-export function isLevelUnlocked(level: Level, stars: number): boolean {
-  return level <= Math.min(stars + 1, 3);
-}
-
-/** Level to suggest when opening a moment. */
+/** Level to suggest when opening a moment (all levels can be chosen freely). */
 export function suggestedLevel(stars: number): Level {
   return Math.min(stars + 1, 3) as Level;
 }

@@ -26,6 +26,8 @@ describe.each(generatorKeys)("generator %s", (key) => {
       const task = generator.generate(level, seed);
       expect(task.prompt.length).toBeGreaterThan(0);
       expect(task.solutionSteps.length).toBeGreaterThan(0);
+      expect(task.hint.length).toBeGreaterThan(10);
+      expect(task.hint).not.toMatch(/undefined|NaN/);
       const value = answerValue(task.answer);
       if (task.answer.kind !== "expression") expect(Number.isFinite(value)).toBe(true);
       expect(task.prompt).not.toMatch(/undefined|NaN|Infinity/);

@@ -19,6 +19,7 @@ export type TaskInput = {
   type: TaskType;
   promptMd: string;
   solutionMd: string;
+  hintMd: string;
   published: boolean;
   draft: AnswerDraft;
 };
@@ -37,6 +38,7 @@ export async function saveTask(input: TaskInput): Promise<ActionResult> {
     type: input.type,
     prompt_md: prompt,
     solution_md: String(input.solutionMd ?? "").trim().slice(0, 5000) || null,
+    hint_md: String(input.hintMd ?? "").trim().slice(0, 2000) || null,
     answer: built.answer as unknown as Json,
     choices: built.choices,
     status: input.published ? ("published" as const) : ("draft" as const),

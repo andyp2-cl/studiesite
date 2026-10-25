@@ -47,6 +47,8 @@ export type GeneratedTask = {
   /** Markdown + KaTeX. */
   prompt: string;
   answer: Answer;
+  /** A nudge in the right direction (Markdown + KaTeX) – must not give away the answer. */
+  hint: string;
   solutionSteps: SolutionStep[];
   figure?: Figure;
 };

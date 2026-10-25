@@ -24,6 +24,7 @@ function simplifyTask(rng: Rng, maxDen: number, factors: number[]): GeneratedTas
   return {
     prompt: `Förkorta ${$(frac(bigN, bigD))} så långt det går.`,
     answer: { kind: "number", value: n / d, display: frac(n, d), requireSimplified: true },
+    hint: `Hitta ett tal som går jämnt upp i både ${bigN} och ${bigD}. Prova 2, 3 och 5 – eller leta efter det största talet som fungerar. Dividera sedan täljare och nämnare med det.`,
     solutionSteps: [
       {
         text: `Hitta det största tal som går jämnt upp i både ${bigN} och ${bigD}.`,
@@ -43,6 +44,7 @@ function missingNumeratorTask(rng: Rng, maxDen: number, factors: number[]): Gene
   return {
     prompt: `Vilket tal ska stå i rutan? $${frac(n, d)} = ${frac("\\square", d * k)}$`,
     answer: { kind: "number", value: n * k, display: String(n * k) },
+    hint: `Hur många gånger större är ${d * k} än ${d}? Täljaren ska bli lika många gånger större.`,
     solutionSteps: [
       { text: `Nämnaren har gått från ${d} till ${d * k}. Den har multiplicerats med ${k}.`, tex: `${d} \\cdot ${k} = ${d * k}` },
       { text: `Förläng täljaren med samma tal.`, tex: `${n} \\cdot ${k} = ${n * k}` },
@@ -57,6 +59,7 @@ function missingDenominatorTask(rng: Rng, maxDen: number, factors: number[]): Ge
   return {
     prompt: `Vilket tal ska stå i rutan? $${frac(n * k, "\\square")} = ${frac(n, d)}$`,
     answer: { kind: "number", value: d * k, display: String(d * k) },
+    hint: `Hur många gånger större är ${n * k} än ${n}? Nämnaren ska bli lika många gånger större.`,
     solutionSteps: [
       { text: `Täljaren har gått från ${n} till ${n * k}. Den har multiplicerats med ${k}.`, tex: `${n} \\cdot ${k} = ${n * k}` },
       { text: `Nämnaren ska multipliceras med samma tal.`, tex: `${d} \\cdot ${k} = ${d * k}` },

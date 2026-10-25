@@ -5,18 +5,22 @@ import { requireProfile } from "@/lib/auth/session";
 import { getGenerator } from "@/lib/generators";
 import { isLevel, type Figure, type Level, type SolutionStep } from "@/lib/generators/types";
 import { checkAnswer, type CheckResult } from "@/lib/math/check-answer";
-import { isLevelUnlocked, levelProgress, WINDOW } from "@/lib/progress";
+import { levelProgress, WINDOW } from "@/lib/progress";
 import { createRng } from "@/lib/random";
+import { strings } from "@/lib/strings";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { checkTaskAnswer, correctAnswerDisplay, type TaskAnswer, type TaskType } from "@/lib/tasks/answers";
 
-// The answer key never leaves the server. Generated tasks: the client gets the
-// prompt and a seed, and the server regenerates the task to check the answer.
-// Admin-written tasks: the client gets the prompt (and shuffled choices) and
-// the task id; the key is read from the tasks table, which students cannot read.
+// The answer key never leaves the server before the student has answered (or
+// asked for the answer). Generated tasks: the client gets the prompt and a
+// seed, and the server regenerates the task to check the answer. Admin-written
+// tasks: the client gets the prompt (and shuffled choices) and the task id; the
+// key is read from the tasks table, which students cannot read.
 
-export type TaskRef = { kind: "generator"; seed: number } | { kind: "task"; taskId: string };
+import type { TaskRef } from "./ref";
+
+export type { TaskRef };
 
 export type PublicTask = {
   ref: TaskRef;
@@ -31,7 +35,8 @@ export type PublicTask = {
 export type SubmitResult =
   | { status: "retry"; reason: "unreadable" | "not-simplified" }
   | {
-      status: "correct" | "wrong";
+      /** revealed = the student chose "ge mig svaret". */
+      status: "correct" | "wrong" | "revealed";
       attemptId: string | null;
       correctAnswer: { tex?: string; text?: string };
       solutionSteps: SolutionStep[];
@@ -43,6 +48,8 @@ export type SubmitResult =
   | { status: "error" };
 
 const MAX_SEED = 2 ** 31 - 1;
+/** How many recent tasks to avoid repeating (covers the previous round of up to 10). */
+const AVOID_RECENT = 10;
 const INPUT_FOR: Record<TaskType, PublicTask["input"]> = {
   numeric: "math",
   expression: "math",
@@ -56,7 +63,7 @@ async function loadPractice(momentId: unknown, level: unknown) {
   const profile = await requireProfile();
   const supabase = await createClient();
 
-  // RLS: only visible moments are returned.
+  // RLS: only visible moments are returned. All levels are open to choose.
   const { data: moment } = await supabase
     .from("moments")
     .select("id, source, generators(generator_key)")
@@ -72,18 +79,46 @@ async function loadPractice(momentId: unknown, level: unknown) {
     .eq("user_id", profile.id)
     .eq("moment_id", moment.id)
     .maybeSingle();
-  const stars = progress?.stars ?? 0;
-  if (!isLevelUnlocked(level, stars)) return null;
 
-  return { profile, moment, generator, level, stars };
+  return { profile, moment, generator, level, stars: progress?.stars ?? 0 };
 }
 
 type Practice = NonNullable<Awaited<ReturnType<typeof loadPractice>>>;
 
-/** Picks a published task, avoiding the ones this student saw most recently. */
-async function pickBankTask(practice: Practice): Promise<PublicTask | null> {
-  const admin = createAdminClient();
-  const { data: tasks } = await admin
+async function recentAttempts(practice: Practice, column: "generator_seed" | "task_id") {
+  const { data } = await createAdminClient()
+    .from("attempts")
+    .select("generator_seed, task_id")
+    .eq("user_id", practice.profile.id)
+    .eq("moment_id", practice.moment.id)
+    .eq("level", practice.level)
+    .not(column, "is", null)
+    .order("created_at", { ascending: false })
+    .limit(AVOID_RECENT);
+  return data ?? [];
+}
+
+/** A generated task whose prompt was not shown this round or in the latest attempts. */
+async function pickGeneratedTask(practice: Practice, seen: Set<string>): Promise<PublicTask> {
+  const generator = practice.generator!;
+  const recentSeeds = (await recentAttempts(practice, "generator_seed")).map((a) => a.generator_seed!);
+  const seenSeeds = [...seen].filter((k) => k.startsWith("g")).map((k) => Number(k.slice(1)));
+  const avoidPrompts = new Set(
+    [...recentSeeds, ...seenSeeds].filter(Number.isInteger).map((s) => generator.generate(practice.level, s).prompt),
+  );
+
+  let seed = randomInt(0, MAX_SEED);
+  let task = generator.generate(practice.level, seed);
+  for (let tries = 0; tries < 30 && avoidPrompts.has(task.prompt); tries++) {
+    seed = randomInt(0, MAX_SEED);
+    task = generator.generate(practice.level, seed);
+  }
+  return { ref: { kind: "generator", seed }, level: practice.level, prompt: task.prompt, figure: task.figure, input: "math" };
+}
+
+/** A published task, avoiding this round and the student's latest attempts when possible. */
+async function pickBankTask(practice: Practice, seen: Set<string>): Promise<PublicTask | null> {
+  const { data: tasks } = await createAdminClient()
     .from("tasks")
     .select("id, type, prompt_md, choices")
     .eq("moment_id", practice.moment.id)
@@ -91,21 +126,11 @@ async function pickBankTask(practice: Practice): Promise<PublicTask | null> {
     .eq("status", "published");
   if (!tasks?.length) return null;
 
-  let candidates = tasks;
-  if (tasks.length > 1) {
-    const { data: recent } = await admin
-      .from("attempts")
-      .select("task_id")
-      .eq("user_id", practice.profile.id)
-      .eq("moment_id", practice.moment.id)
-      .eq("level", practice.level)
-      .not("task_id", "is", null)
-      .order("created_at", { ascending: false })
-      .limit(Math.min(5, tasks.length - 1));
-    const avoid = new Set((recent ?? []).map((r) => r.task_id));
-    candidates = tasks.filter((t) => !avoid.has(t.id));
-  }
-  const task = candidates[randomInt(0, candidates.length)];
+  const recent = new Set((await recentAttempts(practice, "task_id")).map((a) => a.task_id));
+  const notThisRound = tasks.filter((t) => !seen.has(`t${t.id}`));
+  const fresh = notThisRound.filter((t) => !recent.has(t.id));
+  const pool = fresh.length ? fresh : notThisRound.length ? notThisRound : tasks;
+  const task = pool[randomInt(0, pool.length)];
 
   const rng = createRng(randomInt(0, MAX_SEED));
   const choices = Array.isArray(task.choices)
@@ -120,29 +145,30 @@ async function pickBankTask(practice: Practice): Promise<PublicTask | null> {
   };
 }
 
-export async function nextTask(momentId: string, level: Level): Promise<PublicTask | null> {
+/** `seen`: refKeys already shown this round, so a round never repeats a task. */
+export async function nextTask(momentId: string, level: Level, seen: string[] = []): Promise<PublicTask | null> {
   const practice = await loadPractice(momentId, level);
   if (!practice) return null;
-  if (!practice.generator) return pickBankTask(practice);
-
-  const seed = randomInt(0, MAX_SEED);
-  const { prompt, figure } = practice.generator.generate(practice.level, seed);
-  return { ref: { kind: "generator", seed }, level: practice.level, prompt, figure, input: "math" };
+  const seenSet = new Set(Array.isArray(seen) ? seen.slice(0, 20).map(String) : []);
+  return practice.generator ? pickGeneratedTask(practice, seenSet) : pickBankTask(practice, seenSet);
 }
 
-type Checked = {
-  result: CheckResult;
+type Loaded = {
+  check: (answer: string) => CheckResult;
+  hint: string;
   correctAnswer: { tex?: string; text?: string };
   solutionSteps: SolutionStep[];
   record: { generator_key: string | null; generator_seed: number | null; task_id: string | null };
 };
 
-async function check(practice: Practice, ref: TaskRef, answer: string): Promise<Checked | null> {
+/** Loads the full task (with answer key) behind a reference. Server only. */
+async function loadTask(practice: Practice, ref: TaskRef): Promise<Loaded | null> {
   if (ref?.kind === "generator" && practice.generator) {
     if (!Number.isInteger(ref.seed) || ref.seed < 0 || ref.seed > MAX_SEED) return null;
     const task = practice.generator.generate(practice.level, ref.seed);
     return {
-      result: checkAnswer(answer, task.answer),
+      check: (answer) => checkAnswer(answer, task.answer),
+      hint: task.hint,
       correctAnswer: { tex: task.answer.display },
       solutionSteps: task.solutionSteps,
       record: { generator_key: practice.generator.key, generator_seed: ref.seed, task_id: null },
@@ -151,7 +177,7 @@ async function check(practice: Practice, ref: TaskRef, answer: string): Promise<
   if (ref?.kind === "task" && !practice.generator && typeof ref.taskId === "string") {
     const { data: task } = await createAdminClient()
       .from("tasks")
-      .select("id, answer, choices, solution_md")
+      .select("id, type, answer, choices, solution_md, hint_md")
       .eq("id", ref.taskId)
       .eq("moment_id", practice.moment.id)
       .eq("level", practice.level)
@@ -160,7 +186,8 @@ async function check(practice: Practice, ref: TaskRef, answer: string): Promise<
     if (!task) return null;
     const key = task.answer as unknown as TaskAnswer;
     return {
-      result: checkTaskAnswer(key, answer),
+      check: (answer) => checkTaskAnswer(key, answer),
+      hint: task.hint_md?.trim() || strings.practice.genericHints[task.type as TaskType],
       correctAnswer: correctAnswerDisplay(key, task.choices as string[] | null),
       solutionSteps: task.solution_md ? [{ text: task.solution_md }] : [],
       record: { generator_key: null, generator_seed: null, task_id: task.id },
@@ -169,35 +196,49 @@ async function check(practice: Practice, ref: TaskRef, answer: string): Promise<
   return null;
 }
 
+export async function getHint(momentId: string, level: Level, ref: TaskRef): Promise<string | null> {
+  const practice = await loadPractice(momentId, level);
+  if (!practice) return null;
+  return (await loadTask(practice, ref))?.hint ?? null;
+}
+
 export async function submitAnswer(input: {
   momentId: string;
   level: Level;
   ref: TaskRef;
   answer: string;
+  usedHint?: boolean;
+  /** "Ge mig svaret": recorded as not correct, answer and solution are returned. */
+  giveUp?: boolean;
   durationMs?: number;
 }): Promise<SubmitResult> {
   const practice = await loadPractice(input.momentId, input.level);
   if (!practice) return { status: "error" };
   const { profile, moment, level } = practice;
-  const answer = String(input.answer ?? "").slice(0, 500);
+  const task = await loadTask(practice, input.ref);
+  if (!task) return { status: "error" };
 
-  const checked = await check(practice, input.ref, answer);
-  if (!checked) return { status: "error" };
-  if (checked.result.status === "retry") return checked.result;
-  const correct = checked.result.status === "correct";
+  const giveUp = input.giveUp === true;
+  const answer = giveUp ? "" : String(input.answer ?? "").slice(0, 500);
+  let correct = false;
+  if (!giveUp) {
+    const result = task.check(answer);
+    if (result.status === "retry") return result;
+    correct = result.status === "correct";
+  }
 
   const admin = createAdminClient();
 
   // Answering the same generated task twice (double click, back button) is recorded once.
   let attemptId: string | null = null;
-  if (checked.record.generator_seed !== null) {
+  if (task.record.generator_seed !== null) {
     const { data: existing } = await admin
       .from("attempts")
       .select("id")
       .eq("user_id", profile.id)
       .eq("moment_id", moment.id)
       .eq("level", level)
-      .eq("generator_seed", checked.record.generator_seed)
+      .eq("generator_seed", task.record.generator_seed)
       .maybeSingle();
     attemptId = existing?.id ?? null;
   }
@@ -211,9 +252,11 @@ export async function submitAnswer(input: {
         user_id: profile.id,
         moment_id: moment.id,
         level,
-        ...checked.record,
+        ...task.record,
         answer,
         correct,
+        used_hint: input.usedHint === true,
+        gave_up: giveUp,
         duration_ms: durationMs,
       })
       .select("id")
@@ -247,10 +290,10 @@ export async function submitAnswer(input: {
   }
 
   return {
-    status: checked.result.status,
+    status: giveUp ? "revealed" : correct ? "correct" : "wrong",
     attemptId,
-    correctAnswer: checked.correctAnswer,
-    solutionSteps: checked.solutionSteps,
+    correctAnswer: task.correctAnswer,
+    solutionSteps: task.solutionSteps,
     level: { correct: progress.correct, attempts: progress.attempts },
     clearedLevel,
     stars,

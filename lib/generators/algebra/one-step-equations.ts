@@ -22,6 +22,7 @@ function build(shape: Shape, x: number, a: number): GeneratedTask {
       return {
         prompt: `Lös ekvationen. ${$(`x + ${term(a)} = ${num(b)}`)}`,
         answer,
+        hint: `Vilket tal plus ${num(a)} blir ${num(b)}? Du kan också ta bort ${num(a)} från båda sidor så att $x$ står ensamt.`,
         solutionSteps: [
           { text: `Ta bort ${num(a)} från båda sidor.`, tex: `x = ${num(b)} - ${term(a)}` },
           { text: "Räkna ut.", tex: `x = ${num(x)}` },
@@ -34,6 +35,7 @@ function build(shape: Shape, x: number, a: number): GeneratedTask {
       return {
         prompt: `Lös ekvationen. ${$(`x - ${term(a)} = ${num(b)}`)}`,
         answer,
+        hint: `Motsatsen till att subtrahera är att addera. Lägg till ${num(a)} på båda sidor så att $x$ står ensamt.`,
         solutionSteps: [
           { text: `Lägg till ${num(a)} på båda sidor.`, tex: `x = ${num(b)} + ${term(a)}` },
           { text: "Räkna ut.", tex: `x = ${num(x)}` },
@@ -46,6 +48,7 @@ function build(shape: Shape, x: number, a: number): GeneratedTask {
       return {
         prompt: `Lös ekvationen. ${$(`${num(a)}x = ${num(b)}`)}`,
         answer,
+        hint: `$${num(a)}x$ betyder ${num(a)} gånger $x$. Vilket tal gånger ${num(a)} blir ${num(b)}? Dela båda sidor med ${num(a)}.`,
         solutionSteps: [
           { text: `Dividera båda sidor med ${num(a)}.`, tex: `x = ${frac(num(b), num(a))}` },
           { text: "Räkna ut.", tex: `x = ${num(x)}` },
@@ -58,6 +61,7 @@ function build(shape: Shape, x: number, a: number): GeneratedTask {
       return {
         prompt: `Lös ekvationen. ${$(`${frac("x", num(a))} = ${num(b)}`)}`,
         answer,
+        hint: `$x$ delat med ${num(a)} blir ${num(b)}. Motsatsen till att dela är att multiplicera – gör det på båda sidor.`,
         solutionSteps: [
           { text: `Multiplicera båda sidor med ${num(a)}.`, tex: `x = ${num(b)} \\cdot ${term(a)}` },
           { text: "Räkna ut.", tex: `x = ${num(x)}` },
@@ -70,6 +74,7 @@ function build(shape: Shape, x: number, a: number): GeneratedTask {
       return {
         prompt: `Lös ekvationen. ${$(`${num(a)} - x = ${num(b)}`)}`,
         answer,
+        hint: `Vilket tal ska du ta bort från ${num(a)} för att få ${num(b)}?`,
         solutionSteps: [
           { text: `Lägg till $x$ på båda sidor, så blir $x$ positivt.`, tex: `${num(a)} = ${num(b)} + x` },
           { text: `Ta bort ${num(b)} från båda sidor.`, tex: `x = ${num(a)} - ${term(b)} = ${num(x)}` },

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isLevelUnlocked, levelProgress, suggestedLevel } from "@/lib/progress";
+import { levelProgress, suggestedLevel } from "@/lib/progress";
 
 const attempts = (pattern: string) => [...pattern].map((c) => c === "1");
 
@@ -23,13 +23,10 @@ describe("levelProgress", () => {
   });
 });
 
-describe("level unlocking", () => {
-  it("opens the next level per star", () => {
-    expect(isLevelUnlocked(1, 0)).toBe(true);
-    expect(isLevelUnlocked(2, 0)).toBe(false);
-    expect(isLevelUnlocked(2, 1)).toBe(true);
-    expect(isLevelUnlocked(3, 2)).toBe(true);
+describe("suggestedLevel", () => {
+  it("suggests the first level without a star", () => {
     expect(suggestedLevel(0)).toBe(1);
+    expect(suggestedLevel(1)).toBe(2);
     expect(suggestedLevel(3)).toBe(3);
   });
 });
