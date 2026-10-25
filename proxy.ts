@@ -4,7 +4,7 @@ import { LOGIN_PATH } from "@/lib/auth/redirect";
 import type { Database } from "@/lib/database.types";
 
 // Pages reachable without being logged in.
-const PUBLIC_PATHS = [LOGIN_PATH, "/mockup"];
+const PUBLIC_PATHS = [LOGIN_PATH];
 
 /**
  * Refreshes the Supabase session cookie on every request and sends logged-out

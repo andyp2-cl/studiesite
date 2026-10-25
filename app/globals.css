@@ -228,3 +228,9 @@
 .prose-study .katex {
   font-size: 1.1em;
 }
+
+/* Bigger formulas inside the task card. */
+.task-prompt .katex {
+  font-size: 1.5em;
+}
+
