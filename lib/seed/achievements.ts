@@ -51,7 +51,7 @@ export const seedAchievements: SeedAchievement[] = [
     key: "fraction_master",
     name: "Bråkmästare",
     description: "Få 3 stjärnor på alla bråkmoment.",
-    icon: "pie-chart",
+    icon: "chart-pie",
     rule: { type: "area_stars", area: "brak", stars: 3 },
   },
   {

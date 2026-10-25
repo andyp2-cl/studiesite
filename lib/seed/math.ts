@@ -170,7 +170,7 @@ const fractions: SeedArea = {
   name: "Bråk",
   description: "Delar av en helhet – förlänga, förkorta och räkna.",
   color: "#e8115b",
-  icon: "pie-chart",
+  icon: "chart-pie",
   moments: [
     {
       slug: "forlanga-och-forkorta",
@@ -721,7 +721,7 @@ const statistics: SeedArea = {
   name: "Statistik och sannolikhet",
   description: "Lägesmått och chanser.",
   color: "#0d73ec",
-  icon: "bar-chart-3",
+  icon: "chart-column",
   moments: [
     {
       slug: "medelvarde-median-och-typvarde",
