@@ -14,7 +14,8 @@
     "db:types": "supabase gen types typescript --linked > lib/database.types.ts",
     "seed": "tsx --env-file=.env.local scripts/seed.ts",
     "check:rls": "tsx --env-file=.env.local scripts/check-rls.ts",
-    "create-user": "tsx --env-file=.env.local scripts/create-user.ts"
+    "create-user": "tsx --env-file=.env.local scripts/create-user.ts",
+    "sample-tasks": "tsx scripts/sample-tasks.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

@@ -182,11 +182,29 @@ function isSimplifiedExpression(node: MathNode): boolean {
   return true;
 }
 
-/** Removes a typed unit: "12 cm" → "12", "40 cm2" → "40" (unit "cm²"). */
+// Other ways students write the same unit.
+const UNIT_ALIASES: Record<string, string[]> = {
+  "°C": ["° C", "°", "grader", "grad", "C"],
+  "°": ["grader", "grad"],
+  kr: ["kronor", ":-"],
+  st: ["stycken"],
+  "%": ["procent"],
+};
+
+/** Removes a typed unit: "12 cm" → "12", "40 cm2" → "40" (unit "cm²"), "13 grader" → "13" (unit "°C"). */
 function stripUnit(raw: string, unit: string): string {
-  const variants = [unit, unit.replace("²", "2"), unit.replace("²", "^2"), unit.replace("³", "3"), unit.replace("³", "^3")];
+  const variants = [
+    unit,
+    unit.replace("²", "2"),
+    unit.replace("²", "^2"),
+    unit.replace("³", "3"),
+    unit.replace("³", "^3"),
+    ...(UNIT_ALIASES[unit] ?? []),
+  ].sort((a, b) => b.length - a.length);
   const escaped = [...new Set(variants)].map((v) => v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-  return raw.replace(new RegExp(`\\s*(?:${escaped.join("|")})\\s*$`, "i"), "");
+  const stripped = raw.replace(new RegExp(`\\s*(?:${escaped.join("|")})\\s*$`, "i"), "");
+  // Fallback: a number followed by any word ("5 bussar", "12 kronor").
+  return stripped.replace(/(\d)\s*[a-zåäö]+\.?\s*$/i, "$1");
 }
 
 export function checkAnswer(raw: string, answer: Answer): CheckResult {
