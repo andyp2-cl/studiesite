@@ -112,7 +112,8 @@ export function houseFigure(labels: { width: string; wallHeight: string; roofHei
       `<line x1="${x + w / 2}" y1="${roofTop}" x2="${x + w / 2}" y2="${wallTop}" ${DASH} />` +
       text({ x: x + w / 2, y: bottom + 22, text: labels.width }) +
       text({ x: x + w + 10, y: (wallTop + bottom) / 2 + 5, text: labels.wallHeight, anchor: "start" }) +
-      text({ x: x + w / 2 + 8, y: (roofTop + wallTop) / 2 + 8, text: labels.roofHeight, anchor: "start" }),
+      // Low in the roof triangle, where it is wide enough for the label.
+      text({ x: x + w / 2 + 6, y: wallTop - 10, text: labels.roofHeight, anchor: "start" }),
     `Figur: en rektangel med en triangel ovanpå`,
   );
 }

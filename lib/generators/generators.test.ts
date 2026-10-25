@@ -85,7 +85,23 @@ describe.each(generatorKeys)("generator %s", (key) => {
   });
 
   it("produces varied tasks", () => {
-    const prompts = new Set(SEEDS.slice(0, 50).map((s) => generator.generate(1, s).prompt));
+    // Geometry tasks share wording – the numbers are in the figure.
+    const prompts = new Set(
+      SEEDS.slice(0, 50).map((s) => {
+        const task = generator.generate(1, s);
+        return `${task.prompt}|${task.figure?.svg ?? ""}`;
+      }),
+    );
     expect(prompts.size).toBeGreaterThan(15);
+  });
+});
+
+describe("math package coverage", () => {
+  it("every seeded moment has a generator", () => {
+    const missing = mathSubject.areas
+      .flatMap((a) => a.moments)
+      .filter((m) => !getGenerator(m.generatorKey))
+      .map((m) => m.generatorKey);
+    expect(missing).toEqual([]);
   });
 });

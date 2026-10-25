@@ -694,6 +694,10 @@ Det fungerar för alla trianglar. I en fyrhörning blir summan $360^\circ$, efte
       generatorKey: "geometry/unit-conversion",
       intro: String.raw`**Längd:** $1\text{ m} = 10\text{ dm} = 100\text{ cm} = 1\,000\text{ mm}$, och $1\text{ km} = 1\,000\text{ m}$.
 
+**Volym (vätska):** $1\text{ l} = 10\text{ dl} = 100\text{ cl} = 1\,000\text{ ml}$.
+
+**Massa:** $1\text{ kg} = 10\text{ hg} = 1\,000\text{ g}$.
+
 **Area:** varje steg är **100** gånger, eftersom det är två dimensioner:
 
 $$1\text{ m}^2 = 100\text{ dm}^2 = 10\,000\text{ cm}^2$$
@@ -710,6 +714,41 @@ Tumregel: till en **mindre** enhet blir talet **större**.`,
           body: String.raw`En kvadrat på $1\text{ dm} \times 1\text{ dm}$ är $10\text{ cm} \times 10\text{ cm}$. Det blir $10 \cdot 10 = 100$ små rutor på en kvadratcentimeter var.
 
 En kub på $1\text{ dm}^3$ rymmer $10 \cdot 10 \cdot 10 = 1\,000$ små kuber på $1\text{ cm}^3$. Och den rymmer exakt en liter, ungefär som ett mjölkpaket.`,
+        },
+      ],
+    },
+    {
+      slug: "skala",
+      name: "Skala",
+      description: "Kartor, ritningar och förstoringar.",
+      generatorKey: "geometry/scale",
+      intro: String.raw`En **skala** jämför storleken på en bild med verkligheten. Den skrivs med kolon, till exempel $1:100$.
+
+- **Förminskning**, $1:100$: 1 cm på ritningen är 100 cm i verkligheten. Används för ritningar och kartor.
+- **Förstoring**, $5:1$: 5 cm på bilden är 1 cm i verkligheten. Används för små saker, som insekter.
+- **Naturlig storlek** är $1:1$.
+
+Är det **första** talet minst är det en förminskning. Är det första talet störst är det en förstoring.
+
+**Exempel:** en karta har skalan $1:10\,000$ och avståndet på kartan är 3 cm.
+
+$$3 \cdot 10\,000 = 30\,000\text{ cm} = 300\text{ m}$$
+
+Viktigt: båda talen i skalan har **samma enhet**. Räkna i cm och gör om till meter eller kilometer på slutet.`,
+      deepenings: [
+        {
+          title: "Varför står det ingen enhet?",
+          unlockLevel: 1,
+          body: String.raw`Skalan $1:50\,000$ säger bara att verkligheten är $50\,000$ gånger större – i vilken enhet som helst. 1 cm blir $50\,000$ cm, 1 mm blir $50\,000$ mm.
+
+Därför fungerar samma skala oavsett om du mäter i centimeter eller millimeter. Det enda som krävs är att du använder samma enhet på båda sidor.`,
+        },
+        {
+          title: "Skala och area",
+          unlockLevel: 3,
+          body: String.raw`Om en ritning är i skala $1:100$ blir **längderna** 100 gånger större i verkligheten. Men **arean** blir $100 \cdot 100 = 10\,000$ gånger större!
+
+En rektangel på $2\text{ cm} \times 3\text{ cm} = 6\text{ cm}^2$ på ritningen är $2\text{ m} \times 3\text{ m} = 6\text{ m}^2$ i verkligheten – och $6\text{ m}^2 = 60\,000\text{ cm}^2$.`,
         },
       ],
     },

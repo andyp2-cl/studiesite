@@ -12,12 +12,18 @@ import { generator as fractionsCompareOrder } from "./fractions/compare-order";
 import { generator as expandSimplify } from "./fractions/expand-simplify";
 import { generator as mixedNumbers } from "./fractions/mixed-numbers";
 import { generator as fractionsMultiplyDivide } from "./fractions/multiply-divide";
+import { generator as angles } from "./geometry/angles";
+import { generator as perimeterArea } from "./geometry/perimeter-area";
+import { generator as scale } from "./geometry/scale";
+import { generator as unitConversion } from "./geometry/unit-conversion";
 import { generator as fourOperations } from "./number-sense/four-operations";
 import { generator as negativeNumbers } from "./number-sense/negative-numbers";
 import { generator as orderOfOperations } from "./number-sense/order-of-operations";
 import { generator as placeValueRounding } from "./number-sense/place-value-rounding";
 import { generator as powerNotation } from "./powers/power-notation";
 import { generator as squaresRoots } from "./powers/squares-roots";
+import { generator as meanMedianMode } from "./statistics/mean-median-mode";
+import { generator as probability } from "./statistics/probability";
 import type { Generator } from "./types";
 
 // generator_key in the database → implementation. Moments whose key is missing
@@ -49,6 +55,14 @@ const GENERATORS: Record<string, Generator> = Object.fromEntries(
     oneStepEquations,
     twoStepEquations,
     numberPatterns,
+    // Geometri
+    perimeterArea,
+    angles,
+    unitConversion,
+    scale,
+    // Statistik och sannolikhet
+    meanMedianMode,
+    probability,
   ].map((g) => [g.key, g]),
 );
 
