@@ -2,7 +2,7 @@ import { ArrowRight, Plus } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminHeader } from "@/components/admin/admin-header";
-import { DeepeningsEditor, IntroEditor, SourcePanel } from "@/components/admin/moment-editors";
+import { DeepeningsEditor, IntroEditor, ModePanel, SourcePanel } from "@/components/admin/moment-editors";
 import { NodeForm } from "@/components/admin/node-form";
 import { MathMarkdown } from "@/components/math/markdown";
 import { SectionLabel } from "@/components/study/visuals";
@@ -46,13 +46,22 @@ export default async function AdminMomentPage({ params }: PageProps<"/admin/inne
       />
       <div className="mx-auto flex max-w-4xl flex-col gap-12 px-4 py-10 sm:px-8">
         <section>
+          <SectionLabel>{t.moment.mode}</SectionLabel>
+          <ModePanel momentId={moment.id} mode={moment.mode} />
+        </section>
+
+        <section>
           <SectionLabel>{t.moment.source}</SectionLabel>
-          <SourcePanel
-            momentId={moment.id}
-            source={moment.source}
-            generatorKey={moment.generatorKey}
-            options={generatorKeys.map((key) => ({ key, label: generatorLabel(key) }))}
-          />
+          {moment.mode === "read" ? (
+            <p className="border border-dashed border-border p-4 text-sm text-muted-foreground">{t.moment.modeReadSourceNote}</p>
+          ) : (
+            <SourcePanel
+              momentId={moment.id}
+              source={moment.source}
+              generatorKey={moment.generatorKey}
+              options={generatorKeys.map((key) => ({ key, label: generatorLabel(key) }))}
+            />
+          )}
         </section>
 
         <section>

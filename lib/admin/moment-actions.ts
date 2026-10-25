@@ -98,3 +98,20 @@ export async function deleteBlock(id: string): Promise<ActionResult> {
   refresh();
   return { ok: true };
 }
+
+/**
+ * "levels": Lätt/Medel/Svår (math). "read": read the material, answer questions
+ * and write texts – no levels. Read moments always use the admin's own tasks.
+ */
+export async function setMomentMode(momentId: string, mode: "levels" | "read"): Promise<ActionResult> {
+  await requireAdmin();
+  if (mode !== "levels" && mode !== "read") return fail(e.generic);
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("moments")
+    .update(mode === "read" ? { mode, source: "tasks" } : { mode })
+    .eq("id", momentId);
+  if (error) return fail(e.generic);
+  refresh();
+  return { ok: true };
+}

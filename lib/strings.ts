@@ -50,6 +50,12 @@ export const strings = {
       count: (n: number, word: string) => `${n} ${word}`,
     },
     moment: {
+      mode: "Momenttyp",
+      modeLevels: "Nivåer",
+      modeLevelsHelp: "Lätt, Medel och Svår. Passar matte och annat där man tränar en färdighet.",
+      modeRead: "Läs och svara",
+      modeReadHelp: "Eleven läser texterna, svarar på frågor och skriver egna texter som AI ger feedback på. Inga nivåer – passar SO, NO och andra faktaämnen.",
+      modeReadSourceNote: "Läs och svara-moment använder dina egna frågor nedan.",
       sourceGenerator: "Generator – uppgifter skapas automatiskt",
       tasksWord: "egna uppgifter",
       source: "Uppgiftskälla",

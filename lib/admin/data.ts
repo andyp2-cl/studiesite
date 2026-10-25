@@ -55,7 +55,7 @@ export async function getAdminMoment(id: string) {
   const { data } = await supabase
     .from("moments")
     .select(
-      "id, name, slug, description, is_hidden, source, areas(id, name, subjects(id, name)), generators(generator_key), content_blocks(id, type, title, body_md, unlock_level, sort_order), tasks(id, level, type, prompt_md, status, created_at)",
+      "id, name, slug, description, is_hidden, source, mode, areas(id, name, subjects(id, name)), generators(generator_key), content_blocks(id, type, title, body_md, unlock_level, sort_order), tasks(id, level, type, prompt_md, status, created_at)",
     )
     .eq("id", id)
     .order("sort_order", { referencedTable: "content_blocks" })

@@ -2,7 +2,7 @@
 
 import { Plus, Trash2 } from "lucide-react";
 import { useState, useTransition } from "react";
-import { deleteBlock, saveBlock, setMomentSource } from "@/lib/admin/moment-actions";
+import { deleteBlock, saveBlock, setMomentMode, setMomentSource } from "@/lib/admin/moment-actions";
 import { LEVELS } from "@/lib/generators/types";
 import { strings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,39 @@ function useSaver() {
       if (result.ok) onOk?.();
     });
   return { message, pending, run, setMessage };
+}
+
+export function ModePanel({ momentId, mode }: { momentId: string; mode: "levels" | "read" }) {
+  const [value, setValue] = useState(mode);
+  const { message, pending, run } = useSaver();
+
+  return (
+    <div className="flex flex-col gap-4 border border-border p-5">
+      <div className="hairline-grid grid gap-px sm:grid-cols-2">
+        {(["levels", "read"] as const).map((option) => (
+          <label
+            key={option}
+            className={cn(
+              "flex cursor-pointer flex-col gap-1 p-4",
+              value === option && "bg-primary/[0.07] outline outline-1 -outline-offset-1 outline-primary",
+            )}
+          >
+            <span className="flex items-center gap-2 font-semibold">
+              <input type="radio" name="mode" checked={value === option} onChange={() => setValue(option)} className="accent-primary" />
+              {option === "levels" ? t.modeLevels : t.modeRead}
+            </span>
+            <span className="text-sm text-muted-foreground">{option === "levels" ? t.modeLevelsHelp : t.modeReadHelp}</span>
+          </label>
+        ))}
+      </div>
+      <div className="flex items-center gap-3">
+        <Button variant="primary" disabled={pending || value === mode} onClick={() => run(() => setMomentMode(momentId, value))}>
+          {pending ? f.saving : f.save}
+        </Button>
+        {message && <Message kind={message.kind}>{message.text}</Message>}
+      </div>
+    </div>
+  );
 }
 
 export function SourcePanel({

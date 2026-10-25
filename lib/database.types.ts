@@ -325,23 +325,32 @@ export type Database = {
         Row: {
           current_level: number
           moment_id: string
+          quiz_passed_at: string | null
+          read_at: string | null
           stars: number
           updated_at: string
           user_id: string
+          writing_approved_at: string | null
         }
         Insert: {
           current_level?: number
           moment_id: string
+          quiz_passed_at?: string | null
+          read_at?: string | null
           stars?: number
           updated_at?: string
           user_id: string
+          writing_approved_at?: string | null
         }
         Update: {
           current_level?: number
           moment_id?: string
+          quiz_passed_at?: string | null
+          read_at?: string | null
           stars?: number
           updated_at?: string
           user_id?: string
+          writing_approved_at?: string | null
         }
         Relationships: [
           {
@@ -367,6 +376,7 @@ export type Database = {
           description: string | null
           id: string
           is_hidden: boolean
+          mode: Database["public"]["Enums"]["moment_mode"]
           name: string
           slug: string
           sort_order: number
@@ -379,6 +389,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_hidden?: boolean
+          mode?: Database["public"]["Enums"]["moment_mode"]
           name: string
           slug: string
           sort_order?: number
@@ -391,6 +402,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_hidden?: boolean
+          mode?: Database["public"]["Enums"]["moment_mode"]
           name?: string
           slug?: string
           sort_order?: number
@@ -766,6 +778,118 @@ export type Database = {
           },
         ]
       }
+      writing_submissions: {
+        Row: {
+          ai_call_id: string | null
+          body: string
+          char_count: number
+          created_at: string
+          feedback_md: string | null
+          id: string
+          moment_id: string
+          user_id: string
+          verdict: Database["public"]["Enums"]["writing_verdict"] | null
+          writing_task_id: string
+        }
+        Insert: {
+          ai_call_id?: string | null
+          body: string
+          char_count: number
+          created_at?: string
+          feedback_md?: string | null
+          id?: string
+          moment_id: string
+          user_id: string
+          verdict?: Database["public"]["Enums"]["writing_verdict"] | null
+          writing_task_id: string
+        }
+        Update: {
+          ai_call_id?: string | null
+          body?: string
+          char_count?: number
+          created_at?: string
+          feedback_md?: string | null
+          id?: string
+          moment_id?: string
+          user_id?: string
+          verdict?: Database["public"]["Enums"]["writing_verdict"] | null
+          writing_task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "writing_submissions_ai_call_id_fkey"
+            columns: ["ai_call_id"]
+            isOneToOne: false
+            referencedRelation: "ai_calls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "writing_submissions_moment_id_fkey"
+            columns: ["moment_id"]
+            isOneToOne: false
+            referencedRelation: "moments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "writing_submissions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "writing_submissions_writing_task_id_fkey"
+            columns: ["writing_task_id"]
+            isOneToOne: false
+            referencedRelation: "writing_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      writing_tasks: {
+        Row: {
+          created_at: string
+          id: string
+          min_chars: number
+          moment_id: string
+          prompt_md: string
+          rubric_md: string
+          sort_order: number
+          status: Database["public"]["Enums"]["task_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          min_chars?: number
+          moment_id: string
+          prompt_md: string
+          rubric_md?: string
+          sort_order?: number
+          status?: Database["public"]["Enums"]["task_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          min_chars?: number
+          moment_id?: string
+          prompt_md?: string
+          rubric_md?: string
+          sort_order?: number
+          status?: Database["public"]["Enums"]["task_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "writing_tasks_moment_id_fkey"
+            columns: ["moment_id"]
+            isOneToOne: false
+            referencedRelation: "moments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       xp_events: {
         Row: {
           amount: number
@@ -830,7 +954,8 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
-      content_block_type: "intro" | "deepening"
+      content_block_type: "intro" | "deepening" | "reading"
+      moment_mode: "levels" | "read"
       moment_source: "generator" | "tasks"
       redemption_status: "pending" | "approved" | "denied"
       task_origin: "admin" | "ai"
@@ -843,6 +968,7 @@ export type Database = {
         | "free_text"
       upload_status: "uploaded" | "processing" | "ready" | "failed"
       user_role: "admin" | "student"
+      writing_verdict: "approved" | "almost" | "not_yet"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -973,7 +1099,8 @@ export const Constants = {
   },
   public: {
     Enums: {
-      content_block_type: ["intro", "deepening"],
+      content_block_type: ["intro", "deepening", "reading"],
+      moment_mode: ["levels", "read"],
       moment_source: ["generator", "tasks"],
       redemption_status: ["pending", "approved", "denied"],
       task_origin: ["admin", "ai"],
@@ -987,6 +1114,7 @@ export const Constants = {
       ],
       upload_status: ["uploaded", "processing", "ready", "failed"],
       user_role: ["admin", "student"],
+      writing_verdict: ["approved", "almost", "not_yet"],
     },
   },
 } as const
