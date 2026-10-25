@@ -1,4 +1,8 @@
+import { generator as algebraExpressions } from "./algebra/expressions";
+import { generator as numberPatterns } from "./algebra/number-patterns";
 import { generator as oneStepEquations } from "./algebra/one-step-equations";
+import { generator as algebraSimplify } from "./algebra/simplify";
+import { generator as twoStepEquations } from "./algebra/two-step-equations";
 import { generator as percentConvert } from "./decimals-percent/convert";
 import { generator as decimalArithmetic } from "./decimals-percent/decimal-arithmetic";
 import { generator as percentOf } from "./decimals-percent/percent-of";
@@ -40,7 +44,11 @@ const GENERATORS: Record<string, Generator> = Object.fromEntries(
     powerNotation,
     squaresRoots,
     // Algebra
+    algebraExpressions,
+    algebraSimplify,
     oneStepEquations,
+    twoStepEquations,
+    numberPatterns,
   ].map((g) => [g.key, g]),
 );
 
