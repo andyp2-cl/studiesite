@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Lets verification builds use their own folder (NEXT_DIST_DIR=.next-verify)
+  // so they never disturb a running `npm run dev`.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   // Cache Components is left off: almost every page is personalised via the
   // Supabase session cookie, so a static shell would gain us very little.
   turbopack: {
