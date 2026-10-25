@@ -4,7 +4,7 @@ import { randomInt } from "node:crypto";
 import { requireProfile } from "@/lib/auth/session";
 import { getGenerator } from "@/lib/generators";
 import { isLevel, type Figure, type Level, type SolutionStep } from "@/lib/generators/types";
-import { checkAnswer, type CheckResult } from "@/lib/math/check-answer";
+import { checkAnswer, type CheckResult, type RetryReason } from "@/lib/math/check-answer";
 import { levelProgress, WINDOW } from "@/lib/progress";
 import { createRng } from "@/lib/random";
 import { strings } from "@/lib/strings";
@@ -33,7 +33,7 @@ export type PublicTask = {
 };
 
 export type SubmitResult =
-  | { status: "retry"; reason: "unreadable" | "not-simplified" }
+  | { status: "retry"; reason: RetryReason }
   | {
       /** revealed = the student chose "ge mig svaret". */
       status: "correct" | "wrong" | "revealed";

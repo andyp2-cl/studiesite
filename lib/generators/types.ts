@@ -18,6 +18,12 @@ export type Answer =
       display: string;
       /** Only a fully simplified fraction (or integer) counts as correct. */
       requireSimplified?: boolean;
+      /** "mixed": answer must be written as a mixed number (2 1/3); "fraction": as a/b. */
+      requireForm?: "mixed" | "fraction";
+      /** Unit the student may type after the number ("cm", "%", "kr" …). */
+      unit?: string;
+      /** Accepted absolute difference, e.g. for answers rounded with π ≈ 3,14. */
+      tolerance?: number;
     }
   | {
       kind: "equation";
@@ -31,6 +37,8 @@ export type Answer =
       expr: string;
       variables: string[];
       display: string;
+      /** Must be fully simplified: no brackets, like terms collected. */
+      requireSimplified?: boolean;
     };
 
 export type SolutionStep = {

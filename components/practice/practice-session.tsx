@@ -105,7 +105,7 @@ export function PracticeSession({
         durationMs: Math.round(performance.now() - shownAt.current),
       });
       if (res.status === "error") return setNotice(p.error);
-      if (res.status === "retry") return setNotice(res.reason === "not-simplified" ? p.notSimplified : p.unreadable);
+      if (res.status === "retry") return setNotice(p.retry[res.reason]);
       setResult(res);
       setNotice(null);
       setOutcomes((all) => [...all, { status: res.status, usedHint }]);
