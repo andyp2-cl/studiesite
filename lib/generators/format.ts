@@ -9,7 +9,7 @@ export function round(n: number, places = 9): number {
 export function num(n: number): string {
   const clean = round(n);
   const [int, dec] = String(Math.abs(clean)).split(".");
-  const grouped = int.length > 4 ? int.replace(/\B(?=(\d{3})+(?!\d))/g, "\\,") : int;
+  const grouped = int.length >= 4 ? int.replace(/\B(?=(\d{3})+(?!\d))/g, "\\,") : int;
   return `${clean < 0 ? "-" : ""}${grouped}${dec ? `{,}${dec}` : ""}`;
 }
 
@@ -17,7 +17,7 @@ export function num(n: number): string {
 export function plain(n: number): string {
   const clean = round(n);
   const [int, dec] = String(Math.abs(clean)).split(".");
-  const grouped = int.length > 4 ? int.replace(/\B(?=(\d{3})+(?!\d))/g, " ") : int;
+  const grouped = int.length >= 4 ? int.replace(/\B(?=(\d{3})+(?!\d))/g, " ") : int;
   return `${clean < 0 ? "−" : ""}${grouped}${dec ? `,${dec}` : ""}`;
 }
 
