@@ -27,6 +27,7 @@ Testa från mobilen på samma wifi: kör `npm run dev -- -H 0.0.0.0` och öppna 
 | `npm run db:push` | Kör nya migrationer (`supabase/migrations`) mot databasen |
 | `npm run db:types` | Genererar om `lib/database.types.ts` efter en migration |
 | `npm run seed` | Lägger in mattepaketet, märken och testkonton. Rör aldrig befintliga rader |
+| `npm run create-user -- herman "Herman"` | Skapar ett elevkonto och visar lösenordet en gång (`--admin` för admin) |
 | `npm run check:rls` | Testar säkerhetsreglerna med tillfälliga elevkonton |
 
 ## Driftsättning

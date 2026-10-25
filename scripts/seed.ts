@@ -4,8 +4,8 @@
 // Idempotent and non-destructive: rows that already exist are left as they
 // are, so edits made in the admin panel are never overwritten.
 
-import { randomInt } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
+import { generatePassword } from "../lib/auth/password";
 import { usernameToEmail } from "../lib/auth/username";
 import type { Database } from "../lib/database.types";
 import { seedAchievements } from "../lib/seed/achievements";
@@ -149,20 +149,12 @@ async function seedAchievementRows() {
   console.log(`✓ Märken: ${rows.length}`);
 }
 
-function generatePassword(): string {
-  // Readable for a 12-year-old: no look-alike characters (0/O, 1/l/I).
-  const alphabet = "abcdefghjkmnpqrstuvwxyz23456789";
-  const pick = (n: number) => Array.from({ length: n }, () => alphabet[randomInt(alphabet.length)]).join("");
-  return `${pick(4)}-${pick(4)}-${pick(4)}`;
-}
-
 type SeedUser = { username: string; displayName: string; role: "admin" | "student" };
 
-const seedUsers: SeedUser[] = [
-  { username: "admin", displayName: "Admin", role: "admin" },
-  { username: "testelev1", displayName: "Testelev 1", role: "student" },
-  { username: "testelev2", displayName: "Testelev 2", role: "student" },
-];
+// Only the admin account. Student accounts are real people: create them with
+// `npm run create-user` (later from the admin panel), so no test students end
+// up on the leaderboard.
+const seedUsers: SeedUser[] = [{ username: "admin", displayName: "Admin", role: "admin" }];
 
 async function seedAccounts() {
   const existing = must(
