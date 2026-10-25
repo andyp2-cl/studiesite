@@ -85,3 +85,15 @@ export async function getAdminTask(id: string) {
   const { data } = await supabase.from("tasks").select("*").eq("id", id).maybeSingle();
   return data;
 }
+
+/** Sources on an area, with a short preview instead of the whole text. */
+export async function getAreaSources(areaId: string) {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("sources")
+    .select("id, url, title, status, error, content")
+    .eq("area_id", areaId)
+    .order("sort_order");
+  return (data ?? []).map(({ content, ...s }) => ({ ...s, chars: content.length, preview: content.slice(0, 600) }));
+}

@@ -582,6 +582,53 @@ export type Database = {
         }
         Relationships: []
       }
+      sources: {
+        Row: {
+          area_id: string
+          content: string
+          created_at: string
+          error: string | null
+          fetched_at: string | null
+          id: string
+          sort_order: number
+          status: Database["public"]["Enums"]["source_status"]
+          title: string
+          url: string | null
+        }
+        Insert: {
+          area_id: string
+          content?: string
+          created_at?: string
+          error?: string | null
+          fetched_at?: string | null
+          id?: string
+          sort_order?: number
+          status?: Database["public"]["Enums"]["source_status"]
+          title: string
+          url?: string | null
+        }
+        Update: {
+          area_id?: string
+          content?: string
+          created_at?: string
+          error?: string | null
+          fetched_at?: string | null
+          id?: string
+          sort_order?: number
+          status?: Database["public"]["Enums"]["source_status"]
+          title?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sources_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subjects: {
         Row: {
           color: string
@@ -958,6 +1005,7 @@ export type Database = {
       moment_mode: "levels" | "read"
       moment_source: "generator" | "tasks"
       redemption_status: "pending" | "approved" | "denied"
+      source_status: "pending" | "ready" | "failed"
       task_origin: "admin" | "ai"
       task_status: "draft" | "published"
       task_type:
@@ -1103,6 +1151,7 @@ export const Constants = {
       moment_mode: ["levels", "read"],
       moment_source: ["generator", "tasks"],
       redemption_status: ["pending", "approved", "denied"],
+      source_status: ["pending", "ready", "failed"],
       task_origin: ["admin", "ai"],
       task_status: ["draft", "published"],
       task_type: [

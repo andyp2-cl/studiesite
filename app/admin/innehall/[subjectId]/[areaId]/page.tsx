@@ -3,15 +3,16 @@ import { AdminHeader } from "@/components/admin/admin-header";
 import { CreateForm } from "@/components/admin/create-form";
 import { NodeForm } from "@/components/admin/node-form";
 import { SortableList } from "@/components/admin/sortable-list";
+import { SourcesPanel } from "@/components/admin/sources-panel";
 import { SectionLabel } from "@/components/study/visuals";
-import { getAdminArea } from "@/lib/admin/data";
+import { getAdminArea, getAreaSources } from "@/lib/admin/data";
 import { strings } from "@/lib/strings";
 
 const t = strings.admin;
 
 export default async function AdminAreaPage({ params }: PageProps<"/admin/innehall/[subjectId]/[areaId]">) {
   const { subjectId, areaId } = await params;
-  const area = await getAdminArea(areaId);
+  const [area, sources] = await Promise.all([getAdminArea(areaId), getAreaSources(areaId)]);
   if (!area || area.subject.id !== subjectId) notFound();
 
   const describe = (m: (typeof area.moments)[number]) =>
@@ -30,6 +31,13 @@ export default async function AdminAreaPage({ params }: PageProps<"/admin/inneha
         title={area.name}
       />
       <div className="mx-auto flex max-w-4xl flex-col gap-12 px-4 py-10 sm:px-8">
+        {/* Sources first: they are what moments are created from. */}
+        <section>
+          <SectionLabel>{t.sources.title}</SectionLabel>
+          <p className="-mt-2 mb-4 text-sm text-muted-foreground">{t.sources.help}</p>
+          <SourcesPanel areaId={area.id} sources={sources} />
+        </section>
+
         <section>
           <SectionLabel>{t.kindsPlural.moment}</SectionLabel>
           <SortableList
