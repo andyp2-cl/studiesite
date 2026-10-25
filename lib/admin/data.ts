@@ -55,12 +55,13 @@ export async function getAdminMoment(id: string) {
   const { data } = await supabase
     .from("moments")
     .select(
-      "id, name, slug, description, is_hidden, source, mode, areas(id, name, subjects(id, name)), generators(generator_key), content_blocks(id, type, title, body_md, unlock_level, sort_order), tasks(id, level, type, prompt_md, status, created_at)",
+      "id, name, slug, description, is_hidden, source, mode, areas(id, name, subjects(id, name)), generators(generator_key), content_blocks(id, type, title, body_md, unlock_level, sort_order), tasks(id, level, type, prompt_md, status, created_at), writing_tasks(id, prompt_md, min_chars, rubric_md, status, sort_order)",
     )
     .eq("id", id)
     .order("sort_order", { referencedTable: "content_blocks" })
     .order("level", { referencedTable: "tasks" })
     .order("created_at", { referencedTable: "tasks" })
+    .order("sort_order", { referencedTable: "writing_tasks" })
     .maybeSingle();
   if (!data?.areas?.subjects) return null;
   return {
@@ -69,6 +70,9 @@ export async function getAdminMoment(id: string) {
     subject: data.areas.subjects,
     generatorKey: data.generators?.generator_key ?? null,
     intro: data.content_blocks.find((b) => b.type === "intro")?.body_md ?? "",
+    readings: data.content_blocks
+      .filter((b) => b.type === "reading")
+      .map((b) => ({ id: b.id, title: b.title ?? "", body: b.body_md })),
     deepenings: data.content_blocks
       .filter((b) => b.type === "deepening")
       .map((b) => ({ id: b.id, title: b.title ?? "", unlockLevel: b.unlock_level ?? 1, body: b.body_md })),

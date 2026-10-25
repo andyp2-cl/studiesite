@@ -31,11 +31,14 @@ export function TaskEditor({
   momentId,
   momentHref,
   initial,
+  showLevel = true,
 }: {
   momentId: string;
   /** Admin page of the moment (back link, after delete). */
   momentHref: string;
   initial: TaskEditorValues;
+  /** "Läs och svara" questions have no level (stored as 1). */
+  showLevel?: boolean;
 }) {
   const router = useRouter();
   const [values, setValues] = useState(initial);
@@ -51,7 +54,17 @@ export function TaskEditor({
       const result = await saveTask({ ...values, momentId });
       if (!result.ok) return setMessage({ kind: "error", text: result.error });
       if (andNew) {
-        setValues({ ...initial, id: undefined, level: values.level, type: values.type, published: values.published, promptMd: "", solutionMd: "", hintMd: "", draft: {} });
+        setValues({
+          ...initial,
+          id: undefined,
+          level: values.level,
+          type: values.type,
+          published: values.published,
+          promptMd: "",
+          solutionMd: "",
+          hintMd: "",
+          draft: {},
+        });
         setMessage({ kind: "success", text: t.savedNew });
         router.replace(`${momentHref}/uppgift/ny`);
       } else {
@@ -87,7 +100,9 @@ export function TaskEditor({
               onClick={() => set({ type })}
               className={cn(
                 "px-3 py-3 text-left text-sm font-semibold",
-                values.type === type ? "bg-primary/[0.08] text-primary outline outline-1 -outline-offset-1 outline-primary" : "hover:bg-card",
+                values.type === type
+                  ? "bg-primary/[0.08] text-primary outline outline-1 -outline-offset-1 outline-primary"
+                  : "hover:bg-card",
               )}
             >
               {t.types[type]}
@@ -97,15 +112,22 @@ export function TaskEditor({
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label={t.level} htmlFor="task-level">
-          <select id="task-level" value={values.level} onChange={(e) => set({ level: Number(e.target.value) })} className={inputClass}>
-            {LEVELS.map((l) => (
-              <option key={l} value={l}>
-                {strings.levels[l]}
-              </option>
-            ))}
-          </select>
-        </Field>
+        {showLevel && (
+          <Field label={t.level} htmlFor="task-level">
+            <select
+              id="task-level"
+              value={values.level}
+              onChange={(e) => set({ level: Number(e.target.value) })}
+              className={inputClass}
+            >
+              {LEVELS.map((l) => (
+                <option key={l} value={l}>
+                  {strings.levels[l]}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
         <label className="flex items-center gap-3 self-end pb-2.5 text-sm">
           <input
             type="checkbox"
@@ -118,7 +140,13 @@ export function TaskEditor({
       </div>
 
       <Field label={t.prompt}>
-        <MarkdownEditor id="task-prompt" value={values.promptMd} onChange={(promptMd) => set({ promptMd })} rows={6} placeholder={t.promptPlaceholder} />
+        <MarkdownEditor
+          id="task-prompt"
+          value={values.promptMd}
+          onChange={(promptMd) => set({ promptMd })}
+          rows={6}
+          placeholder={t.promptPlaceholder}
+        />
       </Field>
 
       {/* Answer key per type */}
@@ -181,7 +209,11 @@ export function TaskEditor({
                     setDraft({
                       choices: choices.filter((_, j) => j !== i),
                       correctIndex:
-                        draft.correctIndex === i ? undefined : draft.correctIndex !== undefined && draft.correctIndex > i ? draft.correctIndex - 1 : draft.correctIndex,
+                        draft.correctIndex === i
+                          ? undefined
+                          : draft.correctIndex !== undefined && draft.correctIndex > i
+                            ? draft.correctIndex - 1
+                            : draft.correctIndex,
                     })
                   }
                   aria-label={f.delete}
@@ -210,7 +242,13 @@ export function TaskEditor({
                   draft.correctBoolean === v ? "border-primary text-primary" : "border-border",
                 )}
               >
-                <input type="radio" name="tf" checked={draft.correctBoolean === v} onChange={() => setDraft({ correctBoolean: v })} className="accent-primary" />
+                <input
+                  type="radio"
+                  name="tf"
+                  checked={draft.correctBoolean === v}
+                  onChange={() => setDraft({ correctBoolean: v })}
+                  className="accent-primary"
+                />
                 {v ? t.true : t.false}
               </label>
             ))}
@@ -241,11 +279,22 @@ export function TaskEditor({
       </section>
 
       <Field label={t.hint} hint={t.hintHelp}>
-        <MarkdownEditor id="task-hint" value={values.hintMd} onChange={(hintMd) => set({ hintMd })} rows={3} placeholder={t.hintPlaceholder} />
+        <MarkdownEditor
+          id="task-hint"
+          value={values.hintMd}
+          onChange={(hintMd) => set({ hintMd })}
+          rows={3}
+          placeholder={t.hintPlaceholder}
+        />
       </Field>
 
       <Field label={t.solution} hint={t.solutionHelp}>
-        <MarkdownEditor id="task-solution" value={values.solutionMd} onChange={(solutionMd) => set({ solutionMd })} rows={6} />
+        <MarkdownEditor
+          id="task-solution"
+          value={values.solutionMd}
+          onChange={(solutionMd) => set({ solutionMd })}
+          rows={6}
+        />
       </Field>
 
       <div className="sticky bottom-0 flex flex-wrap items-center gap-3 border-t border-border bg-background/95 py-4 backdrop-blur">

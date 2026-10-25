@@ -2,12 +2,19 @@
 
 import { Plus, Trash2 } from "lucide-react";
 import { useState, useTransition } from "react";
-import { deleteBlock, saveBlock, setMomentMode, setMomentSource } from "@/lib/admin/moment-actions";
+import {
+  deleteBlock,
+  deleteWritingTask,
+  saveBlock,
+  saveWritingTask,
+  setMomentMode,
+  setMomentSource,
+} from "@/lib/admin/moment-actions";
 import { LEVELS } from "@/lib/generators/types";
 import { strings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 import { MarkdownEditor } from "./markdown-editor";
-import { Button, Field, inputClass, Message } from "./ui";
+import { Button, Field, inputClass, Message, textareaClass } from "./ui";
 
 const t = strings.admin.moment;
 const f = strings.admin.form;
@@ -235,6 +242,167 @@ export function DeepeningsEditor({
         }
       >
         <Plus className="size-4" /> {t.newDeepening}
+      </Button>
+    </div>
+  );
+}
+
+type Reading = { id?: string; key: string; title: string; body: string };
+
+function ReadingCard({ momentId, initial, onRemoved }: { momentId: string; initial: Reading; onRemoved: () => void }) {
+  const [id, setId] = useState(initial.id);
+  const [title, setTitle] = useState(initial.title);
+  const [body, setBody] = useState(initial.body);
+  const { message, pending, run } = useSaver();
+  const r = strings.admin.read;
+
+  function save() {
+    run(async () => {
+      const result = await saveBlock({ id, momentId, type: "reading", title, body });
+      if (result.ok && result.id) setId(result.id);
+      return result;
+    });
+  }
+
+  function remove() {
+    if (!id) return onRemoved();
+    if (!window.confirm(f.confirmDelete(title || r.reading))) return;
+    run(() => deleteBlock(id), onRemoved);
+  }
+
+  return (
+    <div className="flex flex-col gap-4 border border-border p-5">
+      <Field label={r.readingTitle} htmlFor={`reading-title-${initial.key}`}>
+        <input
+          id={`reading-title-${initial.key}`}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          maxLength={120}
+          placeholder={r.readingTitlePlaceholder}
+          className={inputClass}
+        />
+      </Field>
+      <MarkdownEditor id={`reading-body-${initial.key}`} value={body} onChange={setBody} rows={12} placeholder={r.readingPlaceholder} />
+      <div className="flex flex-wrap items-center gap-3">
+        <Button variant="primary" disabled={pending || !title.trim()} onClick={save}>
+          {pending ? f.saving : f.save}
+        </Button>
+        <Button variant="danger" disabled={pending} onClick={remove}>
+          <Trash2 className="size-3.5" /> {f.delete}
+        </Button>
+        {message && <Message kind={message.kind}>{message.text}</Message>}
+      </div>
+    </div>
+  );
+}
+
+/** Reading sections for a "Läs och svara" moment, in reading order. */
+export function ReadingsEditor({ momentId, initial }: { momentId: string; initial: { id: string; title: string; body: string }[] }) {
+  const [items, setItems] = useState<Reading[]>(initial.map((d) => ({ ...d, key: d.id })));
+  return (
+    <div className="flex flex-col gap-3">
+      {items.map((d) => (
+        <ReadingCard key={d.key} momentId={momentId} initial={d} onRemoved={() => setItems((all) => all.filter((x) => x.key !== d.key))} />
+      ))}
+      <Button className="w-fit" onClick={() => setItems((all) => [...all, { key: crypto.randomUUID(), title: "", body: "" }])}>
+        <Plus className="size-4" /> {strings.admin.read.newReading}
+      </Button>
+    </div>
+  );
+}
+
+type Writing = { id?: string; key: string; prompt: string; minChars: number; rubric: string; published: boolean };
+
+function WritingCard({ momentId, initial, onRemoved }: { momentId: string; initial: Writing; onRemoved: () => void }) {
+  const [id, setId] = useState(initial.id);
+  const [prompt, setPrompt] = useState(initial.prompt);
+  const [minChars, setMinChars] = useState(initial.minChars);
+  const [rubric, setRubric] = useState(initial.rubric);
+  const [published, setPublished] = useState(initial.published);
+  const { message, pending, run } = useSaver();
+  const w = strings.admin.writing;
+
+  function save() {
+    run(async () => {
+      const result = await saveWritingTask({ id, momentId, promptMd: prompt, minChars, rubricMd: rubric, published });
+      if (result.ok && result.id) setId(result.id);
+      return result;
+    });
+  }
+
+  function remove() {
+    if (!id) return onRemoved();
+    if (!window.confirm(w.confirmDelete)) return;
+    run(() => deleteWritingTask(id), onRemoved);
+  }
+
+  return (
+    <div className="flex flex-col gap-4 border border-border p-5">
+      <Field label={w.prompt}>
+        <MarkdownEditor id={`writing-prompt-${initial.key}`} value={prompt} onChange={setPrompt} rows={4} placeholder={w.promptPlaceholder} />
+      </Field>
+      <div className="grid gap-4 sm:grid-cols-[12rem_1fr]">
+        <Field label={w.minChars} htmlFor={`writing-min-${initial.key}`} hint={w.minCharsHelp}>
+          <input
+            id={`writing-min-${initial.key}`}
+            type="number"
+            min={50}
+            max={5000}
+            step={50}
+            value={minChars}
+            onChange={(e) => setMinChars(Number(e.target.value))}
+            className={inputClass}
+          />
+        </Field>
+        <label className="flex items-center gap-3 self-start pt-7 text-sm">
+          <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} className="size-4 accent-primary" />
+          {strings.admin.task.published}
+        </label>
+      </div>
+      <Field label={w.rubric} htmlFor={`writing-rubric-${initial.key}`} hint={w.rubricHelp}>
+        <textarea
+          id={`writing-rubric-${initial.key}`}
+          value={rubric}
+          onChange={(e) => setRubric(e.target.value)}
+          rows={5}
+          placeholder={w.rubricPlaceholder}
+          className={textareaClass}
+        />
+      </Field>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button variant="primary" disabled={pending || !prompt.trim()} onClick={save}>
+          {pending ? f.saving : f.save}
+        </Button>
+        <Button variant="danger" disabled={pending} onClick={remove}>
+          <Trash2 className="size-3.5" /> {f.delete}
+        </Button>
+        {message && <Message kind={message.kind}>{message.text}</Message>}
+      </div>
+    </div>
+  );
+}
+
+/** Writing tasks for a "Läs och svara" moment. */
+export function WritingTasksEditor({
+  momentId,
+  initial,
+}: {
+  momentId: string;
+  initial: { id: string; prompt_md: string; min_chars: number; rubric_md: string; status: string }[];
+}) {
+  const [items, setItems] = useState<Writing[]>(
+    initial.map((t) => ({ id: t.id, key: t.id, prompt: t.prompt_md, minChars: t.min_chars, rubric: t.rubric_md, published: t.status === "published" })),
+  );
+  return (
+    <div className="flex flex-col gap-3">
+      {items.map((t) => (
+        <WritingCard key={t.key} momentId={momentId} initial={t} onRemoved={() => setItems((all) => all.filter((x) => x.key !== t.key))} />
+      ))}
+      <Button
+        className="w-fit"
+        onClick={() => setItems((all) => [...all, { key: crypto.randomUUID(), prompt: "", minChars: 300, rubric: "", published: true }])}
+      >
+        <Plus className="size-4" /> {strings.admin.writing.newTask}
       </Button>
     </div>
   );

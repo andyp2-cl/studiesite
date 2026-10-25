@@ -37,23 +37,24 @@ export async function setMomentSource(
 export type BlockInput = {
   id?: string;
   momentId: string;
-  type: "intro" | "deepening";
+  type: "intro" | "deepening" | "reading";
   title?: string;
   body: string;
   unlockLevel?: number;
 };
 
-/** Creates or updates an intro or a deepening. There is at most one intro per moment. */
+/** Creates or updates an intro, a deepening or a reading section. There is at most one intro per moment. */
 export async function saveBlock(input: BlockInput): Promise<ActionResult> {
   await requireAdmin();
   const body = String(input.body ?? "").slice(0, 20000);
   const title = String(input.title ?? "").trim().slice(0, 120) || null;
   if (input.type === "deepening" && (!title || !isLevel(input.unlockLevel))) return fail(e.deepening);
+  if (input.type === "reading" && !title) return fail(e.reading);
 
   const supabase = await createClient();
   const fields = {
     body_md: body,
-    title: input.type === "deepening" ? title : null,
+    title: input.type === "intro" ? null : title,
     unlock_level: input.type === "deepening" ? (input.unlockLevel as number) : null,
   };
 
@@ -93,7 +94,7 @@ export async function saveBlock(input: BlockInput): Promise<ActionResult> {
 export async function deleteBlock(id: string): Promise<ActionResult> {
   await requireAdmin();
   const supabase = await createClient();
-  const { error } = await supabase.from("content_blocks").delete().eq("id", id).eq("type", "deepening");
+  const { error } = await supabase.from("content_blocks").delete().eq("id", id).in("type", ["deepening", "reading"]);
   if (error) return fail(e.generic);
   refresh();
   return { ok: true };
@@ -111,6 +112,63 @@ export async function setMomentMode(momentId: string, mode: "levels" | "read"): 
     .from("moments")
     .update(mode === "read" ? { mode, source: "tasks" } : { mode })
     .eq("id", momentId);
+  if (error) return fail(e.generic);
+  refresh();
+  return { ok: true };
+}
+
+export type WritingTaskInput = {
+  id?: string;
+  momentId: string;
+  promptMd: string;
+  minChars: number;
+  rubricMd: string;
+  published: boolean;
+};
+
+/** A writing task: the student writes at least minChars characters; the rubric guides the AI feedback. */
+export async function saveWritingTask(input: WritingTaskInput): Promise<ActionResult> {
+  await requireAdmin();
+  const prompt = String(input.promptMd ?? "").trim().slice(0, 5000);
+  if (!prompt) return fail(e.prompt);
+  const minChars = Math.round(Number(input.minChars));
+  if (!Number.isFinite(minChars) || minChars < 50 || minChars > 5000) return fail(e.minChars);
+
+  const row = {
+    moment_id: input.momentId,
+    prompt_md: prompt,
+    min_chars: minChars,
+    rubric_md: String(input.rubricMd ?? "").trim().slice(0, 5000),
+    status: input.published ? ("published" as const) : ("draft" as const),
+  };
+  const supabase = await createClient();
+  if (input.id) {
+    const { error } = await supabase.from("writing_tasks").update(row).eq("id", input.id);
+    if (error) return fail(e.generic);
+    refresh();
+    return { ok: true, id: input.id };
+  }
+  const { data: last } = await supabase
+    .from("writing_tasks")
+    .select("sort_order")
+    .eq("moment_id", input.momentId)
+    .order("sort_order", { ascending: false })
+    .limit(1);
+  const { data, error } = await supabase
+    .from("writing_tasks")
+    .insert({ ...row, sort_order: (last?.[0]?.sort_order ?? -1) + 1 })
+    .select("id")
+    .single();
+  if (error) return fail(e.generic);
+  refresh();
+  return { ok: true, id: data.id };
+}
+
+/** Removes a writing task and the students' submissions for it. */
+export async function deleteWritingTask(id: string): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { error } = await supabase.from("writing_tasks").delete().eq("id", id);
   if (error) return fail(e.generic);
   refresh();
   return { ok: true };

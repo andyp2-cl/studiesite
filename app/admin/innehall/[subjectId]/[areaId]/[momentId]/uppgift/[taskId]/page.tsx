@@ -58,11 +58,17 @@ export default async function AdminTaskPage({
           { href: momentHref, label: moment.name },
         ]}
         kicker={moment.name}
-        title={isNew ? t.task.newTitle : t.task.editTitle}
+        title={moment.mode === "read" ? (isNew ? t.read.newQuestion : t.task.editTitle) : isNew ? t.task.newTitle : t.task.editTitle}
       />
       <div className="mx-auto max-w-4xl px-4 pt-10 sm:px-8">
         {/* key: a fresh editor per task, so "spara och ny" and navigation reset the form */}
-        <TaskEditor key={task?.id ?? "new"} momentId={moment.id} momentHref={momentHref} initial={initial} />
+        <TaskEditor
+          key={task?.id ?? "new"}
+          momentId={moment.id}
+          momentHref={momentHref}
+          initial={initial}
+          showLevel={moment.mode !== "read"}
+        />
       </div>
     </main>
   );
