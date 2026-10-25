@@ -8,7 +8,27 @@ const OPERAND = String.raw`(\d+(?:\.\d+)?|[a-z]|\([^()]*\))`;
 
 const stripParens = (s: string) => (s.startsWith("(") && s.endsWith(")") ? s.slice(1, -1) : s);
 
+// A unit after a number: "22 cm", "40 cm²", "13 grader", "5 m" (single letters
+// only with a space, so "2x" stays algebra).
+const UNIT = /(\d)\s*((?:[a-zåäö]{2,}|[a-zåäö]+)[²³]|[a-zåäö]{2,}|°\s*C?)\s*$|(\d)\s+([mgls])\s*$/i;
+
 export function inputToTex(raw: string): string {
+  const unit = raw.match(UNIT);
+  if (unit) {
+    const name = (unit[2] ?? unit[4]).replace(/\s+/g, "");
+    const rest = raw.slice(0, unit.index! + 1);
+    const power = name.match(/^(.*?)([²³])$/);
+    const unitTex = name.startsWith("°")
+      ? `^\\circ${name.length > 1 ? "\\text{C}" : ""}`
+      : power
+        ? `\\text{ ${power[1]}}^${power[2] === "²" ? 2 : 3}`
+        : `\\text{ ${name}}`;
+    return inputToTex(rest) + unitTex;
+  }
+  return mathToTex(raw);
+}
+
+function mathToTex(raw: string): string {
   // Mixed numbers first, before normalizeInput turns them into (2+1/3).
   const mixed = raw.replace(/(\d+)\s+([1-9]\d*)\s*\/\s*(\d+)/g, (m, w: string, n: string, d: string) =>
     Number(n) < Number(d) ? `${w}\\frac{${n}}{${d}}` : m,

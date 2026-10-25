@@ -47,11 +47,11 @@ function anyPercent(rng: Rng): GeneratedTask {
 
 // Name with article, and the pronoun to use for it ("Den/Det säljs …").
 const ITEMS = [
-  { name: "en tröja", it: "Den" },
-  { name: "ett par skor", it: "De" },
-  { name: "en jacka", it: "Den" },
-  { name: "ett spel", it: "Det" },
-  { name: "en cykel", it: "Den" },
+  { name: "en tröja", it: "Den", the: "tröjan" },
+  { name: "ett par skor", it: "De", the: "skorna" },
+  { name: "en jacka", it: "Den", the: "jackan" },
+  { name: "ett spel", it: "Det", the: "spelet" },
+  { name: "en cykel", it: "Den", the: "cykeln" },
 ];
 
 const capitalize = (s: string) => `${s[0].toUpperCase()}${s.slice(1)}`;
@@ -70,7 +70,7 @@ function saleSaving(rng: Rng): GeneratedTask {
 }
 
 function newPrice(rng: Rng): GeneratedTask {
-  const { name: item, it } = rng.pick(ITEMS);
+  const { name: item, it, the } = rng.pick(ITEMS);
   const price = rng.int(4, 40) * 50;
   const p = rng.pick([10, 15, 20, 25, 30, 40]);
   const raise = rng.chance(0.4);
@@ -78,7 +78,7 @@ function newPrice(rng: Rng): GeneratedTask {
   const value = round(price * factor);
   return {
     prompt: raise
-      ? `Priset på ${item.replace(/^(en|ett) /, "")} höjs med ${$(withUnit(p, "%"))}. Före höjningen kostade det ${$(withUnit(price, "kr"))}. Vad kostar det **nu**?`
+      ? `Priset på ${the} höjs med ${$(withUnit(p, "%"))}. Före höjningen kostade det ${$(withUnit(price, "kr"))}. Vad kostar det **nu**?`
       : `${capitalize(item)} kostar ${$(withUnit(price, "kr"))}. ${it} säljs med ${$(withUnit(p, "%"))} rabatt. Vad blir det **nya priset**?`,
     answer: { kind: "number", value, display: withUnit(value, "kr"), unit: "kr" },
     hint: raise

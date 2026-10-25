@@ -16,3 +16,18 @@ describe("inputToTex", () => {
     expect(inputToTex("x = 2.5")).toBe("x = 2{,}5");
   });
 });
+
+describe("inputToTex – units", () => {
+  it("shows units as text", () => {
+    expect(inputToTex("22 cm")).toBe("22\\text{ cm}");
+    expect(inputToTex("40 cm²")).toBe("40\\text{ cm}^2");
+    expect(inputToTex("13 grader")).toBe("13\\text{ grader}");
+    expect(inputToTex("-4 °C")).toBe("-4^\\circ\\text{C}");
+    expect(inputToTex("5 m")).toBe("5\\text{ m}");
+  });
+
+  it("keeps algebra as algebra", () => {
+    expect(inputToTex("2x + 6")).toBe("2x + 6");
+    expect(inputToTex("3a")).toBe("3a");
+  });
+});
