@@ -6,6 +6,26 @@ export const strings = {
     shortName: "Studiesite",
     description: "Plugga matte på ditt sätt – samla XP, håll streaken vid liv och vinn veckan.",
   },
+  login: {
+    title: "Logga in",
+    subtitle: "Plugga matte, samla XP och vinn veckan.",
+    username: "Användarnamn",
+    password: "Lösenord",
+    submit: "Logga in",
+    submitting: "Loggar in …",
+    forgot: "Glömt lösenordet? Fråga den som skapade ditt konto.",
+    errors: {
+      missing: "Fyll i användarnamn och lösenord.",
+      invalid: "Fel användarnamn eller lösenord.",
+      tooMany: "För många försök. Vänta en stund och försök igen.",
+    },
+  },
+  admin: {
+    title: "Adminpanel",
+    comingSoon: "Här kommer innehåll, användare, statistik och inställningar (steg 7).",
+    link: "Admin",
+    toStudentView: "Till elevvyn",
+  },
   nav: {
     home: "Hem",
     subjects: "Ämnen",

@@ -59,6 +59,19 @@ async function main() {
     );
     if (signup.data.user) await admin.auth.admin.deleteUser(signup.data.user.id);
 
+    // Regression: GoTrue writes app_metadata after insert; the role must still sync.
+    const tmpAdmin = await admin.auth.admin.createUser({
+      email: usernameToEmail(`rlsadmin-${randomUUID().slice(0, 8)}`),
+      password: randomUUID(),
+      email_confirm: true,
+      app_metadata: { role: "admin" },
+    });
+    if (tmpAdmin.data.user) {
+      const role = await admin.from("profiles").select("role").eq("id", tmpAdmin.data.user.id).single();
+      check("admin role from app_metadata reaches the profile", role.data?.role === "admin", role.error?.message);
+      await admin.auth.admin.deleteUser(tmpAdmin.data.user.id);
+    }
+
     const own = await a.client.from("profiles").select("role, xp").eq("id", a.id).single();
     check("student reads own profile as student", own.data?.role === "student", own.error?.message);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { House, LayoutGrid, Trophy, User } from "lucide-react";
+import { House, LayoutGrid, Shield, Trophy, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { strings } from "@/lib/strings";
@@ -21,7 +21,16 @@ export function Logo() {
  * Terminal-style shell: hairline sidebar on desktop, fixed bottom navigation on
  * mobile. `basePath` lets the same shell serve the mockup and the real app.
  */
-export function AppShell({ basePath = "", children }: { basePath?: string; children: React.ReactNode }) {
+export function AppShell({
+  basePath = "",
+  showAdmin = false,
+  children,
+}: {
+  basePath?: string;
+  /** Adds an admin link to the desktop sidebar (admins only). */
+  showAdmin?: boolean;
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const items: NavItem[] = [
     { href: `${basePath}/`, label: strings.nav.home, icon: House },
@@ -52,6 +61,15 @@ export function AppShell({ basePath = "", children }: { basePath?: string; child
               {label}
             </Link>
           ))}
+          {showAdmin && (
+            <Link
+              href="/admin"
+              className="mt-4 flex items-center gap-3 border-t border-border px-5 pt-4 pb-2.5 font-mono text-[13px] text-muted-foreground hover:text-foreground"
+            >
+              <Shield className="size-4" />
+              {strings.admin.link}
+            </Link>
+          )}
         </nav>
       </aside>
 
