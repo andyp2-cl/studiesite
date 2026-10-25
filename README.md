@@ -6,9 +6,11 @@ Gamifierad pluggsajt i matematik för åk 6–7. Se `SPEC.md` för vad som byggs
 
 ```powershell
 npm install
-Copy-Item .env.example .env.local   # fyll i värdena
-npm run dev                          # http://localhost:3000
+Copy-Item .env.example .env.local
+npm run dev
 ```
+
+Fyll i värdena i `.env.local`. Öppna sedan http://localhost:3000 i webbläsaren när det står `Ready`. Stoppa servern med `Ctrl+C`.
 
 Testa från mobilen på samma wifi: kör `npm run dev -- -H 0.0.0.0` och öppna `http://<datorns-ip>:3000`. IP-adressen visas som "Network" när servern startar.
 
