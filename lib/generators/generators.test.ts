@@ -10,6 +10,24 @@ import { mathSubject } from "@/lib/seed/math";
 
 const SEEDS = Array.from({ length: 300 }, (_, i) => i * 7919 + 13);
 
+/** The displayed answer, typed the way a student would: 2\frac{1}{3} → "2 1/3", 3{,}5\text{ cm} → "3,5 cm". */
+function typedFromDisplay(display: string): string {
+  return display
+    .replace(/(\d+)\\frac\{(\d+)\}\{(\d+)\}/g, "$1 $2/$3")
+    .replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, "($1)/($2)")
+    .replace(/\{,\}/g, ",")
+    .replace(/\\,/g, "")
+    .replace(/\^\\circ\\text\{C\}/g, " °C")
+    .replace(/\^\\circ/g, "°")
+    .replace(/\\text\{\s*([^}]*)\}\^2/g, " $1²")
+    .replace(/\\text\{\s*([^}]*)\}\^3/g, " $1³")
+    .replace(/\\text\{\s*([^}]*)\}/g, " $1")
+    .replace(/\\%/g, "%")
+    .replace(/\\cdot/g, "*")
+    .replace(/\\/g, "")
+    .trim();
+}
+
 /** Every formula must render with KaTeX in strict mode (no warnings, no errors). */
 function expectValidTex(tex: string, where: string) {
   expect(() => katex.renderToString(tex, { throwOnError: true, strict: "error" }), `${where}: ${tex}`).not.toThrow();
@@ -20,6 +38,9 @@ function expectValidMarkdownMath(md: string, where: string) {
   const dollars = (md.match(/(?<!\\)\$/g) ?? []).length;
   expect(dollars % 2, `${where}: unbalanced $ in "${md}"`).toBe(0);
   for (const m of md.matchAll(/\$\$([\s\S]+?)\$\$|\$([^$]+?)\$/g)) expectValidTex(m[1] ?? m[2], where);
+  // No TeX commands outside math – they would show up as raw code.
+  const outside = md.replace(/\$\$[\s\S]+?\$\$|\$[^$]+?\$/g, "");
+  expect(outside, `${where}: TeX outside $…$ in "${md}"`).not.toMatch(/\\[a-zA-Z{]/);
 }
 
 describe.each(generatorKeys)("generator %s", (key) => {
@@ -52,14 +73,13 @@ describe.each(generatorKeys)("generator %s", (key) => {
       const value = answerValue(task.answer);
       if (task.answer.kind !== "expression") expect(Number.isFinite(value)).toBe(true);
       expect(task.prompt).not.toMatch(/undefined|NaN|Infinity/);
-      // The value written as a decimal is always readable and right…
-      const typed = task.answer.kind === "expression" ? task.answer.expr : String(value);
-      const result = checkAnswer(typed, task.answer);
-      if (task.answer.kind === "number" && task.answer.requireSimplified) {
-        // …except where the simplest fraction is required.
-        expect(["correct", "retry"]).toContain(result.status);
-      } else {
-        expect(result.status, `${key} L${level} seed ${seed}: ${task.prompt}`).toBe("correct");
+      // The answer as shown to the student must be accepted when typed back.
+      const typed = task.answer.kind === "expression" ? task.answer.expr : typedFromDisplay(task.answer.display);
+      expect(checkAnswer(typed, task.answer).status, `${where}: typed "${typed}" for ${task.prompt}`).toBe("correct");
+      // A plain decimal is always readable (right value), even if a form is required.
+      if (value !== null) {
+        const decimal = checkAnswer(String(value), task.answer).status;
+        expect(["correct", "retry"], `${where}: decimal ${value}`).toContain(decimal);
       }
     }
   });

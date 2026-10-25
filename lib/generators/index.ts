@@ -1,5 +1,9 @@
 import { generator as oneStepEquations } from "./algebra/one-step-equations";
+import { generator as fractionsAddSubtract } from "./fractions/add-subtract";
+import { generator as fractionsCompareOrder } from "./fractions/compare-order";
 import { generator as expandSimplify } from "./fractions/expand-simplify";
+import { generator as mixedNumbers } from "./fractions/mixed-numbers";
+import { generator as fractionsMultiplyDivide } from "./fractions/multiply-divide";
 import { generator as fourOperations } from "./number-sense/four-operations";
 import { generator as negativeNumbers } from "./number-sense/negative-numbers";
 import { generator as orderOfOperations } from "./number-sense/order-of-operations";
@@ -17,6 +21,10 @@ const GENERATORS: Record<string, Generator> = Object.fromEntries(
     orderOfOperations,
     // Bråk
     expandSimplify,
+    fractionsCompareOrder,
+    mixedNumbers,
+    fractionsAddSubtract,
+    fractionsMultiplyDivide,
     // Algebra
     oneStepEquations,
   ].map((g) => [g.key, g]),
