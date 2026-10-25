@@ -1,5 +1,5 @@
 // Creates one account and prints its password once.
-// Usage: npm run create-user -- <username> "<Display name>" [--admin]
+// Usage: npm run create-user -- <username> "<Display name>" [--admin] [--password <pw>]
 // Until the admin panel exists (step 7), this is how student accounts are made.
 
 import { createClient } from "@supabase/supabase-js";
@@ -15,11 +15,14 @@ if (!url || !serviceRoleKey) {
 
 const args = process.argv.slice(2);
 const isAdmin = args.includes("--admin");
-const [rawUsername, displayName] = args.filter((a) => !a.startsWith("--"));
+const passwordFlag = args.indexOf("--password");
+const chosenPassword = passwordFlag >= 0 ? args[passwordFlag + 1] : undefined;
+const positional = args.filter((a, i) => !a.startsWith("--") && !(passwordFlag >= 0 && i === passwordFlag + 1));
+const [rawUsername, displayName] = positional;
 
 const username = rawUsername ? normalizeUsername(rawUsername) : null;
 if (!username || !displayName) {
-  console.error('Användning: npm run create-user -- <användarnamn> "<Visningsnamn>" [--admin]');
+  console.error('Användning: npm run create-user -- <användarnamn> "<Visningsnamn>" [--admin] [--password <lösenord>]');
   console.error("Användarnamn: 2–32 tecken, bara a–z, 0–9 och . _ - (inga å, ä, ö).");
   process.exit(1);
 }
@@ -29,7 +32,7 @@ const db = createClient<Database>(url, serviceRoleKey, {
 });
 
 async function main(username: string, displayName: string) {
-  const password = generatePassword();
+  const password = chosenPassword || generatePassword();
   const { error } = await db.auth.admin.createUser({
     email: usernameToEmail(username),
     password,
