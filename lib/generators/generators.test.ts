@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { generatorKeys, getGenerator } from "@/lib/generators";
-import { LEVELS } from "@/lib/generators/types";
+import { answerValue, LEVELS } from "@/lib/generators/types";
 import { checkAnswer } from "@/lib/math/check-answer";
 import { mathSubject } from "@/lib/seed/math";
 
@@ -26,10 +26,12 @@ describe.each(generatorKeys)("generator %s", (key) => {
       const task = generator.generate(level, seed);
       expect(task.prompt.length).toBeGreaterThan(0);
       expect(task.solutionSteps.length).toBeGreaterThan(0);
-      expect(Number.isFinite(task.answer.value)).toBe(true);
+      const value = answerValue(task.answer);
+      if (task.answer.kind !== "expression") expect(Number.isFinite(value)).toBe(true);
       expect(task.prompt).not.toMatch(/undefined|NaN|Infinity/);
       // The value written as a decimal is always readable and right…
-      const result = checkAnswer(String(task.answer.value), task.answer);
+      const typed = task.answer.kind === "expression" ? task.answer.expr : String(value);
+      const result = checkAnswer(typed, task.answer);
       if (task.answer.kind === "number" && task.answer.requireSimplified) {
         // …except where the simplest fraction is required.
         expect(["correct", "retry"]).toContain(result.status);

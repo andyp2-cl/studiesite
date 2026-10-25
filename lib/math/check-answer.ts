@@ -25,8 +25,8 @@ const ALLOWED_OPERATORS = new Set(["add", "subtract", "multiply", "divide", "pow
 const ALLOWED_FUNCTIONS = new Set(["sqrt"]);
 const ALLOWED_SYMBOLS = new Set(["pi"]);
 
-/** Whitelist the parse tree so only plain arithmetic is ever evaluated. */
-function isSafe(root: MathNode): boolean {
+/** Whitelist the parse tree so only plain arithmetic (plus the given variables) is ever evaluated. */
+function isSafe(root: MathNode, variables: readonly string[] = []): boolean {
   let safe = true;
   root.traverse((node, path, parent) => {
     if (isConstantNode(node) || isParenthesisNode(node)) return;
@@ -35,28 +35,72 @@ function isSafe(root: MathNode): boolean {
     if (isSymbolNode(node)) {
       // The name of an (already vetted) function call.
       if (parent && isFunctionNode(parent) && path === "fn") return;
-      if (ALLOWED_SYMBOLS.has(node.name)) return;
+      if (ALLOWED_SYMBOLS.has(node.name) || variables.includes(node.name)) return;
     }
     safe = false;
   });
   return safe;
 }
 
+function safeParse(input: string, variables: readonly string[] = []): MathNode | null {
+  if (!input || input.length > 200) return null;
+  try {
+    const node = parse(input);
+    return isSafe(node, variables) ? node : null;
+  } catch {
+    return null;
+  }
+}
+
+function evaluateNode(node: MathNode, scope: Record<string, number> = {}): number | null {
+  try {
+    const value: unknown = node.evaluate({ ...scope });
+    return typeof value === "number" && Number.isFinite(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 function readNumber(input: string): { value: number; node: MathNode } | null {
-  if (!input || input.length > 100) return null;
-  let node: MathNode;
-  try {
-    node = parse(input);
-  } catch {
-    return null;
-  }
-  if (!isSafe(node)) return null;
-  try {
-    const value: unknown = node.evaluate();
-    return typeof value === "number" && Number.isFinite(value) ? { value, node } : null;
-  } catch {
-    return null;
-  }
+  const node = safeParse(input);
+  const value = node ? evaluateNode(node) : null;
+  return node && value !== null ? { value, node } : null;
+}
+
+/** Reads a number the way students may type it ("3/4", "0,75", "√2"). Null if unreadable. */
+export function parseNumber(raw: string): number | null {
+  return readNumber(normalizeInput(raw))?.value ?? null;
+}
+
+/** Single-letter variables used in an expression, e.g. "2x + 3y" → ["x", "y"]. */
+export function expressionVariables(raw: string): string[] {
+  const letters = normalizeInput(raw).replace(/sqrt|pi/g, "").match(/[a-z]/g) ?? [];
+  return [...new Set(letters)].sort();
+}
+
+/** True if the expression can be read with the given variables. */
+export function isValidExpression(raw: string, variables: readonly string[]): boolean {
+  return safeParse(splitLetters(normalizeInput(raw)), variables) !== null;
+}
+
+// Fixed sample points (not round numbers) used to compare expressions.
+const SAMPLES = [1.37, -2.41, 0.53, 3.17, -0.89];
+
+/** "5ab" means 5·a·b: split letter runs (but keep sqrt and pi). */
+function splitLetters(s: string): string {
+  return s.replace(/[a-z]{2,}/g, (m) => (m === "sqrt" || m === "pi" ? m : m.split("").join("*")));
+}
+
+function sameExpression(input: string, expected: string, variables: readonly string[]): boolean | null {
+  const a = safeParse(splitLetters(input), variables);
+  const b = safeParse(splitLetters(expected), variables);
+  if (!a || !b) return null;
+  return SAMPLES.every((sample, i) => {
+    const scope = Object.fromEntries(variables.map((v, j) => [v, sample + j * 0.71 + i * 0.13]));
+    const va = evaluateNode(a, scope);
+    const vb = evaluateNode(b, scope);
+    return va !== null && vb !== null && sameNumber(va, vb);
+  });
 }
 
 function sameNumber(a: number, b: number): boolean {
@@ -93,6 +137,11 @@ function isSimplifiedFraction(node: MathNode): boolean {
 
 export function checkAnswer(raw: string, answer: Answer): CheckResult {
   let input = normalizeInput(raw);
+  if (answer.kind === "expression") {
+    const same = sameExpression(input, normalizeInput(answer.expr), answer.variables);
+    if (same === null) return { status: "retry", reason: "unreadable" };
+    return { status: same ? "correct" : "wrong" };
+  }
   if (answer.kind === "equation") input = stripVariableAssignment(input, answer.variable);
 
   const read = readNumber(input);

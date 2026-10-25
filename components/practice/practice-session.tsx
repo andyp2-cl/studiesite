@@ -82,7 +82,7 @@ export function PracticeSession({
       const res = await submitAnswer({
         momentId,
         level,
-        seed: task.seed,
+        ref: task.ref,
         answer: value,
         durationMs: Math.round(performance.now() - shownAt.current),
       });
@@ -211,7 +211,7 @@ export function PracticeSession({
         )}
 
         <div
-          key={task.seed}
+          key={task.ref.kind === "generator" ? task.ref.seed : `${task.ref.taskId}-${answered}`}
           className={cn(
             "task-prompt bg-dots relative border border-border px-6 py-10 text-center text-lg",
             status === "correct" && "animate-correct border-success",
@@ -229,6 +229,50 @@ export function PracticeSession({
           )}
         </div>
 
+        {(task.input === "choice" || task.input === "boolean") && (
+          <div className="flex flex-col gap-2">
+            <p className="font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">{t.chooseAnswer}</p>
+            <div className={cn("hairline-grid grid gap-px", task.input === "boolean" && "grid-cols-2")}>
+              {(task.input === "boolean"
+                ? [
+                    { key: "true", label: strings.admin.task.true },
+                    { key: "false", label: strings.admin.task.false },
+                  ]
+                : (task.choices ?? []).map((c) => ({ key: String(c.index), label: c.text }))
+              ).map((option, i) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  disabled={Boolean(result)}
+                  onClick={() => {
+                    if (!shownAt.current) shownAt.current = performance.now();
+                    setValue(option.key);
+                    setNotice(null);
+                  }}
+                  aria-pressed={value === option.key}
+                  className={cn(
+                    "flex min-h-12 items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-card disabled:hover:bg-transparent",
+                    value === option.key && "bg-primary/[0.08] outline outline-1 -outline-offset-1 outline-primary",
+                  )}
+                >
+                  {task.input === "choice" && (
+                    <span className="font-mono text-xs text-muted-foreground">{String.fromCharCode(65 + i)}</span>
+                  )}
+                  <span className="min-w-0 flex-1">
+                    <MathMarkdown>{option.label}</MathMarkdown>
+                  </span>
+                </button>
+              ))}
+            </div>
+            {notice && (
+              <p role="status" className="border border-amber-400/50 bg-amber-400/[0.06] px-4 py-2.5 text-sm text-amber-200">
+                {notice}
+              </p>
+            )}
+          </div>
+        )}
+
+        {(task.input === "math" || task.input === "text") && (
         <div className="flex flex-col gap-2">
           <label htmlFor="answer" className="font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">
             {t.answerLabel}
@@ -261,7 +305,7 @@ export function PracticeSession({
             />
           </div>
           <div className="flex min-h-9 items-center gap-2 font-mono text-xs text-muted-foreground">
-            {value && (
+            {value && task.input === "math" && (
               <>
                 <span>{t.preview}</span>
                 <Tex className="text-lg text-foreground">{inputToTex(value)}</Tex>
@@ -273,7 +317,7 @@ export function PracticeSession({
               {notice}
             </p>
           )}
-          {!result && (
+          {!result && task.input === "math" && (
             <div className="hairline-grid grid grid-cols-9 gap-px">
               {SYMBOLS.map((s) => (
                 <button
@@ -290,6 +334,7 @@ export function PracticeSession({
             </div>
           )}
         </div>
+        )}
 
         {result?.status === "correct" && (
           <div className="flex items-center gap-3 border border-success/60 bg-success/[0.07] px-4 py-3">
@@ -308,7 +353,12 @@ export function PracticeSession({
               <X className="size-5 text-destructive" />
               <span className="flex-1 font-semibold text-destructive">{t.wrong}</span>
               <span className="flex items-center gap-2 font-mono text-xs text-muted-foreground">
-                {t.rightAnswer} <Tex className="text-lg text-foreground">{result.correctAnswer}</Tex>
+                {t.rightAnswer}{" "}
+                {result.correctAnswer.tex ? (
+                  <Tex className="text-lg text-foreground">{result.correctAnswer.tex}</Tex>
+                ) : (
+                  <span className="font-sans text-sm text-foreground">{result.correctAnswer.text}</span>
+                )}
               </span>
             </div>
             <div className="p-4">

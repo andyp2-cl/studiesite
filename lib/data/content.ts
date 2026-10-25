@@ -90,12 +90,19 @@ export async function getMoment(subjectSlug: string, areaSlug: string, momentSlu
 
   // Titles of locked deepenings are shown as teasers, so read just the
   // titles with the service role (bodies stay locked).
-  const { data: allDeepenings } = await createAdminClient()
-    .from("content_blocks")
-    .select("id, title, unlock_level, sort_order")
-    .eq("moment_id", summary.id)
-    .eq("type", "deepening")
-    .order("sort_order");
+  const admin = createAdminClient();
+  const [{ data: allDeepenings }, { data: bankTasks }] = await Promise.all([
+    admin
+      .from("content_blocks")
+      .select("id, title, unlock_level, sort_order")
+      .eq("moment_id", summary.id)
+      .eq("type", "deepening")
+      .order("sort_order"),
+    // Students cannot read tasks (answer keys); count published ones per level.
+    admin.from("tasks").select("level").eq("moment_id", summary.id).eq("status", "published"),
+  ]);
+  const taskCounts: Record<Level, number> = { 1: 0, 2: 0, 3: 0 };
+  for (const t of bankTasks ?? []) taskCounts[t.level as Level]++;
 
   const unlocked = new Map((blocks ?? []).filter((b) => b.type === "deepening").map((b) => [b.id, b]));
   const deepenings = (allDeepenings ?? []).map((d) => ({
@@ -112,7 +119,9 @@ export async function getMoment(subjectSlug: string, areaSlug: string, momentSlu
     subject: found.subject,
     area: found.area,
     moment: summary,
+    source: summary.source,
     generatorKey: summary.generators?.generator_key ?? null,
+    taskCounts,
     intro: (blocks ?? []).find((b) => b.type === "intro")?.body_md ?? "",
     deepenings,
     stars: progressMap.get(summary.id)?.stars ?? 0,

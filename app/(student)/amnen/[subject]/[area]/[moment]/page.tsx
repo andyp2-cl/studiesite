@@ -7,7 +7,7 @@ import { BlockBar, SectionLabel, Stars, readable } from "@/components/study/visu
 import { requireProfile } from "@/lib/auth/session";
 import { getMoment } from "@/lib/data/content";
 import { getGenerator } from "@/lib/generators";
-import { LEVELS } from "@/lib/generators/types";
+import { LEVELS, type Level } from "@/lib/generators/types";
 import { isLevelUnlocked, REQUIRED_CORRECT, suggestedLevel } from "@/lib/progress";
 import { strings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
@@ -21,8 +21,11 @@ export default async function MomentPage({ params }: PageProps<"/amnen/[subject]
   if (!data) notFound();
 
   const { subject, area, moment, intro, deepenings, stars, levelStats } = data;
-  const canPractise = Boolean(getGenerator(data.generatorKey));
   const startLevel = suggestedLevel(stars);
+  // Generator moments can always be practised; task-bank moments need published tasks at the level.
+  const hasTasks = (level: Level) =>
+    data.source === "generator" ? Boolean(getGenerator(data.generatorKey)) : data.taskCounts[level] > 0;
+  const canPractise = hasTasks(startLevel);
   const practiseHref = (level: number) => `/ova/${moment.id}?niva=${level}`;
 
   return (
@@ -61,7 +64,13 @@ export default async function MomentPage({ params }: PageProps<"/amnen/[subject]
                     className={cn(!unlocked && "opacity-40")}
                   />
                   <span className="font-mono text-[11px] leading-tight text-muted-foreground">
-                    {done ? t.levelDone : unlocked ? `${stats.correct}/${REQUIRED_CORRECT} rätt` : t.levelLocked}
+                    {done
+                      ? t.levelDone
+                      : !unlocked
+                        ? t.levelLocked
+                        : hasTasks(level)
+                          ? `${stats.correct}/${REQUIRED_CORRECT} rätt`
+                          : t.noTasksAtLevel}
                   </span>
                 </>
               );
@@ -70,7 +79,7 @@ export default async function MomentPage({ params }: PageProps<"/amnen/[subject]
                 level === startLevel && !done && "bg-primary/[0.07] outline outline-1 -outline-offset-1 outline-primary",
                 !unlocked && "text-muted-foreground",
               );
-              return unlocked && canPractise ? (
+              return unlocked && hasTasks(level) ? (
                 <Link key={level} href={practiseHref(level)} className={cn(className, "transition-colors hover:bg-card")}>
                   {card}
                 </Link>

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { answerValue } from "@/lib/generators/types";
 import { generator } from "@/lib/generators/fractions/expand-simplify";
 import { checkAnswer } from "@/lib/math/check-answer";
 
@@ -20,7 +21,7 @@ describe("fractions/expand-simplify", () => {
     for (let seed = 1; seed < 200; seed++) {
       for (const level of [2, 3] as const) {
         const task = generator.generate(level, seed);
-        if (task.prompt.includes("\\square")) expect(Number.isInteger(task.answer.value)).toBe(true);
+        if (task.prompt.includes("\\square")) expect(Number.isInteger(answerValue(task.answer)!)).toBe(true);
       }
     }
   });

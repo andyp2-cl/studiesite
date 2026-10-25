@@ -24,6 +24,13 @@ export type Answer =
       variable: string;
       value: number;
       display: string;
+    }
+  | {
+      /** Algebraic expression; any equivalent form is correct (2(x+3) = 2x+6). */
+      kind: "expression";
+      expr: string;
+      variables: string[];
+      display: string;
     };
 
 export type SolutionStep = {
@@ -48,3 +55,9 @@ export type Generator = {
   key: string;
   generate(level: Level, seed: number): GeneratedTask;
 };
+
+/** Numeric value of an answer, or null for expression answers. */
+export function answerValue(answer: Answer): number | null {
+  return answer.kind === "expression" ? null : answer.value;
+}
+
