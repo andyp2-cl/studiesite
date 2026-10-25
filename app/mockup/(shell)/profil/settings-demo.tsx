@@ -1,12 +1,13 @@
 "use client";
 
-import { Moon, Volume2 } from "lucide-react";
 import { useState } from "react";
+import { SectionLabel } from "@/components/study/visuals";
 import { strings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
 const t = strings.profile;
 
+/** Terminal-style on/off switch: [ PÅ ] / [ AV ]. */
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <button
@@ -15,14 +16,14 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
       aria-checked={checked}
       aria-label={label}
       onClick={() => onChange(!checked)}
-      className={cn("relative h-7 w-12 rounded-full transition-colors", checked ? "bg-primary" : "bg-foreground/20")}
+      className="flex border border-border font-mono text-[11px]"
     >
-      <span
-        className={cn(
-          "absolute top-1 left-1 size-5 rounded-full bg-white shadow transition-transform",
-          checked && "translate-x-5",
-        )}
-      />
+      <span className={cn("px-2.5 py-1", checked ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
+        {t.on}
+      </span>
+      <span className={cn("px-2.5 py-1", !checked ? "bg-foreground text-background" : "text-muted-foreground")}>
+        {t.off}
+      </span>
     </button>
   );
 }
@@ -39,20 +40,21 @@ export function SettingsDemo() {
 
   return (
     <section>
-      <h2 className="mb-3 text-lg font-bold">{t.settings}</h2>
-      <div className="divide-y divide-border rounded-xl bg-card">
-        <div className="flex items-center gap-3 p-4">
-          <Moon className="size-5 text-muted-foreground" />
-          <span className="flex-1 font-semibold">{t.darkTheme}</span>
+      <SectionLabel>{t.settings}</SectionLabel>
+      <div className="border border-border">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <span className="font-medium">{t.darkTheme}</span>
           <Toggle checked={dark} onChange={setTheme} label={t.darkTheme} />
         </div>
-        <div className="flex items-center gap-3 p-4">
-          <Volume2 className="size-5 text-muted-foreground" />
-          <span className="flex-1 font-semibold">{t.sound}</span>
+        <div className="flex items-center justify-between px-4 py-3">
+          <span className="font-medium">{t.sound}</span>
           <Toggle checked={sound} onChange={setSound} label={t.sound} />
         </div>
       </div>
-      <button type="button" className="mt-4 w-full rounded-full border border-border py-3 font-bold hover:border-foreground">
+      <button
+        type="button"
+        className="mt-4 w-full border border-border py-3 font-mono text-sm text-muted-foreground hover:border-foreground hover:text-foreground"
+      >
         {t.logout}
       </button>
     </section>

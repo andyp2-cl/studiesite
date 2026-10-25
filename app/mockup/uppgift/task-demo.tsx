@@ -1,9 +1,10 @@
 "use client";
 
-import { Check, Flame, MessageSquareText, Sparkles, X } from "lucide-react";
+import { ArrowRight, Check, Flame, MessageSquareText, X } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { Tex } from "@/components/math/tex";
+import { BlockBar } from "@/components/study/visuals";
 import { strings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
@@ -59,8 +60,7 @@ export function TaskDemo({ closeHref }: { closeHref: string }) {
     const el = inputRef.current;
     const start = el?.selectionStart ?? value.length;
     const end = el?.selectionEnd ?? value.length;
-    const next = value.slice(0, start) + symbol + value.slice(end);
-    setValue(next);
+    setValue(value.slice(0, start) + symbol + value.slice(end));
     requestAnimationFrame(() => {
       el?.focus();
       el?.setSelectionRange(start + symbol.length, start + symbol.length);
@@ -81,67 +81,71 @@ export function TaskDemo({ closeHref }: { closeHref: string }) {
 
   return (
     <div className="flex min-h-dvh w-full flex-col">
-      {/* Top bar: close, progress, streak-in-a-row */}
-      <div className="flex items-center gap-3 px-4 pt-4 sm:px-6">
-        <Link href={closeHref} className="grid size-9 place-items-center rounded-full hover:bg-foreground/10" aria-label={t.close}>
-          <X className="size-5" />
+      {/* Top bar */}
+      <div className="flex h-14 items-center gap-4 border-b border-border px-4 sm:px-6">
+        <Link
+          href={closeHref}
+          className="grid size-8 place-items-center border border-border text-muted-foreground hover:text-foreground"
+          aria-label={t.close}
+        >
+          <X className="size-4" />
         </Link>
-        <div className="flex flex-1 gap-1">
-          {Array.from({ length: 10 }, (_, i) => (
-            <span
-              key={i}
-              className={cn("h-2 flex-1 rounded-full bg-foreground/10 transition-colors", i < done && "bg-primary")}
-            />
-          ))}
-        </div>
-        <span className="flex items-center gap-1 text-sm font-bold">
-          <Flame className="size-4 fill-orange-500 text-orange-500" /> 3
+        <BlockBar value={done} max={10} className="flex-1" />
+        <span className="flex items-center gap-1 font-mono text-xs">
+          <Flame className="size-3.5 text-orange-500" /> 3
         </span>
       </div>
 
-      {/* Task card */}
-      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 pt-8 pb-4 sm:px-6">
-        <p className="text-sm font-semibold text-muted-foreground">
+      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 pt-8 pb-6 sm:px-6">
+        <p className="font-mono text-xs tracking-[0.2em] text-primary uppercase">
           {t.question(4, 10)} · {strings.levels[2]}
         </p>
 
+        {/* Task */}
         <div
           key={round}
           className={cn(
-            "relative rounded-2xl bg-card p-6 text-center sm:p-8",
-            status === "correct" && "animate-correct ring-2 ring-primary",
-            status === "wrong" && "animate-shake ring-2 ring-destructive",
+            "bg-dots relative border border-border px-6 py-10 text-center",
+            status === "correct" && "animate-correct border-success",
+            status === "wrong" && "animate-shake border-destructive",
           )}
         >
-          <p className="mb-4 text-lg font-semibold">{task.prompt}</p>
-          <Tex display className="text-3xl sm:text-4xl">
+          <p className="mb-5 text-lg font-medium">{task.prompt}</p>
+          <Tex display className="text-4xl">
             {task.tex}
           </Tex>
           {status === "correct" && (
-            <span className="animate-xp-float pointer-events-none absolute top-4 right-4 rounded-full bg-primary px-3 py-1 text-sm font-extrabold text-primary-foreground">
+            <span className="animate-xp-float pointer-events-none absolute top-3 right-3 bg-success px-2 py-0.5 font-mono text-sm font-bold text-background">
               {t.xp(task.xp)}
             </span>
           )}
         </div>
 
-        {/* Answer input */}
+        {/* Answer */}
         <div className="flex flex-col gap-2">
-          <label htmlFor="answer" className="text-sm font-semibold">
+          <label htmlFor="answer" className="font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">
             {t.answerLabel}
           </label>
-          <input
-            id="answer"
-            ref={inputRef}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && status === "answering" && check()}
-            disabled={status !== "answering"}
-            inputMode="text"
-            autoComplete="off"
-            placeholder={t.answerPlaceholder}
-            className="h-14 rounded-xl border border-input bg-secondary px-4 text-xl font-semibold outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 disabled:opacity-70"
-          />
-          <div className="flex min-h-10 items-center gap-2 text-sm text-muted-foreground">
+          <div
+            className={cn(
+              "flex h-14 items-center gap-3 border border-input bg-card px-4 focus-within:border-primary",
+              status !== "answering" && "opacity-70",
+            )}
+          >
+            <span className="font-mono text-primary">{">"}</span>
+            <input
+              id="answer"
+              ref={inputRef}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && status === "answering" && check()}
+              disabled={status !== "answering"}
+              autoComplete="off"
+              placeholder={t.answerPlaceholder}
+              className="min-w-0 flex-1 bg-transparent font-mono text-xl outline-none placeholder:text-base placeholder:text-muted-foreground/60"
+            />
+          </div>
+          <div className="flex min-h-9 items-center gap-2 font-mono text-xs text-muted-foreground">
             {value && (
               <>
                 <span>{t.preview}</span>
@@ -150,57 +154,54 @@ export function TaskDemo({ closeHref }: { closeHref: string }) {
             )}
           </div>
 
-          {/* Symbol row – the important bit on mobile */}
           {status === "answering" && (
-            <div className="grid grid-cols-9 gap-1">
-              {SYMBOLS.map((s) => (
-                <button
-                  key={s.label}
-                  type="button"
-                  aria-label={s.aria}
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => insert(s.insert)}
-                  className="h-11 rounded-lg bg-secondary text-lg font-semibold transition-colors hover:bg-foreground/15 active:scale-95"
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
+            <>
+              <div className="hairline-grid grid grid-cols-9 gap-px">
+                {SYMBOLS.map((s) => (
+                  <button
+                    key={s.label}
+                    type="button"
+                    aria-label={s.aria}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => insert(s.insert)}
+                    className="h-11 font-mono text-base transition-colors hover:bg-card active:bg-primary active:text-primary-foreground"
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+              <p className="font-mono text-[11px] text-muted-foreground">{strings.mockup.taskHint}</p>
+            </>
           )}
-          {status === "answering" && <p className="text-xs text-muted-foreground">{strings.mockup.taskHint}</p>}
         </div>
 
-        {/* Result – in the page flow so nothing is covered */}
+        {/* Result */}
         {status === "correct" && (
-          <p className="flex items-center gap-2 rounded-xl bg-primary/15 p-4 text-lg font-extrabold text-primary">
-            <span className="grid size-8 place-items-center rounded-full bg-primary text-primary-foreground">
-              <Check className="size-5" />
+          <div className="flex items-center gap-3 border border-success/60 bg-success/[0.07] px-4 py-3">
+            <Check className="size-5 text-success" />
+            <span className="flex-1 font-semibold text-success">
+              {t.correctMessages[round % t.correctMessages.length]}
             </span>
-            {t.correctMessages[round % t.correctMessages.length]}
-            <Sparkles className="size-5" />
-            <span className="ml-auto text-sm">{t.xp(task.xp)}</span>
-          </p>
+            <span className="font-mono text-sm text-success">{t.xp(task.xp)}</span>
+          </div>
         )}
         {status === "wrong" && (
-          <div className="flex flex-col gap-3 rounded-xl bg-destructive/10 p-4">
-            <p className="flex items-center gap-2 text-lg font-extrabold text-destructive">
-              <span className="grid size-8 place-items-center rounded-full bg-destructive text-white">
-                <X className="size-5" />
+          <div className="border border-destructive/60">
+            <div className="flex items-center gap-3 border-b border-destructive/40 bg-destructive/[0.07] px-4 py-3">
+              <X className="size-5 text-destructive" />
+              <span className="flex-1 font-semibold text-destructive">{t.wrong}</span>
+              <span className="flex items-center gap-2 font-mono text-xs text-muted-foreground">
+                {t.rightAnswer} <Tex className="text-lg text-foreground">{task.answerTex}</Tex>
               </span>
-              {t.wrong}
-            </p>
-            <p className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">{t.rightAnswer}</span>
-              <Tex className="text-xl">{task.answerTex}</Tex>
-            </p>
-            <div className="rounded-lg bg-background/60 p-3">
-              <p className="text-sm font-bold">{t.solution}</p>
-              <ol className="mt-2 flex flex-col gap-3">
+            </div>
+            <div className="p-4">
+              <p className="mb-3 font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">
+                {t.solution}
+              </p>
+              <ol className="flex flex-col gap-4">
                 {task.steps.map((s, i) => (
-                  <li key={i} className="flex gap-3 text-sm">
-                    <span className="grid size-6 shrink-0 place-items-center rounded-full bg-foreground/10 text-xs font-bold">
-                      {i + 1}
-                    </span>
+                  <li key={i} className="grid grid-cols-[1.75rem_1fr] gap-2 text-sm">
+                    <span className="font-mono text-primary">{String(i + 1).padStart(2, "0")}</span>
                     <span className="min-w-0">
                       {s.text}
                       <Tex display className="mt-1 overflow-x-auto text-base">
@@ -214,58 +215,54 @@ export function TaskDemo({ closeHref }: { closeHref: string }) {
           </div>
         )}
 
-        {/* Explanation – shown after answering */}
+        {/* Explanation */}
         {status !== "answering" && (
-          <div className="flex flex-col gap-2 rounded-xl bg-card p-4">
-            <label htmlFor="explain" className="flex items-baseline justify-between text-sm font-semibold">
-              {t.explainLabel}
-              <span className="text-xs font-normal text-muted-foreground">{t.explainHint}</span>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="explain" className="flex items-baseline justify-between">
+              <span className="font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">
+                {t.explainLabel}
+              </span>
+              <span className="font-mono text-[11px] text-primary">{t.explainHint}</span>
             </label>
             <textarea
               id="explain"
               value={explanation}
               onChange={(e) => setExplanation(e.target.value)}
-              rows={2}
+              rows={3}
               placeholder={t.explainPlaceholder}
-              className="resize-none rounded-lg border border-input bg-secondary p-3 outline-none focus:border-primary"
+              className="resize-none border border-input bg-card p-3 outline-none focus:border-primary"
             />
             <button
               type="button"
               disabled={!explanation.trim()}
-              className="flex items-center gap-2 self-start rounded-full border border-border px-4 py-2 text-sm font-bold transition-colors hover:border-foreground disabled:opacity-40"
+              className="flex w-fit items-center gap-2 border border-border px-3 py-2 font-mono text-xs transition-colors hover:border-foreground disabled:opacity-40"
             >
-              <MessageSquareText className="size-4" />
+              <MessageSquareText className="size-3.5" />
               {t.feedback}
-              <span className="font-normal text-muted-foreground">· {t.feedbackLeft(5)}</span>
+              <span className="text-muted-foreground">· {t.feedbackLeft(5)}</span>
             </button>
           </div>
         )}
       </div>
 
-      {/* Sticky action bar: just the main button, always reachable by thumb */}
+      {/* Sticky action bar */}
       <div className="sticky bottom-0 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
         <div className="mx-auto max-w-2xl px-4 py-3 sm:px-6">
-          {status === "answering" ? (
-            <button
-              type="button"
-              onClick={check}
-              disabled={!value.trim()}
-              className="h-12 w-full rounded-full bg-primary font-bold text-primary-foreground transition-transform hover:scale-[1.01] disabled:bg-secondary disabled:text-muted-foreground"
-            >
-              {t.check}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={next}
-              className={cn(
-                "h-12 w-full rounded-full font-bold transition-transform hover:scale-[1.01]",
-                status === "correct" ? "bg-primary text-primary-foreground" : "bg-foreground text-background",
-              )}
-            >
-              {status === "correct" ? t.next : t.similar}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={status === "answering" ? check : next}
+            disabled={status === "answering" && !value.trim()}
+            className={cn(
+              "flex h-12 w-full items-center justify-center gap-2 font-mono text-sm font-semibold transition-opacity hover:opacity-90",
+              status === "answering" &&
+                "bg-primary text-primary-foreground disabled:bg-card disabled:text-muted-foreground",
+              status === "correct" && "bg-success text-background",
+              status === "wrong" && "bg-foreground text-background",
+            )}
+          >
+            {status === "answering" ? t.check : status === "correct" ? t.next : t.similar}
+            {status !== "answering" && <ArrowRight className="size-4" />}
+          </button>
         </div>
       </div>
     </div>

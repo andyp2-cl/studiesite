@@ -1,10 +1,8 @@
-import { ChevronLeft, Play } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { Icon } from "@/components/icon";
-import { ProgressRing } from "@/components/progress-ring";
-import { Stars, areaGradient, headerWash } from "@/components/study/visuals";
-import { strings } from "@/lib/strings";
 import { BASE, fractions, stars } from "@/app/mockup/_mock";
+import { AreaMark, BlockBar, SectionLabel, Stars, readable } from "@/components/study/visuals";
+import { strings } from "@/lib/strings";
 
 export default function MockArea() {
   const area = fractions;
@@ -12,60 +10,55 @@ export default function MockArea() {
   const max = area.moments.length * 3;
 
   return (
-    <main className="relative">
-      <div className="absolute inset-x-0 top-0 h-96 md:rounded-t-xl" style={{ background: headerWash(area.color) }} />
-
-      <div className="relative px-4 pt-4 pb-8 sm:px-6">
-        <Link href={`${BASE}/`} className="mb-4 inline-grid size-9 place-items-center rounded-full bg-black/40">
-          <ChevronLeft className="size-5" />
-        </Link>
-
-        <header className="flex flex-col gap-5 sm:flex-row sm:items-end">
-          <span
-            className="grid size-40 shrink-0 place-items-center self-center rounded-lg shadow-2xl sm:size-48 sm:self-auto"
-            style={{ background: areaGradient(area.color) }}
-          >
-            <Icon name={area.icon} className="size-20 text-white" />
-          </span>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold">{strings.area.kind}</p>
-            <h1 className="text-5xl font-extrabold tracking-tight sm:text-7xl">{area.name}</h1>
-            <p className="mt-2 text-muted-foreground">{area.description}</p>
-            <p className="mt-1 text-sm font-semibold">
-              {strings.home.moments(area.moments.length)} · {strings.area.starsTotal(got, max)}
-            </p>
-          </div>
-        </header>
-
-        <div className="my-6 flex items-center gap-4">
+    <main>
+      <header className="bg-dots border-b border-border">
+        <div className="mx-auto max-w-5xl px-4 pt-6 pb-8 sm:px-8">
           <Link
-            href={`${BASE}/moment`}
-            className="grid size-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-xl transition-transform hover:scale-105"
+            href={`${BASE}/amnen`}
+            className="mb-8 inline-flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground"
           >
-            <Play className="size-6 fill-current" />
+            <ArrowLeft className="size-3.5" /> {strings.home.areas.toLowerCase()}
           </Link>
-          <ProgressRing value={got} max={max} size={40} stroke={4} />
+          <div className="flex items-end gap-5">
+            <AreaMark icon={area.icon} color={area.color} size={72} />
+            <div className="min-w-0">
+              <p className="font-mono text-xs tracking-[0.2em] uppercase" style={{ color: readable(area.color) }}>
+                {strings.area.kind}
+              </p>
+              <h1 className="text-4xl font-semibold tracking-tight sm:text-6xl">{area.name}</h1>
+            </div>
+          </div>
+          <p className="mt-4 max-w-xl text-muted-foreground">{area.description}</p>
+          <div className="mt-6 max-w-md">
+            <div className="mb-2 flex justify-between font-mono text-xs text-muted-foreground">
+              <span>{strings.home.moments(area.moments.length)}</span>
+              <span>{strings.area.starsTotal(got, max)}</span>
+            </div>
+            <BlockBar value={got} max={max} cells={max} color={area.color} />
+          </div>
         </div>
+      </header>
 
-        <ol className="flex flex-col">
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-8">
+        <SectionLabel>Moment</SectionLabel>
+        <ol className="border border-border">
           {area.moments.map((m, i) => {
             const s = stars[m.slug] ?? 0;
             return (
-              <li key={m.slug}>
+              <li key={m.slug} className="border-b border-border last:border-b-0">
                 <Link
                   href={`${BASE}/moment`}
-                  className="group grid grid-cols-[1.5rem_auto_1fr_auto] items-center gap-4 rounded-md px-2 py-3 transition-colors hover:bg-foreground/10 sm:px-4"
+                  className="group grid grid-cols-[2rem_1fr_auto] items-center gap-4 px-4 py-4 transition-colors hover:bg-card"
                 >
-                  <span className="text-center text-muted-foreground tabular-nums group-hover:hidden">{i + 1}</span>
-                  <Play className="hidden size-4 fill-current group-hover:block" />
-                  <ProgressRing value={s} max={3} size={44} stroke={4} color={area.color}>
-                    <span className="text-xs font-bold">{s}/3</span>
-                  </ProgressRing>
+                  <span className="font-mono text-sm text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                   <span className="min-w-0">
-                    <span className="block truncate font-semibold">{m.name}</span>
+                    <span className="block font-semibold">{m.name}</span>
                     <span className="block truncate text-sm text-muted-foreground">{m.description}</span>
                   </span>
-                  <Stars count={s} className="hidden sm:inline-flex" />
+                  <span className="flex items-center gap-3">
+                    <Stars count={s} />
+                    <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
+                  </span>
                 </Link>
               </li>
             );

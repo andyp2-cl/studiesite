@@ -1,30 +1,54 @@
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { Icon } from "@/components/icon";
-import { areaGradient } from "@/components/study/visuals";
+import { BASE, areas, stars } from "@/app/mockup/_mock";
+import { AreaMark, BlockBar } from "@/components/study/visuals";
 import { strings } from "@/lib/strings";
-import { BASE, areas } from "@/app/mockup/_mock";
 
-// Spotify "Browse" style grid of areas.
 export default function MockSubjects() {
   return (
-    <main className="px-4 pt-6 pb-8 sm:px-6 md:pt-8">
-      <h1 className="mb-6 text-3xl font-bold tracking-tight">{strings.home.areas}</h1>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {areas.map((area) => (
-          <Link
-            key={area.slug}
-            href={`${BASE}/omrade`}
-            className="relative aspect-[16/10] overflow-hidden rounded-lg p-3 transition-transform hover:scale-[1.02] sm:p-4"
-            style={{ background: areaGradient(area.color, 70) }}
-          >
-            <span className="block text-lg leading-tight font-extrabold text-white sm:text-xl">{area.name}</span>
-            <span className="text-xs font-semibold text-white/80">{strings.home.moments(area.moments.length)}</span>
-            <Icon
-              name={area.icon}
-              className="absolute -right-3 -bottom-3 size-20 rotate-[25deg] text-white/35 sm:size-24"
-            />
-          </Link>
-        ))}
+    <main>
+      <header className="bg-dots border-b border-border">
+        <div className="mx-auto max-w-5xl px-4 pt-10 pb-8 sm:px-8 sm:pt-14">
+          <p className="mb-3 font-mono text-xs tracking-[0.2em] text-primary uppercase">{strings.nav.subjects}</p>
+          <h1 className="text-4xl font-semibold tracking-tight sm:text-6xl">{strings.home.areas}</h1>
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-8">
+        <div className="hairline-grid grid gap-px sm:grid-cols-2 lg:grid-cols-3">
+          {areas.map((area, i) => {
+            const got = area.moments.reduce((sum, m) => sum + (stars[m.slug] ?? 0), 0);
+            const max = area.moments.length * 3;
+            return (
+              <Link
+                key={area.slug}
+                href={`${BASE}/omrade`}
+                className="group flex flex-col gap-5 p-5 transition-colors hover:bg-card"
+              >
+                <span className="flex items-start justify-between">
+                  <AreaMark icon={area.icon} color={area.color} size={44} />
+                  <span className="font-mono text-xs text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
+                </span>
+                <span>
+                  <span className="flex items-center justify-between text-lg font-semibold">
+                    {area.name}
+                    <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
+                  </span>
+                  <span className="mt-1 block text-sm text-muted-foreground">{area.description}</span>
+                </span>
+                <span className="mt-auto">
+                  <span className="mb-1.5 flex justify-between font-mono text-[11px] text-muted-foreground">
+                    <span>{strings.home.moments(area.moments.length)}</span>
+                    <span>
+                      {got}/{max} ★
+                    </span>
+                  </span>
+                  <BlockBar value={got} max={max} cells={12} color={area.color} />
+                </span>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </main>
   );

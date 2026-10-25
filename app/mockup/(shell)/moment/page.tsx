@@ -1,18 +1,18 @@
-import { Check, ChevronDown, ChevronLeft, Lightbulb, Lock, Play } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronDown, Lock } from "lucide-react";
 import Link from "next/link";
+import { BASE, expandSimplify, fractions } from "@/app/mockup/_mock";
 import { MathMarkdown } from "@/components/math/markdown";
-import { Stars, headerWash } from "@/components/study/visuals";
+import { BlockBar, SectionLabel, Stars, readable } from "@/components/study/visuals";
 import { strings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
-import { BASE, expandSimplify, fractions } from "@/app/mockup/_mock";
 
 const t = strings.moment;
 
 // Mock state: Lätt cleared, Medel in progress (6 of last 10 correct), Svår locked.
 const levelState = [
-  { level: 1 as const, status: "done" as const },
+  { level: 1 as const, status: "done" as const, correct: 8 },
   { level: 2 as const, status: "active" as const, correct: 6 },
-  { level: 3 as const, status: "locked" as const },
+  { level: 3 as const, status: "locked" as const, correct: 0 },
 ];
 
 export default function MockMoment() {
@@ -24,104 +24,97 @@ export default function MockMoment() {
   ];
 
   return (
-    <main className="relative">
-      <div className="absolute inset-x-0 top-0 h-80 md:rounded-t-xl" style={{ background: headerWash(area.color) }} />
-
-      <div className="relative mx-auto flex max-w-3xl flex-col gap-6 px-4 pt-4 pb-8 sm:px-6">
-        <Link href={`${BASE}/omrade`} className="inline-grid size-9 place-items-center rounded-full bg-black/40">
-          <ChevronLeft className="size-5" />
-        </Link>
-
-        <header>
-          <p className="text-sm font-semibold">
-            {area.name} · {t.kind}
+    <main>
+      <header className="bg-dots border-b border-border">
+        <div className="mx-auto max-w-3xl px-4 pt-6 pb-8 sm:px-8">
+          <Link
+            href={`${BASE}/omrade`}
+            className="mb-8 inline-flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="size-3.5" /> {area.name.toLowerCase()}
+          </Link>
+          <p className="font-mono text-xs tracking-[0.2em] uppercase" style={{ color: readable(area.color) }}>
+            {area.name} / {t.kind}
           </p>
-          <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">{moment.name}</h1>
-          <Stars count={1} className="mt-3 [&_svg]:size-5" />
-        </header>
+          <h1 className="mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">{moment.name}</h1>
+          <Stars count={1} className="mt-3 block text-lg" />
+        </div>
+      </header>
 
+      <div className="mx-auto flex max-w-3xl flex-col gap-12 px-4 py-10 sm:px-8">
         {/* Levels */}
         <section>
-          <h2 className="mb-3 text-lg font-bold">{t.levels}</h2>
-          <div className="grid grid-cols-3 gap-2">
-            {levelState.map((s) => {
-              const name = strings.levels[s.level];
-              return (
-                <div
-                  key={s.level}
-                  className={cn(
-                    "flex flex-col gap-2 rounded-xl border p-3 sm:p-4",
-                    s.status === "active" && "border-primary bg-primary/10",
-                    s.status === "done" && "border-transparent bg-card",
-                    s.status === "locked" && "border-dashed border-border bg-transparent text-muted-foreground",
-                  )}
-                >
-                  <span className="flex items-center justify-between">
-                    <span className="font-bold">{name}</span>
-                    {s.status === "done" && (
-                      <span className="grid size-6 place-items-center rounded-full bg-primary text-primary-foreground">
-                        <Check className="size-4" />
-                      </span>
-                    )}
-                    {s.status === "locked" && <Lock className="size-4" />}
-                  </span>
-                  {s.status === "active" && (
-                    <>
-                      <span className="h-1.5 overflow-hidden rounded-full bg-foreground/10">
-                        <span className="block h-full rounded-full bg-primary" style={{ width: `${(s.correct / 8) * 100}%` }} />
-                      </span>
-                      <span className="text-xs text-muted-foreground">{t.levelProgress(s.correct)}</span>
-                    </>
-                  )}
-                  {s.status === "done" && <span className="text-xs text-muted-foreground">{t.levelDone}</span>}
-                  {s.status === "locked" && <span className="text-xs">{t.levelLocked}</span>}
-                </div>
-              );
-            })}
+          <SectionLabel>{t.levels}</SectionLabel>
+          <div className="hairline-grid grid grid-cols-3 gap-px">
+            {levelState.map((s) => (
+              <div
+                key={s.level}
+                className={cn(
+                  "flex flex-col gap-3 p-3 sm:p-4",
+                  s.status === "active" && "bg-primary/[0.07] outline outline-1 -outline-offset-1 outline-primary",
+                  s.status === "locked" && "text-muted-foreground",
+                )}
+              >
+                <span className="flex items-center justify-between">
+                  <span className="font-mono text-[10px] text-muted-foreground">0{s.level}</span>
+                  {s.status === "done" && <Check className="size-4 text-success" />}
+                  {s.status === "locked" && <Lock className="size-3.5" />}
+                </span>
+                <span className="font-semibold">{strings.levels[s.level]}</span>
+                <BlockBar
+                  value={s.correct}
+                  max={8}
+                  cells={8}
+                  color={s.status === "done" ? "var(--success)" : undefined}
+                  className={cn(s.status === "locked" && "opacity-40")}
+                />
+                <span className="font-mono text-[11px] leading-tight text-muted-foreground">
+                  {s.status === "done" && t.levelDone}
+                  {s.status === "active" && `${s.correct}/8 rätt`}
+                  {s.status === "locked" && t.levelLocked}
+                </span>
+              </div>
+            ))}
           </div>
+          <p className="mt-3 font-mono text-[11px] text-muted-foreground">{t.levelRule}</p>
           <Link
             href={`${BASE}/uppgift`}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary py-3.5 font-bold text-primary-foreground transition-transform hover:scale-[1.01] sm:w-auto sm:px-10"
+            className="mt-6 flex w-full items-center justify-center gap-2 bg-primary py-3.5 font-mono text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 sm:w-fit sm:px-8"
           >
-            <Play className="size-4 fill-current" />
-            {t.start(strings.levels[2])}
+            {t.start(strings.levels[2])} <ArrowRight className="size-4" />
           </Link>
         </section>
 
         {/* Intro */}
-        <section className="rounded-xl bg-card p-5 sm:p-6">
-          <h2 className="mb-3 text-lg font-bold">{t.intro}</h2>
-          <MathMarkdown>{moment.intro}</MathMarkdown>
+        <section>
+          <SectionLabel>{t.intro}</SectionLabel>
+          <div className="border border-border p-5 sm:p-7">
+            <MathMarkdown>{moment.intro}</MathMarkdown>
+          </div>
         </section>
 
         {/* Deepenings */}
         <section>
-          <h2 className="mb-3 text-lg font-bold">{t.deepenings}</h2>
-          <div className="flex flex-col gap-2">
+          <SectionLabel>{t.deepenings}</SectionLabel>
+          <div className="border border-border">
             {deepenings.map((d) =>
               d.unlocked ? (
-                <details key={d.title} className="group rounded-xl bg-card" open>
-                  <summary className="flex cursor-pointer list-none items-center gap-3 p-4">
-                    <span className="grid size-9 place-items-center rounded-lg bg-amber-400/15 text-amber-400">
-                      <Lightbulb className="size-5" />
-                    </span>
-                    <span className="flex-1 font-bold">{d.title}</span>
-                    <ChevronDown className="size-5 text-muted-foreground transition-transform group-open:rotate-180" />
+                <details key={d.title} className="group border-b border-border last:border-b-0" open>
+                  <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4">
+                    <span className="font-mono text-xs text-primary">{">"}</span>
+                    <span className="flex-1 font-semibold">{d.title}</span>
+                    <ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" />
                   </summary>
-                  <MathMarkdown className="px-4 pb-5">{d.body}</MathMarkdown>
+                  <MathMarkdown className="px-5 pb-6 text-[15px]">{d.body}</MathMarkdown>
                 </details>
               ) : (
                 <div
                   key={d.title}
-                  className="flex items-center gap-3 rounded-xl border border-dashed border-border p-4 text-muted-foreground"
+                  className="flex items-center gap-3 border-b border-border px-5 py-4 text-muted-foreground last:border-b-0"
                 >
-                  <span className="grid size-9 place-items-center rounded-lg bg-foreground/5">
-                    <Lock className="size-4" />
-                  </span>
-                  <span className="flex-1">
-                    <span className="block font-bold text-foreground/70">{d.title}</span>
-                    <span className="text-xs">{t.unlocksAt(strings.levels[d.unlockLevel])}</span>
-                  </span>
+                  <Lock className="size-3.5" />
+                  <span className="flex-1 font-semibold">{d.title}</span>
+                  <span className="font-mono text-[11px]">{t.unlocksAt(strings.levels[d.unlockLevel])}</span>
                 </div>
               ),
             )}
