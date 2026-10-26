@@ -34,6 +34,5 @@ Märken (achievements) byggs inte: korten är den enda samlingen.
 
 ## Kända brister
 
-- Migrationen `20261026220000_drop_coins_and_monsters.sql` ska köras live (`npm run db:push`) efter att Vercel har publicerat koden som inte längre läser mynten.
 - Dagens mix, kortsamlingen och kortutdelningen är inte provkörda inloggade av Claude, bara via tester, typkontroll och en läsfråga mot databasen.
 - Kortens position, genre och land är skrivna ur minnet och kan innehålla enstaka fel. Rättas direkt i datafilerna.
