@@ -422,7 +422,6 @@ export type Database = {
       profiles: {
         Row: {
           avatar: string | null
-          coins: number
           collection_theme: string
           created_at: string
           daily_goal_xp: number | null
@@ -444,7 +443,6 @@ export type Database = {
         }
         Insert: {
           avatar?: string | null
-          coins?: number
           collection_theme?: string
           created_at?: string
           daily_goal_xp?: number | null
@@ -466,7 +464,6 @@ export type Database = {
         }
         Update: {
           avatar?: string | null
-          coins?: number
           collection_theme?: string
           created_at?: string
           daily_goal_xp?: number | null
@@ -485,94 +482,6 @@ export type Database = {
           updated_at?: string
           username?: string
           xp?: number
-        }
-        Relationships: []
-      }
-      reward_redemptions: {
-        Row: {
-          created_at: string
-          decided_at: string | null
-          decided_by: string | null
-          id: string
-          price: number
-          reward_id: string
-          status: Database["public"]["Enums"]["redemption_status"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          decided_at?: string | null
-          decided_by?: string | null
-          id?: string
-          price: number
-          reward_id: string
-          status?: Database["public"]["Enums"]["redemption_status"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          decided_at?: string | null
-          decided_by?: string | null
-          id?: string
-          price?: number
-          reward_id?: string
-          status?: Database["public"]["Enums"]["redemption_status"]
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "reward_redemptions_decided_by_fkey"
-            columns: ["decided_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reward_redemptions_reward_id_fkey"
-            columns: ["reward_id"]
-            isOneToOne: false
-            referencedRelation: "rewards"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reward_redemptions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      rewards: {
-        Row: {
-          created_at: string
-          description: string | null
-          icon: string
-          id: string
-          is_active: boolean
-          name: string
-          price: number
-          sort_order: number
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          icon?: string
-          id?: string
-          is_active?: boolean
-          name: string
-          price: number
-          sort_order?: number
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          icon?: string
-          id?: string
-          is_active?: boolean
-          name?: string
-          price?: number
-          sort_order?: number
         }
         Relationships: []
       }
@@ -869,35 +778,6 @@ export type Database = {
           },
         ]
       }
-      user_monsters: {
-        Row: {
-          count: number
-          first_at: string
-          monster_id: number
-          user_id: string
-        }
-        Insert: {
-          count?: number
-          first_at?: string
-          monster_id: number
-          user_id: string
-        }
-        Update: {
-          count?: number
-          first_at?: string
-          monster_id?: number
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_monsters_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       writing_submissions: {
         Row: {
           ai_call_id: string | null
@@ -1014,7 +894,6 @@ export type Database = {
         Row: {
           amount: number
           attempt_id: string | null
-          coins: number
           created_at: string
           id: string
           reason: string
@@ -1023,7 +902,6 @@ export type Database = {
         Insert: {
           amount: number
           attempt_id?: string | null
-          coins?: number
           created_at?: string
           id?: string
           reason: string
@@ -1032,7 +910,6 @@ export type Database = {
         Update: {
           amount?: number
           attempt_id?: string | null
-          coins?: number
           created_at?: string
           id?: string
           reason?: string

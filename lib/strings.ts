@@ -297,7 +297,7 @@ export const strings = {
       activeDays: "Aktiva dagar",
       profile: "Profil",
       streakLabel: "Streak",
-      coinsLabel: "Mynt",
+      cardsLabel: "Kort",
       level: (level: number, name: string) => `Nivå ${level} · ${name}`,
       streak: (days: number) => `${days} ${days === 1 ? "dag" : "dagar"} i rad`,
       lastActive: (date: string) => `Senast aktiv ${date}`,
@@ -569,7 +569,6 @@ export const strings = {
     stats: {
       xp: "XP totalt",
       streak: "Dagar i rad",
-      coins: "Mynt",
       tasks: "Uppgifter",
     },
     freeze: "Streakfrys",

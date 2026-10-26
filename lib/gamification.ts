@@ -1,13 +1,12 @@
 import type { Level } from "@/lib/generators/types";
 
-// SPEC 7: XP, levels, coins, daily goal and streak. Pure functions so the
+// SPEC 7: XP, levels, daily goal and streak (rewards are cards, lib/cards). Pure functions so the
 // rules can be tested; lib/xp.ts applies them to the database.
 
 export const XP_FOR_LEVEL: Record<Level, number> = { 1: 10, 2: 20, 3: 30 };
 export const EXPLANATION_XP = 5;
 /** Shorter explanations are saved but give no XP. */
 export const EXPLANATION_MIN_CHARS = 20;
-export const XP_PER_COIN = 10;
 
 /** Total XP needed to reach `level`: 0, 50, 150, 300, 500 … Each level takes 50 XP more than the last. */
 export function xpForLevel(level: number): number {
@@ -27,10 +26,6 @@ export function levelNameIndex(level: number): number {
   if (level >= 10) return 2;
   if (level >= 5) return 1;
   return 0;
-}
-
-export function coinsEarned(xpBefore: number, amount: number): number {
-  return Math.floor((xpBefore + amount) / XP_PER_COIN) - Math.floor(xpBefore / XP_PER_COIN);
 }
 
 /** Dates are "YYYY-MM-DD" in Swedish time. */
@@ -89,25 +84,22 @@ export function profileStreak(
   );
 }
 
-export type Profile = StreakState & { xp: number; coins: number; level: number };
+export type Profile = StreakState & { xp: number; level: number };
 
 export type XpOutcome = {
   profile: Profile;
-  coins: number;
   levelUp: boolean;
   goalReached: boolean;
 };
 
 /** Adds XP; `todayXpBefore` decides whether this award reaches the daily goal. */
 export function applyXp(profile: Profile, amount: number, todayXpBefore: number, dailyGoal: number, today: string): XpOutcome {
-  const coins = coinsEarned(profile.xp, amount);
   const xp = profile.xp + amount;
   const level = Math.max(profile.level, levelForXp(xp));
   const goalReached = todayXpBefore < dailyGoal && todayXpBefore + amount >= dailyGoal;
   const streak = goalReached ? reachDailyGoal(profile, today) : profile;
   return {
-    profile: { ...streak, xp, coins: profile.coins + coins, level },
-    coins,
+    profile: { ...streak, xp, level },
     levelUp: level > profile.level,
     goalReached,
   };

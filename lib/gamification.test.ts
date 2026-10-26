@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   applyXp,
-  coinsEarned,
   currentStreak,
   levelForXp,
   levelNameIndex,
@@ -29,15 +28,6 @@ describe("levels", () => {
 
   it("names levels in five steps", () => {
     expect([1, 4, 5, 10, 20, 35, 99].map(levelNameIndex)).toEqual([0, 0, 1, 2, 3, 4, 4]);
-  });
-});
-
-describe("coinsEarned", () => {
-  it("gives one coin per 10 XP, carrying remainders", () => {
-    expect(coinsEarned(0, 10)).toBe(1);
-    expect(coinsEarned(5, 5)).toBe(1);
-    expect(coinsEarned(0, 5)).toBe(0);
-    expect(coinsEarned(18, 30)).toBe(3);
   });
 });
 
@@ -102,12 +92,12 @@ describe("currentStreak", () => {
 });
 
 describe("applyXp", () => {
-  const profile: Profile = { ...fresh, xp: 45, coins: 4, level: 1 };
+  const profile: Profile = { ...fresh, xp: 45, level: 1 };
 
-  it("adds XP, coins and levels up", () => {
+  it("adds XP and levels up", () => {
     const out = applyXp(profile, 10, 0, 50, "2026-10-26");
-    expect(out.profile).toMatchObject({ xp: 55, coins: 5, level: 2 });
-    expect(out).toMatchObject({ coins: 1, levelUp: true, goalReached: false });
+    expect(out.profile).toMatchObject({ xp: 55, level: 2 });
+    expect(out).toMatchObject({ levelUp: true, goalReached: false });
   });
 
   it("reaches the daily goal once, which extends the streak", () => {

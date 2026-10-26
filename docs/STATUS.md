@@ -15,12 +15,13 @@ Uppdateras vid varje commit. Senast: 2026-10-26.
 - Kortsamling (ersätter monstren): fotbollsspelare (546 kort) eller artister (721 kort) i brons, silver och guld, riktiga namn och enkla ritade bilder. Data i `lib/cards/football.ts` och `music.ts`, en rad per kort; nya kort läggs sist i sin nivå. Samlingssidan visar elevens kort och hur många som finns kvar per nivå.
 - Kortutdelning: ett bronskort för var femte rätt svar (alla ämnen), och ett kort när alla synliga moment i ett matteområde klarat Lätt (brons), Medel (silver) och Svår (guld), och silver när alla quiz i ett faktaområde är klara. Delas ut när svaret sparas och kontrolleras även när samlingssidan öppnas, så redan klarade områden ger kort i efterhand. I övningen visas det nya kortet med länk till samlingen.
 - Admin väljer kortsamling per elev under Användare (Herman: fotboll, Märta: artister).
+- Mynt, monster och den gamla belöningsbutiken är borttagna. Admins statistik visar antal kort i stället för mynt.
 
 ## På gång
 
 Belöningar är bara kort: brons för var femte rätt svar, finare kort för klara områden.
 
-1. Ta bort mynt och monsterpaket (även tabellen `user_monsters`).
+Inget just nu.
 
 Märken (achievements) byggs inte: korten är den enda samlingen.
 
@@ -32,6 +33,7 @@ Märken (achievements) byggs inte: korten är den enda samlingen.
 
 ## Kända brister
 
+- Migrationen `20261026220000_drop_coins_and_monsters.sql` ska köras live (`npm run db:push`) efter att Vercel har publicerat koden som inte längre läser mynten.
 - Dagens mix, kortsamlingen och kortutdelningen är inte provkörda inloggade av Claude, bara via tester, typkontroll och en läsfråga mot databasen.
 - Kortens position, genre och land är skrivna ur minnet och kan innehålla enstaka fel. Rättas direkt i datafilerna.
 - När admin "Visar som" en elev sparas svar på adminkontot, inte elevens. Barnen ska logga in själva för att öva.

@@ -4,11 +4,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { startOfStockholmDay, stockholmDate } from "@/lib/time";
 
 // Applies the rules in lib/gamification.ts: logs an xp_event and updates the
-// profile (XP, coins, level, streak). The profile update only succeeds if XP
+// profile (XP, level, streak). The profile update only succeeds if XP
 // is unchanged since it was read, so two awards at once cannot overwrite
 // each other.
 
-export type XpAward = { xp: number; coins: number; levelUp: boolean; level: number; goalReached: boolean; streak: number };
+export type XpAward = { xp: number; levelUp: boolean; level: number; goalReached: boolean; streak: number };
 
 const DEFAULT_DAILY_GOAL = 150;
 const MAX_TRIES = 3;
@@ -33,7 +33,7 @@ export async function awardXp(
     const [{ data: row }, { data: today }] = await Promise.all([
       admin
         .from("profiles")
-        .select("xp, coins, level, streak, streak_freezes, freeze_refilled_week, last_active_date, daily_goal_xp")
+        .select("xp, level, streak, streak_freezes, freeze_refilled_week, last_active_date, daily_goal_xp")
         .eq("id", userId)
         .single(),
       admin.from("xp_events").select("amount").eq("user_id", userId).gte("created_at", startOfStockholmDay(now).toISOString()),
@@ -42,7 +42,6 @@ export async function awardXp(
 
     const profile: Profile = {
       xp: row.xp,
-      coins: row.coins,
       level: row.level,
       streak: row.streak,
       freezes: row.streak_freezes,
@@ -57,7 +56,6 @@ export async function awardXp(
       .update(
         {
           xp: out.profile.xp,
-          coins: out.profile.coins,
           level: out.profile.level,
           streak: out.profile.streak,
           streak_freezes: out.profile.freezes,
@@ -72,12 +70,11 @@ export async function awardXp(
 
     const { error } = await admin
       .from("xp_events")
-      .insert({ user_id: userId, amount, coins: out.coins, reason, attempt_id: attemptId });
+      .insert({ user_id: userId, amount, reason, attempt_id: attemptId });
     if (error) console.error("xp: could not log event", error);
 
     return {
       xp: amount,
-      coins: out.coins,
       levelUp: out.levelUp,
       level: out.profile.level,
       goalReached: out.goalReached,

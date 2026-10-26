@@ -1,4 +1,4 @@
-import { ArrowRight, Coins, Flame, Shuffle } from "lucide-react";
+import { ArrowRight, Flame, Shuffle } from "lucide-react";
 import Link from "next/link";
 import { AreaMark, BlockBar, Chip, SectionLabel, Stars, readable } from "@/components/study/visuals";
 import { requireViewProfile } from "@/lib/auth/session";
@@ -27,9 +27,6 @@ export default async function Home() {
           <div className="mb-6 flex flex-wrap gap-2">
             <Chip>
               <Flame className="size-3.5 text-orange-500" /> {t.dayStreak(profileStreak(profile, stockholmDate()))}
-            </Chip>
-            <Chip>
-              <Coins className="size-3.5 text-amber-400" /> {profile.coins} {strings.profile.stats.coins.toLowerCase()}
             </Chip>
             <Chip>
               {strings.profile.level} {profile.level}

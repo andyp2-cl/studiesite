@@ -57,8 +57,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-// Icons are stored by name in the database (subjects, areas, achievements,
-// rewards). Admins pick from this list; add names here to offer more.
+// Icons are stored by name in the database (subjects and areas). Admins pick from this list; add names here to offer more.
 const ICONS: Record<string, LucideIcon> = {
   atom: Atom,
   award: Award,

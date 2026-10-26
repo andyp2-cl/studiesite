@@ -31,10 +31,10 @@ export async function getStudentStats(studentId: string) {
   const now = new Date();
   const since = new Date(now.getTime() - WINDOW_DAYS * 86_400_000).toISOString();
 
-  const [{ data: profile }, { data: attemptRows }, budget, spent] = await Promise.all([
+  const [{ data: profile }, { data: attemptRows }, { count: cards }, budget, spent] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, display_name, xp, level, coins, streak, last_active_date, streak_freezes, freeze_refilled_week")
+      .select("id, display_name, xp, level, streak, last_active_date, streak_freezes, freeze_refilled_week")
       .eq("id", studentId)
       .eq("role", "student")
       .maybeSingle(),
@@ -45,6 +45,7 @@ export async function getStudentStats(studentId: string) {
       .gte("created_at", since)
       .order("created_at", { ascending: false })
       .limit(MAX_ATTEMPTS),
+    supabase.from("user_cards").select("card_id", { count: "exact", head: true }).eq("user_id", studentId),
     monthlyBudgetUsd(),
     monthSpendUsd(now),
   ]);
@@ -93,7 +94,7 @@ export async function getStudentStats(studentId: string) {
       name: profile.display_name,
       xp: profile.xp,
       level: profile.level,
-      coins: profile.coins,
+      cards: cards ?? 0,
       streak: profileStreak(profile, today),
       lastActive: profile.last_active_date,
     },

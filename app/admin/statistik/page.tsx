@@ -128,7 +128,7 @@ export default async function AdminStatsPage({ searchParams }: PageProps<"/admin
                   sub={t.level(stats.profile.level, strings.levelNames[levelNameIndex(stats.profile.level)])}
                 />
                 <Tile label={t.streakLabel} value={String(stats.profile.streak)} sub={t.streak(stats.profile.streak)} />
-                <Tile label={t.coinsLabel} value={String(stats.profile.coins)} />
+                <Tile label={t.cardsLabel} value={String(stats.profile.cards)} />
                 <Tile
                   label={t.ai}
                   value={`$${stats.ai.spent.toFixed(2)}`}
