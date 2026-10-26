@@ -9,12 +9,8 @@ If the sources disagree, follow the more reliable or more widely accepted accoun
 // emphasis only; facts still come from the sources.
 const CURRICULUM = `If <curriculum> tags are given, they hold the Swedish curriculum's central content (Lgr22) for the student's school years. Use it to decide what is important: emphasise what it names, explain in a way that fits those years, and leave out what it would not expect. It is not a source of facts.`;
 
-const withCurriculum = (curriculum: string) => (curriculum ? `
-
-${CURRICULUM}` : "");
-const curriculumBlock = (curriculum: string) => (curriculum ? `${curriculum}
-
-` : "");
+const withCurriculum = (curriculum: string) => (curriculum ? `\n\n${CURRICULUM}` : "");
+const curriculumBlock = (curriculum: string) => (curriculum ? `${curriculum}\n\n` : "");
 
 export function anglesPrompt(input: { subject: string; area: string; existing: string[]; sources: string; curriculum: string }) {
   return {
