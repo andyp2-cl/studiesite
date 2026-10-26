@@ -255,6 +255,7 @@ export const strings = {
     dailyGoal: "Dagsmål",
     dailyGoalDone: "Dagsmålet klart!",
     dayStreak: (days: number) => `${days} dagar i rad`,
+    noAreas: "Inga områden här än.",
     continue: "Fortsätt där du slutade",
     dailyMix: "Dagens mix",
     dailyMixDescription: "Lite av det du nyligen fått fel på och sådant du inte övat på ett tag.",

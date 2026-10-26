@@ -77,29 +77,33 @@ export default async function Home() {
         {subjects.map((subject) => (
           <section key={subject.id}>
             <SectionLabel action={{ href: `/amnen/${subject.slug}`, label: t.showAll }}>{subject.name}</SectionLabel>
-            <div className="snap-x overflow-x-auto border border-border [scrollbar-width:none]">
-              <div className="flex w-max gap-px bg-border">
-                {subject.areas.map((area, i) => (
-                  <Link
-                    key={area.id}
-                    href={`/amnen/${subject.slug}/${area.slug}`}
-                    className="group flex w-40 shrink-0 snap-start flex-col gap-4 bg-background p-4 transition-colors hover:bg-card sm:w-44"
-                  >
-                    <span className="flex items-start justify-between">
-                      <AreaMark icon={area.icon} color={area.color} size={44} />
-                      <span className="font-mono text-xs text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
-                    </span>
-                    <span>
-                      <span className="block font-semibold">{area.name}</span>
-                      <span className="font-mono text-xs text-muted-foreground">
-                        {t.moments(area.momentIds.length)} ·{" "}
-                        {area.momentIds.reduce((s, id) => s + (progress.get(id)?.stars ?? 0), 0)} ★
+            {subject.areas.length === 0 ? (
+              <p className="border border-dashed border-border p-5 text-sm text-muted-foreground">{t.noAreas}</p>
+            ) : (
+              <div className="snap-x overflow-x-auto border border-border [scrollbar-width:none]">
+                <div className="flex w-max gap-px bg-border">
+                  {subject.areas.map((area, i) => (
+                    <Link
+                      key={area.id}
+                      href={`/amnen/${subject.slug}/${area.slug}`}
+                      className="group flex w-40 shrink-0 snap-start flex-col gap-4 bg-background p-4 transition-colors hover:bg-card sm:w-44"
+                    >
+                      <span className="flex items-start justify-between">
+                        <AreaMark icon={area.icon} color={area.color} size={44} />
+                        <span className="font-mono text-xs text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                       </span>
-                    </span>
-                  </Link>
-                ))}
+                      <span>
+                        <span className="block font-semibold">{area.name}</span>
+                        <span className="font-mono text-xs text-muted-foreground">
+                          {t.moments(area.momentIds.length)} ·{" "}
+                          {area.momentIds.reduce((s, id) => s + (progress.get(id)?.stars ?? 0), 0)} ★
+                        </span>
+                      </span>
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </section>
         ))}
       </div>

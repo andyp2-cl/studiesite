@@ -1,6 +1,6 @@
 // The school subjects of Lgr22 for åk 6–9, without areas: the admin adds
-// areas (and sources) to the ones being studied. Students only see a subject
-// once it has a visible area. Mathematics, with its full package, is in math.ts.
+// areas (and sources) to the ones being studied and hides the rest.
+// Mathematics, with its full package, is in math.ts.
 
 export type SeedSubjectShell = {
   slug: string;

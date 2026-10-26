@@ -19,6 +19,9 @@ export function AreaGrid({
   areas: AreaSummary[];
   progress: Map<string, MomentProgress>;
 }) {
+  if (areas.length === 0) {
+    return <p className="border border-dashed border-border p-5 text-sm text-muted-foreground">{strings.home.noAreas}</p>;
+  }
   return (
     <div className="hairline-grid grid gap-px sm:grid-cols-2 lg:grid-cols-3">
       {areas.map((area, i) => {
