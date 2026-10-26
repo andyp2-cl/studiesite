@@ -1,4 +1,5 @@
-// Seeds the mathematics package, achievements, settings and test accounts.
+// Seeds the mathematics package, the other school subjects (without areas),
+// achievements and the admin account.
 // Run with: npm run seed
 //
 // Idempotent and non-destructive: rows that already exist are left as they
@@ -10,6 +11,7 @@ import { usernameToEmail } from "../lib/auth/username";
 import type { Database } from "../lib/database.types";
 import { seedAchievements } from "../lib/seed/achievements";
 import { mathSubject } from "../lib/seed/math";
+import { otherSubjects } from "../lib/seed/subjects";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -140,6 +142,16 @@ async function seedContent() {
   console.log(`✓ Matematik: ${s.areas.length} områden, ${momentCount} moment, ${blockCount} nya texter`);
 }
 
+// Existing subjects keep their name, colour, icon and order from the admin panel.
+async function seedOtherSubjects() {
+  const rows = otherSubjects.map((s, i) => ({ ...s, sort_order: i + 1 }));
+  const inserted = must(
+    await db.from("subjects").upsert(rows, { onConflict: "slug", ignoreDuplicates: true }).select("id"),
+    "other subjects",
+  );
+  console.log(`✓ Övriga ämnen: ${inserted.length} nya av ${rows.length}`);
+}
+
 async function seedAchievementRows() {
   const rows = seedAchievements.map((a, i) => ({ ...a, sort_order: i }));
   must(
@@ -194,6 +206,7 @@ async function seedAccounts() {
 
 async function main() {
   await seedContent();
+  await seedOtherSubjects();
   await seedAchievementRows();
   // --skip-accounts lets content be (re)seeded without touching auth users.
   if (!process.argv.includes("--skip-accounts")) await seedAccounts();

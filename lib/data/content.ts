@@ -29,12 +29,15 @@ export const getSubjectsWithAreas = cache(async () => {
     )
     .order("sort_order")
     .order("sort_order", { referencedTable: "areas" });
-  return (data ?? []).map((s) => ({
-    ...s,
-    areas: s.areas
-      .filter((a) => !a.is_hidden)
-      .map((a) => ({ ...a, momentIds: a.moments.filter((m) => !m.is_hidden).map((m) => m.id) })),
-  }));
+  // Subjects without a visible area are not shown to students yet.
+  return (data ?? [])
+    .map((s) => ({
+      ...s,
+      areas: s.areas
+        .filter((a) => !a.is_hidden)
+        .map((a) => ({ ...a, momentIds: a.moments.filter((m) => !m.is_hidden).map((m) => m.id) })),
+    }))
+    .filter((s) => s.areas.length > 0);
 });
 
 export type SubjectWithAreas = Awaited<ReturnType<typeof getSubjectsWithAreas>>[number];
