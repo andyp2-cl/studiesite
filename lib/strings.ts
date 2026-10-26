@@ -409,7 +409,8 @@ export const strings = {
     levelLocked: "Låst",
     noTasksAtLevel: "Inga uppgifter än",
     levelProgress: (correct: number, required: number) => `${correct} av ${required} rätt av de senaste 10`,
-    levelRule: (required: number) => `En nivå är klar när du har ${required} rätt av dina 10 senaste försök.`,
+    levelRule: (required: number) =>
+      `Välj fritt – du kan gå direkt på Svår eller öva mer på en nivå du redan klarat. En nivå är klar när du har ${required} rätt av dina 10 senaste försök.`,
     deepenings: "Fördjupningar",
     unlocksAt: (level: string) => `Låses upp när du klarar ${level.toLowerCase()}`,
   },
@@ -478,6 +479,8 @@ export const strings = {
     chooseLevel: "Nivå",
     start: (n: number) => `Starta ${n} frågor`,
     newRound: (n: number) => `${n} nya frågor`,
+    moreTitle: "Öva mer",
+    sameLevel: "nu",
     summaryParts: {
       correct: "rätt",
       withHint: "med ledtråd",

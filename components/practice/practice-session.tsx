@@ -7,7 +7,7 @@ import { MathMarkdown } from "@/components/math/markdown";
 import { Tex } from "@/components/math/tex";
 import { BlockBar, Stars, readable } from "@/components/study/visuals";
 import { levelNameIndex } from "@/lib/gamification";
-import type { Level } from "@/lib/generators/types";
+import { LEVELS, type Level } from "@/lib/generators/types";
 import { inputToTex } from "@/lib/math/input-to-tex";
 import { getHint, nextTask, saveExplanation, submitAnswer, type PublicTask, type SubmitResult } from "@/lib/practice/actions";
 import { refKey, ROUND_SIZES } from "@/lib/practice/ref";
@@ -225,28 +225,13 @@ export function PracticeSession({
           {stars !== null && <Stars count={stars} className="mt-4 block text-2xl" />}
 
           <div className="mt-8 flex flex-col gap-2">
-            {nextLevel && (
-              <a
-                href={`/ova/${momentId}?niva=${nextLevel}&antal=${roundSize}`}
-                className="flex h-12 items-center justify-center gap-2 bg-primary font-mono text-sm font-semibold text-primary-foreground"
-              >
-                {p.nextLevel(strings.levels[nextLevel])} <ArrowRight className="size-4" />
-              </a>
-            )}
-            <div className="grid grid-cols-2 gap-2">
-              {ROUND_SIZES.map((n) => (
-                <a
-                  key={n}
-                  href={`/ova/${momentId}?niva=${level}&antal=${n}`}
-                  className={cn(
-                    "flex h-12 items-center justify-center gap-2 font-mono text-sm font-semibold",
-                    !nextLevel && n === roundSize ? "bg-primary text-primary-foreground" : "border border-border",
-                  )}
-                >
-                  <RotateCcw className="size-4" /> {p.newRound(n)}
-                </a>
-              ))}
-            </div>
+            <MoreRounds
+              momentId={momentId}
+              current={level}
+              suggested={nextLevel ?? level}
+              roundSize={roundSize}
+              withLevels={!readings}
+            />
             <Link
               href={momentHref}
               className="flex h-12 items-center justify-center border border-border font-mono text-sm text-muted-foreground hover:text-foreground"
@@ -586,6 +571,62 @@ export function PracticeSession({
 }
 
 /** "Svaret finns i avsnittet …" plus the reading text, with that section opened. */
+/** After a round: pick any level (easier, same or straight to hard) and a new round of 5 or 10. */
+function MoreRounds({
+  momentId,
+  current,
+  suggested,
+  roundSize,
+  withLevels,
+}: {
+  momentId: string;
+  current: Level;
+  suggested: Level;
+  roundSize: number;
+  withLevels: boolean;
+}) {
+  const [chosen, setChosen] = useState<Level>(suggested);
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">{p.moreTitle}</p>
+      {withLevels && (
+        <div className="grid grid-cols-3 border border-border font-mono text-xs" role="radiogroup" aria-label={p.chooseLevel}>
+          {LEVELS.map((l) => (
+            <button
+              key={l}
+              type="button"
+              role="radio"
+              aria-checked={chosen === l}
+              onClick={() => setChosen(l)}
+              className={cn(
+                "flex h-11 flex-col items-center justify-center border-r border-border last:border-r-0",
+                chosen === l ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <span className="font-semibold">{strings.levels[l]}</span>
+              {l === current && <span className="text-[10px] opacity-70">{p.sameLevel}</span>}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="grid grid-cols-2 gap-2">
+        {ROUND_SIZES.map((n) => (
+          <a
+            key={n}
+            href={`/ova/${momentId}?niva=${chosen}&antal=${n}`}
+            className={cn(
+              "flex h-12 items-center justify-center gap-2 font-mono text-sm font-semibold",
+              n === roundSize ? "bg-primary text-primary-foreground" : "border border-border",
+            )}
+          >
+            {chosen === current ? <RotateCcw className="size-4" /> : <ArrowRight className="size-4" />} {p.newRound(n)}
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** After two misses in a row: point back to the text, a lower level, or a free explanation elsewhere. */
 function StuckTip({
   read,
