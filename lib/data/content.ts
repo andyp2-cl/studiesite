@@ -194,7 +194,7 @@ export async function getDailyGoal(profile: { daily_goal_xp: number | null }): P
   if (profile.daily_goal_xp) return profile.daily_goal_xp;
   const supabase = await createClient();
   const { data } = await supabase.from("settings").select("value").eq("key", "daily_goal_xp").maybeSingle();
-  return typeof data?.value === "number" ? data.value : 50;
+  return typeof data?.value === "number" ? data.value : 150;
 }
 
 /** What a "Läs och svara" moment page needs beyond getMoment: milestones, writing tasks and sources. */

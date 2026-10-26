@@ -2,7 +2,7 @@
 
 import { randomInt } from "node:crypto";
 import { requireProfile } from "@/lib/auth/session";
-import { awardAreaCards } from "@/lib/cards/award";
+import { awardCards } from "@/lib/cards/award";
 import type { Card } from "@/lib/cards/catalog";
 import { getGenerator } from "@/lib/generators";
 import { isLevel, type Figure, type Level, type SolutionStep } from "@/lib/generators/types";
@@ -249,6 +249,7 @@ export async function submitAnswer(input: {
   // Answering the same generated task twice (double click, back button) is recorded once.
   let attemptId: string | null = null;
   let xp: XpAward | null = null;
+  let newCorrect = false;
   if (task.record.generator_seed !== null) {
     const { data: existing } = await admin
       .from("attempts")
@@ -282,6 +283,7 @@ export async function submitAnswer(input: {
     if (error) return { status: "error" };
     attemptId = inserted.id;
     if (correct) xp = await awardXp(profile.id, XP_FOR_LEVEL[level], "correct_answer", attemptId);
+    newCorrect = correct;
   }
 
   // Level progress: 8 of the latest 10 at this level clears it (or the student's own bar).
@@ -315,8 +317,11 @@ export async function submitAnswer(input: {
       );
   }
 
-  // A new star can complete the area: Lätt, Medel or Svår for all its moments, or all quizzes.
-  const cards = clearedLevel || quizPassed ? await awardAreaCards(profile, [moment.area_id]) : [];
+  // Cards: every 5th correct answer, and a new star can complete the area (Lätt,
+  // Medel or Svår for all its moments, or all quizzes).
+  const newStar = Boolean(clearedLevel) || quizPassed;
+  const cards =
+    newCorrect || newStar ? await awardCards(profile, { answers: newCorrect, areas: newStar ? [moment.area_id] : undefined }) : [];
 
   return {
     status: giveUp ? "revealed" : correct ? "correct" : "wrong",

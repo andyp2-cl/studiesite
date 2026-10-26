@@ -3,8 +3,8 @@ import { parseNewStudent, parseSiteSettings, parseStudentSettings, suggestedForG
 
 describe("suggestedForGrade", () => {
   it("asks less of younger students", () => {
-    expect(suggestedForGrade(5)).toEqual({ dailyGoalXp: 40, passCorrect: 7 });
-    expect(suggestedForGrade(7)).toEqual({ dailyGoalXp: 60, passCorrect: 8 });
+    expect(suggestedForGrade(5)).toEqual({ dailyGoalXp: 150, passCorrect: 7 });
+    expect(suggestedForGrade(7)).toEqual({ dailyGoalXp: 180, passCorrect: 8 });
   });
 });
 

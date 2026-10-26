@@ -10,7 +10,7 @@ import { startOfStockholmDay, stockholmDate } from "@/lib/time";
 
 export type XpAward = { xp: number; coins: number; levelUp: boolean; level: number; goalReached: boolean; streak: number };
 
-const DEFAULT_DAILY_GOAL = 50;
+const DEFAULT_DAILY_GOAL = 150;
 const MAX_TRIES = 3;
 
 async function dailyGoal(admin: ReturnType<typeof createAdminClient>): Promise<number> {

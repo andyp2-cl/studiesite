@@ -9,9 +9,9 @@ export const MIN_PASSWORD = 8;
 
 /** What we suggest for a school year: younger students get a lower daily goal and pass bar. */
 export function suggestedForGrade(grade: number): { dailyGoalXp: number; passCorrect: number } {
-  if (grade <= 5) return { dailyGoalXp: 40, passCorrect: 7 };
-  if (grade === 6) return { dailyGoalXp: 50, passCorrect: 8 };
-  return { dailyGoalXp: 60, passCorrect: 8 };
+  if (grade <= 5) return { dailyGoalXp: 150, passCorrect: 7 };
+  if (grade === 6) return { dailyGoalXp: 150, passCorrect: 8 };
+  return { dailyGoalXp: 180, passCorrect: 8 };
 }
 
 type Parsed<T> = { ok: true; value: T } | { ok: false; field: string };

@@ -1,7 +1,7 @@
 import { CardArt } from "@/components/cards/card-art";
 import { PageHeader } from "@/components/study/page-header";
 import { requireViewProfile } from "@/lib/auth/session";
-import { awardAreaCards } from "@/lib/cards/award";
+import { awardCards } from "@/lib/cards/award";
 import { CARDS, TIERS, isTheme, type Tier } from "@/lib/cards/catalog";
 import { strings } from "@/lib/strings";
 import { createClient } from "@/lib/supabase/server";
@@ -18,8 +18,8 @@ const TIER_TEXT: Record<Tier, string> = {
 export default async function CollectionPage() {
   const profile = await requireViewProfile();
   const theme = isTheme(profile.collection_theme) ? profile.collection_theme : "football";
-  // Areas finished before cards existed (or while the award failed) are caught up here.
-  if (profile.role === "student") await awardAreaCards(profile);
+  // Milestones reached before cards existed (or while an award failed) are caught up here.
+  if (profile.role === "student") await awardCards(profile, { areas: "all", answers: true });
   const supabase = await createClient();
   const { data } = await supabase.from("user_cards").select("card_id").eq("user_id", profile.id).eq("theme", theme);
   const owned = new Set((data ?? []).map((r) => r.card_id));

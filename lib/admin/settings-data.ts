@@ -7,7 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 // Read-side for /admin/anvandare and /admin/installningar.
 
-const DEFAULTS = { daily_goal_xp: 50, ai_monthly_budget_usd: 5, ai_feedback_daily_limit: 5 };
+const DEFAULTS = { daily_goal_xp: 150, ai_monthly_budget_usd: 5, ai_feedback_daily_limit: 5 };
 
 export async function getSiteSettings() {
   await requireAdmin();

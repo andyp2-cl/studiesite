@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { areaMilestones, type AreaMoment } from "./milestones";
+import { answerMilestones, areaMilestones, type AreaMoment } from "./milestones";
 
 const level = (stars: number): AreaMoment => ({ mode: "levels", stars, quizPassed: false });
 const read = (quizPassed: boolean): AreaMoment => ({ mode: "read", stars: quizPassed ? 2 : 1, quizPassed });
@@ -25,5 +25,13 @@ describe("areaMilestones", () => {
 
   it("gives nothing for an empty area", () => {
     expect(areaMilestones("e", [])).toEqual([]);
+  });
+});
+
+describe("answerMilestones", () => {
+  it("gives a bronze card for every 5 correct answers", () => {
+    expect(answerMilestones(4)).toEqual([]);
+    expect(answerMilestones(8)).toEqual([{ key: "correct:5", tier: "bronze" }]);
+    expect(answerMilestones(10).map((m) => m.key)).toEqual(["correct:5", "correct:10"]);
   });
 });
