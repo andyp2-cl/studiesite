@@ -2,6 +2,7 @@ import { ArrowRight, Plus } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminHeader } from "@/components/admin/admin-header";
+import { DraftBulk } from "@/components/admin/draft-bulk";
 import { DraftPanel } from "@/components/admin/draft-panel";
 import {
   DeepeningsEditor,
@@ -110,6 +111,8 @@ export default async function AdminMomentPage({ params }: PageProps<"/admin/inne
 
   const base = `/admin/innehall/${subjectId}/${areaId}/${momentId}`;
   const read = moment.mode === "read";
+  const draftQuestions = moment.tasks.filter((x) => x.status === "draft").length;
+  const draftWriting = moment.writing_tasks.filter((x) => x.status === "draft").length;
 
   return (
     <main>
@@ -136,6 +139,10 @@ export default async function AdminMomentPage({ params }: PageProps<"/admin/inne
               unavailable={ai.available ? null : strings.ai[ai.reason]}
               hasContent={moment.readings.length > 0 || moment.tasks.length > 0}
             />
+
+            {draftQuestions + draftWriting > 0 && (
+              <DraftBulk momentId={moment.id} questions={draftQuestions} writing={draftWriting} />
+            )}
 
             <section>
               <SectionLabel>{t.read.intro}</SectionLabel>

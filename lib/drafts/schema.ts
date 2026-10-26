@@ -89,9 +89,10 @@ export const momentDraftSchema = {
           choices: { type: "array", items: { type: "string" } },
           correct_index: { type: "integer" },
           correct_boolean: { type: "boolean" },
+          section: { type: "string" },
           explanation: { type: "string" },
         },
-        required: ["type", "prompt", "accepted", "keywords", "choices", "correct_index", "correct_boolean", "explanation"],
+        required: ["type", "prompt", "accepted", "keywords", "choices", "correct_index", "correct_boolean", "section", "explanation"],
         additionalProperties: false,
       },
     },
@@ -119,6 +120,8 @@ export type DraftQuestion = {
   answer: TaskAnswer;
   choices: string[] | null;
   solution: string;
+  /** Title of the reading section with the answer ("" if the AI named none that exists). */
+  section: string;
 };
 export type DraftWriting = { prompt: string; minChars: number; rubric: string };
 export type MomentDraft = {
@@ -130,7 +133,7 @@ export type MomentDraft = {
 
 const QUESTION_TYPE: Record<string, TaskType> = { short: "free_text", choice: "multiple_choice", true_false: "true_false" };
 
-function parseQuestion(q: Record<string, unknown>): DraftQuestion | null {
+function parseQuestion(q: Record<string, unknown>, sectionTitles: Map<string, string>): DraftQuestion | null {
   const type = QUESTION_TYPE[String(q?.type)];
   const prompt = text(q?.prompt, 1000);
   if (!type || !prompt) return null;
@@ -143,7 +146,14 @@ function parseQuestion(q: Record<string, unknown>): DraftQuestion | null {
   };
   const built = buildAnswer(type, draft);
   if (!built) return null;
-  return { type, prompt, answer: built.answer, choices: built.choices, solution: text(q.explanation, 1000) };
+  return {
+    type,
+    prompt,
+    answer: built.answer,
+    choices: built.choices,
+    solution: text(q.explanation, 1000),
+    section: sectionTitles.get(text(q.section, 120).toLowerCase()) ?? "",
+  };
 }
 
 export function parseMomentDraft(json: unknown): MomentDraft | null {
@@ -154,8 +164,9 @@ export function parseMomentDraft(json: unknown): MomentDraft | null {
     .map((s) => ({ title: text(s?.title, 120), body: text(s?.body, 20000) }))
     .filter((s) => s.title && s.body)
     .slice(0, 6);
+  const sectionTitles = new Map(sections.map((s) => [s.title.toLowerCase(), s.title]));
   const questions = (Array.isArray(d.questions) ? d.questions : [])
-    .map((q) => parseQuestion(q as Record<string, unknown>))
+    .map((q) => parseQuestion(q as Record<string, unknown>, sectionTitles))
     .filter((q): q is DraftQuestion => q !== null)
     .slice(0, 30);
   const writing = (Array.isArray(d.writing) ? d.writing : [])

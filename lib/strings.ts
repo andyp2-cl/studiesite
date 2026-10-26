@@ -141,6 +141,11 @@ export const strings = {
       questions: "Frågor",
       questionsHelp: "Frågor som rättas automatiskt: flerval, sant/falskt, fritext med godkända svar eller nyckelord, eller tal. Eleven får 5 eller 10 av dem per runda.",
       newQuestion: "Ny fråga",
+      draftsCount: (questions: number, writing: number) => `${questions} frågor och ${writing} skrivuppgifter är utkast.`,
+      publishAll: "Publicera alla och visa momentet",
+      deleteDrafts: "Ta bort alla utkast",
+      confirmPublishAll: "Publicera alla utkast i momentet och visa det för eleverna?",
+      confirmDeleteDrafts: "Ta bort alla frågor och skrivuppgifter som är utkast? Lästexterna och det som redan är publicerat ligger kvar.",
       questionsCount: (published: number, total: number) => `${published} publicerade av ${total}`,
     },
     drafts: {
@@ -150,7 +155,7 @@ export const strings = {
       anglesDone: (n: number) => `${n} nya moment skapade. De är dolda tills du visar dem.`,
       momentTitle: "Fyll momentet med AI",
       momentHelp:
-        "AI läser områdets källor och skriver en sammanställning, 15–20 frågor med korta svar och några skrivuppgifter. Allt blir utkast, och momentet döljs tills du har granskat och publicerat.",
+        "AI läser områdets källor och skriver en sammanställning, 8–12 frågor om det viktigaste (mest korta svar) och några skrivuppgifter. Allt blir utkast, och momentet döljs tills du har granskat och publicerat.",
       momentButton: "Skapa utkast från källor",
       momentAgain: "Det finns redan innehåll. Nya utkast läggs till efter det som finns.",
       working: "AI skriver … det kan ta ett par minuter",
@@ -160,6 +165,7 @@ export const strings = {
       nothingUsable: "AI:ns svar gick inte att använda. Försök igen.",
       partlySaved: "Allt kunde inte sparas. Kontrollera momentet och försök igen.",
       cost: "Kostar ungefär 1–2 kronor per gång.",
+      sectionHint: (section: string) => `Svaret finns i avsnittet **${section}**.`,
     },
     sources: {
       title: "Källor",

@@ -164,6 +164,7 @@ export async function draftMoment(momentId: string): Promise<DraftResult> {
         answer: q.answer as unknown as Json,
         choices: q.choices,
         solution_md: q.solution || null,
+        hint_md: q.section ? t.sectionHint(q.section) : null,
         status: "draft" as const,
         source: "ai" as const,
       })),

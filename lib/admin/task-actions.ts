@@ -74,3 +74,30 @@ export async function setTaskPublished(id: string, published: boolean): Promise<
   refresh();
   return { ok: true };
 }
+
+/** Publishes every draft question and writing task in a moment and makes the moment visible. */
+export async function publishMomentDrafts(momentId: string): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  const results = await Promise.all([
+    supabase.from("tasks").update({ status: "published" }).eq("moment_id", momentId).eq("status", "draft"),
+    supabase.from("writing_tasks").update({ status: "published" }).eq("moment_id", momentId).eq("status", "draft"),
+    supabase.from("moments").update({ is_hidden: false }).eq("id", momentId),
+  ]);
+  if (results.some((r) => r.error)) return fail(e.generic);
+  refresh();
+  return { ok: true };
+}
+
+/** Deletes every draft question and writing task in a moment (published ones and reading texts stay). */
+export async function deleteMomentDrafts(momentId: string): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  const results = await Promise.all([
+    supabase.from("tasks").delete().eq("moment_id", momentId).eq("status", "draft"),
+    supabase.from("writing_tasks").delete().eq("moment_id", momentId).eq("status", "draft"),
+  ]);
+  if (results.some((r) => r.error)) return fail(e.generic);
+  refresh();
+  return { ok: true };
+}

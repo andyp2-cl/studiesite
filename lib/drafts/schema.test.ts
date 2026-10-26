@@ -53,6 +53,7 @@ const question = (overrides: Record<string, unknown>) => ({
   choices: [],
   correct_index: 0,
   correct_boolean: false,
+  section: "",
   explanation: "",
   ...overrides,
 });
@@ -65,7 +66,12 @@ describe("parseMomentDraft", () => {
       { title: "", body: "saknar rubrik" },
     ],
     questions: [
-      question({ prompt: "Vid vilken stad förlorade Karl XII 1709?", accepted: ["Poltava", "slaget vid Poltava"], explanation: "Poltava 1709." }),
+      question({
+        prompt: "Vid vilken stad förlorade Karl XII 1709?",
+        accepted: ["Poltava", "slaget vid Poltava"],
+        section: "krigen",
+        explanation: "Poltava 1709.",
+      }),
       question({ type: "choice", prompt: "Vilket land?", choices: ["Ryssland", "Norge"], correct_index: 1 }),
       question({ type: "true_false", prompt: "Han dog i Norge.", correct_boolean: true }),
       question({ type: "choice", prompt: "Trasig", choices: ["bara ett"], correct_index: 0 }),
@@ -84,6 +90,8 @@ describe("parseMomentDraft", () => {
     expect(parsed.sections).toEqual([{ title: "Krigen", body: "Text om krigen." }]);
     expect(parsed.questions.map((q) => q.type)).toEqual(["free_text", "multiple_choice", "true_false"]);
     expect(parsed.questions[0].solution).toBe("Poltava 1709.");
+    expect(parsed.questions[0].section).toBe("Krigen");
+    expect(parsed.questions[1].section).toBe("");
     expect(parsed.questions[1]).toMatchObject({ answer: { kind: "choice", index: 1 }, choices: ["Ryssland", "Norge"] });
     expect(parsed.writing).toEqual([{ prompt: "Varför förlorade Sverige stormaktsställningen?", minChars: 50, rubric: "Orsaker" }]);
   });
