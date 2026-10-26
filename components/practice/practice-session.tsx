@@ -127,6 +127,8 @@ export function PracticeSession({
       if (res.clearedLevel) setClearedLevel(res.clearedLevel);
       gainXp(res.xp);
       if (res.quizPassed) setNews((items) => [p.quizPassed, ...items]);
+      const cards = res.cards.map((c) => p.newCard(c.name, strings.collection.tier[c.tier].toLowerCase()));
+      if (cards.length) setNews((items) => [...cards, ...items]);
     });
   }
 

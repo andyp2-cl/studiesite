@@ -12,14 +12,14 @@ Uppdateras vid varje commit. Senast: 2026-10-26.
 - Admin: innehåll, användare (årskurs, dagsmål, godkäntgräns, lösenord), statistik, inställningar.
 - Dagens mix (`/mix`): 10 uppgifter från upp till 4 övade moment, viktade mot nyliga fel och tid sedan senaste övning. "Läs och svara"-moment ingår inte.
 - Kortsamling (ersätter monstren): fotbollsspelare (546 kort) eller artister (721 kort) i brons, silver och guld, riktiga namn och enkla ritade bilder. Data i `lib/cards/football.ts` och `music.ts`, en rad per kort; nya kort läggs sist i sin nivå. Samlingssidan visar elevens kort och hur många som finns kvar per nivå.
+- Kortutdelning: ett kort när alla synliga moment i ett matteområde klarat Lätt (brons), Medel (silver) och Svår (guld), och silver när alla quiz i ett faktaområde är klara. Delas ut när svaret sparas (med en notis i övningen) och kontrolleras även när samlingssidan öppnas, så redan klarade områden ger kort i efterhand.
 
 ## På gång
 
 Belöningar är sparsamma: bara kort, och bara för stora milstolpar.
 
-1. Utdelning: ett kort när ett matteområde klarar Lätt (brons), Medel (silver) och Svår (guld), och silver när ett faktaområde är klart.
-2. Ta bort mynt och monsterpaket (även tabellen `user_monsters`).
-3. Admin väljer tema per elev, och en notis i övningen när ett nytt kort delas ut.
+1. Ta bort mynt och monsterpaket (även tabellen `user_monsters`).
+2. Admin väljer tema per elev (fotboll eller musik), och en snyggare notis när ett nytt kort delas ut.
 
 Märken (achievements) byggs inte: korten är den enda samlingen.
 
@@ -31,6 +31,5 @@ Märken (achievements) byggs inte: korten är den enda samlingen.
 
 ## Kända brister
 
-- Dagens mix och kortsamlingen är inte provkörda inloggade av Claude, bara via tester och typkontroll.
+- Dagens mix, kortsamlingen och kortutdelningen är inte provkörda inloggade av Claude, bara via tester, typkontroll och en läsfråga mot databasen.
 - Kortens position, genre och land är skrivna ur minnet och kan innehålla enstaka fel. Rättas direkt i datafilerna.
-- Migrationen `20261026200000_cards.sql` måste köras live: `npm run db:push` och sedan `npm run db:types`. Tills dess visar samlingen fotbollskort utan några tagna kort.

@@ -2,6 +2,8 @@
 
 import { randomInt } from "node:crypto";
 import { requireProfile } from "@/lib/auth/session";
+import { awardAreaCards } from "@/lib/cards/award";
+import type { Card } from "@/lib/cards/catalog";
 import { getGenerator } from "@/lib/generators";
 import { isLevel, type Figure, type Level, type SolutionStep } from "@/lib/generators/types";
 import { checkAnswer, type CheckResult, type RetryReason } from "@/lib/math/check-answer";
@@ -53,6 +55,8 @@ export type SubmitResult =
       stars: number;
       /** XP for a correct answer; null when nothing was awarded (wrong, or answered before). */
       xp: XpAward | null;
+      /** Cards won because this answer finished an area milestone. */
+      cards: Card[];
     }
   | { status: "error" };
 
@@ -75,7 +79,7 @@ async function loadPractice(momentId: unknown, level: unknown) {
   // RLS: only visible moments are returned. All levels are open to choose.
   const { data: moment } = await supabase
     .from("moments")
-    .select("id, source, mode, generators(generator_key)")
+    .select("id, area_id, source, mode, generators(generator_key)")
     .eq("id", momentId)
     .maybeSingle();
   if (!moment) return null;
@@ -311,6 +315,9 @@ export async function submitAnswer(input: {
       );
   }
 
+  // A new star can complete the area: Lätt, Medel or Svår for all its moments, or all quizzes.
+  const cards = clearedLevel || quizPassed ? await awardAreaCards(profile, [moment.area_id]) : [];
+
   return {
     status: giveUp ? "revealed" : correct ? "correct" : "wrong",
     attemptId,
@@ -321,6 +328,7 @@ export async function submitAnswer(input: {
     quizPassed,
     stars,
     xp,
+    cards,
   };
 }
 

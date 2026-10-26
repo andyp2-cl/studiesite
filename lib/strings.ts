@@ -465,6 +465,7 @@ export const strings = {
     levelClearedBody: "Du fick en ny stjärna och har låst upp nästa nivå och en ny fördjupning.",
     xpGained: (xp: number) => `+${xp} XP`,
     quizPassed: "Frågorna klara! Du fick en ny stjärna.",
+    newCard: (name: string, tier: string) => `Området är klart! Nytt kort i samlingen: ${name} (${tier}).`,
     roundXp: (xp: number) => `${xp} XP den här rundan`,
     levelUp: (level: number, name: string) => `Nivå ${level}! Du är nu ${name.toLowerCase()}.`,
     goalReached: (streak: number) => `Dagsmålet klart! ${streak} ${streak === 1 ? "dag" : "dagar"} i rad.`,
