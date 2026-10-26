@@ -14,15 +14,26 @@ export default async function PracticePage({ params, searchParams }: PageProps<"
   const supabase = await createClient();
   const { data: moment } = await supabase
     .from("moments")
-    .select("id, slug, name, areas(slug, name, color, subjects(slug))")
+    .select("id, slug, name, mode, areas(slug, name, color, subjects(slug))")
     .eq("id", momentId)
     .maybeSingle();
   if (!moment?.areas?.subjects) notFound();
 
   const momentHref = `/amnen/${moment.areas.subjects.slug}/${moment.areas.slug}/${moment.slug}`;
   // nextTask returns null if the moment has no generator or no published tasks at this level.
-  const firstTask = await nextTask(moment.id, level);
+  const read = moment.mode === "read";
+  const firstTask = await nextTask(moment.id, read ? 1 : level);
   if (!firstTask) redirect(momentHref);
+
+  // "Läs och svara": the reading text can be opened while answering.
+  const { data: readings } = read
+    ? await supabase
+        .from("content_blocks")
+        .select("title, body_md")
+        .eq("moment_id", moment.id)
+        .eq("type", "reading")
+        .order("sort_order")
+    : { data: null };
 
   return (
     <PracticeSession
@@ -33,6 +44,7 @@ export default async function PracticePage({ params, searchParams }: PageProps<"
       momentHref={momentHref}
       firstTask={firstTask}
       roundSize={roundSize}
+      readings={readings ? readings.map((r) => ({ title: r.title ?? "", body: r.body_md })) : null}
     />
   );
 }

@@ -15,3 +15,10 @@ export function levelProgress(recent: readonly boolean[]) {
 export function suggestedLevel(stars: number): Level {
   return Math.min(stars + 1, 3) as Level;
 }
+
+export type ReadMilestones = { read: boolean; quiz: boolean; writing: boolean };
+
+/** "Läs och svara": one star each for reading, passing the quiz and an approved text. */
+export function readStars(m: ReadMilestones): number {
+  return Number(m.read) + Number(m.quiz) + Number(m.writing);
+}

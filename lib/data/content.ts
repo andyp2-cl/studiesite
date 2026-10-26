@@ -52,7 +52,7 @@ export async function getArea(subjectSlug: string, areaSlug: string) {
   const { data: area } = await supabase
     .from("areas")
     .select(
-      "id, slug, name, description, color, icon, moments(id, slug, name, description, sort_order, is_hidden, source, generators(generator_key))",
+      "id, slug, name, description, color, icon, moments(id, slug, name, description, sort_order, is_hidden, source, mode, generators(generator_key))",
     )
     .eq("subject_id", subject.id)
     .eq("slug", areaSlug)
@@ -72,7 +72,7 @@ export async function getMoment(subjectSlug: string, areaSlug: string, momentSlu
 
   const supabase = await createClient();
   const [{ data: blocks }, { data: attempts }, progressMap] = await Promise.all([
-    // RLS returns intros plus only the deepenings this student has unlocked.
+    // RLS returns intros and reading sections plus only the deepenings this student has unlocked.
     supabase
       .from("content_blocks")
       .select("id, type, title, body_md, unlock_level, sort_order")
@@ -123,6 +123,9 @@ export async function getMoment(subjectSlug: string, areaSlug: string, momentSlu
     generatorKey: summary.generators?.generator_key ?? null,
     taskCounts,
     intro: (blocks ?? []).find((b) => b.type === "intro")?.body_md ?? "",
+    readings: (blocks ?? [])
+      .filter((b) => b.type === "reading")
+      .map((b) => ({ id: b.id, title: b.title ?? "", body: b.body_md })),
     deepenings,
     stars: progressMap.get(summary.id)?.stars ?? 0,
     levelStats,
@@ -174,4 +177,40 @@ export async function getDailyGoal(): Promise<number> {
   const supabase = await createClient();
   const { data } = await supabase.from("settings").select("value").eq("key", "daily_goal_xp").maybeSingle();
   return typeof data?.value === "number" ? data.value : 50;
+}
+
+/** What a "Läs och svara" moment page needs beyond getMoment: milestones, writing tasks and sources. */
+export async function getReadMomentExtras(momentId: string, areaId: string, userId: string) {
+  const supabase = await createClient();
+  const admin = createAdminClient();
+  const [{ data: progress }, { data: writing }, { data: links }, { data: pasted }] = await Promise.all([
+    supabase
+      .from("moment_progress")
+      .select("read_at, quiz_passed_at, writing_approved_at")
+      .eq("user_id", userId)
+      .eq("moment_id", momentId)
+      .maybeSingle(),
+    // Writing tasks are admin-only (the rubric is secret); students get the prompt.
+    admin
+      .from("writing_tasks")
+      .select("id, prompt_md, min_chars")
+      .eq("moment_id", momentId)
+      .eq("status", "published")
+      .order("sort_order"),
+    supabase.from("sources").select("id, title, url").eq("area_id", areaId).eq("status", "ready").not("url", "is", null).order("sort_order"),
+    // Pasted texts have no link to send the student to, so their text is shown.
+    supabase.from("sources").select("id, title, content").eq("area_id", areaId).eq("status", "ready").is("url", null).order("sort_order"),
+  ]);
+  return {
+    milestones: {
+      read: Boolean(progress?.read_at),
+      quiz: Boolean(progress?.quiz_passed_at),
+      writing: Boolean(progress?.writing_approved_at),
+    },
+    writingTasks: writing ?? [],
+    sources: [
+      ...(links ?? []).map((s) => ({ id: s.id, title: s.title, url: s.url, content: null })),
+      ...(pasted ?? []).map((s) => ({ id: s.id, title: s.title, url: null, content: s.content })),
+    ],
+  };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Check, Eye, Lightbulb, RotateCcw, Sparkles, Star, X } from "lucide-react";
+import { ArrowRight, BookOpen, Check, ChevronDown, Eye, Lightbulb, RotateCcw, Sparkles, Star, X } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
 import { MathMarkdown } from "@/components/math/markdown";
@@ -47,6 +47,7 @@ export function PracticeSession({
   momentHref,
   firstTask,
   roundSize,
+  readings,
 }: {
   momentId: string;
   momentName: string;
@@ -55,6 +56,8 @@ export function PracticeSession({
   momentHref: string;
   firstTask: PublicTask;
   roundSize: number;
+  /** "Läs och svara": the reading text, openable while answering. Null for level moments. */
+  readings: { title: string; body: string }[] | null;
 }) {
   const [task, setTask] = useState(firstTask);
   const [seen, setSeen] = useState<string[]>([refKey(firstTask.ref)]);
@@ -117,6 +120,7 @@ export function PracticeSession({
       setInARow((n) => (res.status === "correct" ? n + 1 : 0));
       if (res.clearedLevel) setClearedLevel(res.clearedLevel);
       gainXp(res.xp);
+      if (res.quizPassed) setNews((items) => [p.quizPassed, ...items]);
     });
   }
 
@@ -186,7 +190,7 @@ export function PracticeSession({
       <div className="bg-dots flex min-h-dvh items-center justify-center px-4 py-10">
         <div className="w-full max-w-md border border-border bg-background p-6 sm:p-8">
           <p className="font-mono text-xs tracking-[0.2em] uppercase" style={{ color: readable(areaColor) }}>
-            {momentName} · {strings.levels[level]}
+            {readings ? momentName : `${momentName} · ${strings.levels[level]}`}
           </p>
           <h1 className="mt-2 text-4xl font-semibold tracking-tight">{p.roundDone}</h1>
           <p className="mt-6 font-mono text-5xl tabular-nums">
@@ -277,7 +281,8 @@ export function PracticeSession({
 
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 pt-8 pb-6 sm:px-6">
         <p className="font-mono text-xs tracking-[0.2em] uppercase" style={{ color: readable(areaColor) }}>
-          {areaName} · {strings.levels[level]} · {t.question(Math.min(answered + (result ? 0 : 1), roundSize), roundSize)}
+          {areaName} · {!readings && `${strings.levels[level]} · `}
+          {t.question(Math.min(answered + (result ? 0 : 1), roundSize), roundSize)}
         </p>
 
         {news.map((item) => (
@@ -296,6 +301,8 @@ export function PracticeSession({
             </div>
           </div>
         )}
+
+        {readings && <ReadingReference reference={task.reference} readings={readings} key={`ref-${refKey(task.ref)}`} />}
 
         <div
           key={refKey(task.ref)}
@@ -432,17 +439,19 @@ export function PracticeSession({
           </p>
         )}
 
-        {/* Help: hint first, then the answer */}
+        {/* Help: hint first, then the answer. Read moments show their reference up front instead of a hint. */}
         {!result && (
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={showHint}
-              disabled={pending || usedHint}
-              className="flex items-center gap-2 border border-border px-3 py-2 font-mono text-xs text-muted-foreground transition-colors hover:border-amber-400/60 hover:text-amber-300 disabled:opacity-40"
-            >
-              <Lightbulb className="size-3.5" /> {p.hint}
-            </button>
+            {!readings && (
+              <button
+                type="button"
+                onClick={showHint}
+                disabled={pending || usedHint}
+                className="flex items-center gap-2 border border-border px-3 py-2 font-mono text-xs text-muted-foreground transition-colors hover:border-amber-400/60 hover:text-amber-300 disabled:opacity-40"
+              >
+                <Lightbulb className="size-3.5" /> {p.hint}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => submit(true)}
@@ -563,6 +572,33 @@ export function PracticeSession({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** "Svaret finns i avsnittet …" plus the reading text, with that section opened. */
+function ReadingReference({ reference, readings }: { reference?: string; readings: { title: string; body: string }[] }) {
+  return (
+    <div className="flex flex-col gap-2">
+      {reference && (
+        <div className="flex items-start gap-2 text-sm text-muted-foreground">
+          <BookOpen className="mt-0.5 size-4 shrink-0 text-primary" />
+          <MathMarkdown className="[&_p]:m-0">{reference}</MathMarkdown>
+        </div>
+      )}
+      <details className="group border border-border">
+        <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-2.5 font-mono text-xs text-muted-foreground hover:text-foreground">
+          <ChevronDown className="size-4 transition-transform group-open:rotate-180" /> {strings.read.showText}
+        </summary>
+        <div className="max-h-[50vh] overflow-auto border-t border-border">
+          {readings.map((r) => (
+            <details key={r.title} open={Boolean(reference?.includes(r.title))} className="border-b border-border last:border-b-0">
+              <summary className="cursor-pointer list-none px-4 py-3 font-semibold">{r.title}</summary>
+              <MathMarkdown className="px-4 pb-5 text-[15px] leading-relaxed">{r.body}</MathMarkdown>
+            </details>
+          ))}
+        </div>
+      </details>
     </div>
   );
 }

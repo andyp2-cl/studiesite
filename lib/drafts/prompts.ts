@@ -38,8 +38,9 @@ sections: 3–4 reading sections that together are a clear, well-structured summ
 
 questions: 8–12 questions answerable from the reading sections alone, in the order the facts appear.
 - Ask only about what matters for understanding the moment and what a teacher would expect a student to remember: the central events, the most important people, causes and consequences, key terms and a few key years. Never ask about minor details such as the names of tutors or servants, exact days, or anecdotes. Prefer questions that check understanding over pure recall. At most two questions may ask for a year.
-- About two thirds of type "short": answered with one to three words (a name, a year, a place, a term). In "accepted", list every reasonable way to write the correct answer (e.g. "Poltava", "slaget vid Poltava", "vid Poltava"; for years just the year). Leave "keywords" empty unless the answer is a phrase; then put 1–2 essential words that must all appear.
-- The rest "choice" (3–4 plausible options, "correct_index" 0-based) or "true_false" ("correct_boolean").
+- Mix the types evenly for variety: about 40 % "short", 30 % "choice" and 30 % "true_false".
+- "short": answered with one to three words (a name, a year, a place, a term). In "accepted", list every reasonable way to write the correct answer (e.g. "Poltava", "slaget vid Poltava", "vid Poltava"; for years just the year). Leave "keywords" empty unless the answer is a phrase; then put 1–2 essential words that must all appear.
+- "choice": 3–4 plausible options, "correct_index" 0-based. "true_false": a clear statement, "correct_boolean"; make about half of them false.
 - Fill fields that do not apply to the type with empty arrays, 0 or false.
 - "section": the exact title of the reading section that contains the answer.
 - "explanation": one sentence shown after answering that says why the answer is right.

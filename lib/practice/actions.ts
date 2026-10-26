@@ -8,6 +8,7 @@ import { checkAnswer, type CheckResult, type RetryReason } from "@/lib/math/chec
 import { EXPLANATION_MIN_CHARS, EXPLANATION_XP, XP_FOR_LEVEL } from "@/lib/gamification";
 import { levelProgress, WINDOW } from "@/lib/progress";
 import { createRng } from "@/lib/random";
+import { reachMilestone } from "@/lib/read/progress";
 import { strings } from "@/lib/strings";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -32,6 +33,8 @@ export type PublicTask = {
   /** math: text field + symbol row; text: plain text field; choice / boolean: buttons. */
   input: "math" | "text" | "choice" | "boolean";
   choices?: { index: number; text: string }[];
+  /** "Läs och svara": where in the reading text the answer is, shown before answering. */
+  reference?: string;
 };
 
 export type SubmitResult =
@@ -45,6 +48,8 @@ export type SubmitResult =
       level: { correct: number; attempts: number };
       /** Set when this answer cleared the level (a new star). */
       clearedLevel: Level | null;
+      /** "Läs och svara": set when this answer passed the quiz (a new star). */
+      quizPassed: boolean;
       stars: number;
       /** XP for a correct answer; null when nothing was awarded (wrong, or answered before). */
       xp: XpAward | null;
@@ -70,12 +75,15 @@ async function loadPractice(momentId: unknown, level: unknown) {
   // RLS: only visible moments are returned. All levels are open to choose.
   const { data: moment } = await supabase
     .from("moments")
-    .select("id, source, generators(generator_key)")
+    .select("id, source, mode, generators(generator_key)")
     .eq("id", momentId)
     .maybeSingle();
   if (!moment) return null;
-  const generator = moment.source === "generator" ? getGenerator(moment.generators?.generator_key) : null;
-  if (moment.source === "generator" && !generator) return null;
+  // "Läs och svara" questions have no level; they are stored as level 1.
+  const read = moment.mode === "read";
+  if (read && level !== 1) return null;
+  const generator = !read && moment.source === "generator" ? getGenerator(moment.generators?.generator_key) : null;
+  if (!read && moment.source === "generator" && !generator) return null;
 
   const { data: progress } = await supabase
     .from("moment_progress")
@@ -84,7 +92,7 @@ async function loadPractice(momentId: unknown, level: unknown) {
     .eq("moment_id", moment.id)
     .maybeSingle();
 
-  return { profile, moment, generator, level, stars: progress?.stars ?? 0 };
+  return { profile, moment, generator, level, read, stars: progress?.stars ?? 0 };
 }
 
 type Practice = NonNullable<Awaited<ReturnType<typeof loadPractice>>>;
@@ -124,7 +132,7 @@ async function pickGeneratedTask(practice: Practice, seen: Set<string>): Promise
 async function pickBankTask(practice: Practice, seen: Set<string>): Promise<PublicTask | null> {
   const { data: tasks } = await createAdminClient()
     .from("tasks")
-    .select("id, type, prompt_md, choices")
+    .select("id, type, prompt_md, choices, hint_md")
     .eq("moment_id", practice.moment.id)
     .eq("level", practice.level)
     .eq("status", "published");
@@ -146,6 +154,7 @@ async function pickBankTask(practice: Practice, seen: Set<string>): Promise<Publ
     prompt: task.prompt_md,
     input: INPUT_FOR[task.type as TaskType],
     choices,
+    reference: practice.read ? task.hint_md?.trim() || undefined : undefined,
   };
 }
 
@@ -284,7 +293,14 @@ export async function submitAnswer(input: {
 
   let stars = practice.stars;
   let clearedLevel: Level | null = null;
-  if (progress.cleared && level > stars) {
+  let quizPassed = false;
+  if (practice.read) {
+    // 8 of the latest 10 answers passes the quiz: the second milestone.
+    if (progress.cleared && (await reachMilestone(profile.id, moment.id, "quiz_passed_at"))) {
+      quizPassed = true;
+      stars += 1;
+    }
+  } else if (progress.cleared && level > stars) {
     stars = level;
     clearedLevel = level;
     await admin
@@ -302,6 +318,7 @@ export async function submitAnswer(input: {
     solutionSteps: task.solutionSteps,
     level: { correct: progress.correct, attempts: progress.attempts },
     clearedLevel,
+    quizPassed,
     stars,
     xp,
   };
