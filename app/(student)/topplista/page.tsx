@@ -2,7 +2,7 @@ import { Crown, Flame } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/study/page-header";
 import { Avatar, SectionLabel } from "@/components/study/visuals";
-import { requireProfile } from "@/lib/auth/session";
+import { requireViewProfile } from "@/lib/auth/session";
 import { strings } from "@/lib/strings";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
@@ -16,7 +16,7 @@ const colorFor = (id: string) => AVATAR_COLORS[parseInt(id.slice(0, 8), 16) % AV
 export default async function LeaderboardPage({ searchParams }: PageProps<"/topplista">) {
   const { period } = await searchParams;
   const all = period === "all";
-  const profile = await requireProfile();
+  const profile = await requireViewProfile();
   const supabase = await createClient();
   const { data } = await supabase.rpc("get_leaderboard", { p_period: all ? "all" : "week" });
   const rows = data ?? [];

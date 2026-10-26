@@ -288,6 +288,11 @@ export const strings = {
       },
     },
   },
+  viewAs: {
+    label: "Visa som",
+    me: "Mig",
+    note: "Svar du ger här sparas på ditt eget konto.",
+  },
   nav: {
     home: "Hem",
     subjects: "Ämnen",

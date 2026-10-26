@@ -1,7 +1,7 @@
 import { ArrowRight, Coins, Flame } from "lucide-react";
 import Link from "next/link";
 import { AreaMark, BlockBar, Chip, SectionLabel, Stars, readable } from "@/components/study/visuals";
-import { requireProfile } from "@/lib/auth/session";
+import { requireViewProfile } from "@/lib/auth/session";
 import { getContinueItems, getDailyGoal, getProgressMap, getSubjectsWithAreas, getTodayXp } from "@/lib/data/content";
 import { profileStreak } from "@/lib/gamification";
 import { greetingFor } from "@/lib/greeting";
@@ -11,7 +11,7 @@ import { stockholmDate } from "@/lib/time";
 const t = strings.home;
 
 export default async function Home() {
-  const profile = await requireProfile();
+  const profile = await requireViewProfile();
   const [continueItems, subjects, progress, todayXp, dailyGoal] = await Promise.all([
     getContinueItems(profile.id),
     getSubjectsWithAreas(),

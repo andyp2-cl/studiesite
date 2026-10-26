@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/study/page-header";
 import { StartPanel } from "@/components/practice/start-panel";
 import { ReadMoment } from "@/components/study/read-moment";
 import { SectionLabel, Stars, readable } from "@/components/study/visuals";
-import { requireProfile } from "@/lib/auth/session";
+import { requireViewProfile } from "@/lib/auth/session";
 import { getMoment, getReadMomentExtras } from "@/lib/data/content";
 import { getGenerator } from "@/lib/generators";
 import type { Level } from "@/lib/generators/types";
@@ -16,7 +16,7 @@ const t = strings.moment;
 
 export default async function MomentPage({ params }: PageProps<"/amnen/[subject]/[area]/[moment]">) {
   const { subject: s, area: a, moment: m } = await params;
-  const profile = await requireProfile();
+  const profile = await requireViewProfile();
   const data = await getMoment(s, a, m, profile.id);
   if (!data) notFound();
 

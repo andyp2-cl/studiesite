@@ -1,12 +1,12 @@
 import { AreaGrid } from "@/components/study/area-grid";
 import { PageHeader } from "@/components/study/page-header";
 import { SectionLabel } from "@/components/study/visuals";
-import { requireProfile } from "@/lib/auth/session";
+import { requireViewProfile } from "@/lib/auth/session";
 import { getProgressMap, getSubjectsWithAreas } from "@/lib/data/content";
 import { strings } from "@/lib/strings";
 
 export default async function SubjectsPage() {
-  const profile = await requireProfile();
+  const profile = await requireViewProfile();
   const [subjects, progress] = await Promise.all([getSubjectsWithAreas(), getProgressMap(profile.id)]);
 
   return (

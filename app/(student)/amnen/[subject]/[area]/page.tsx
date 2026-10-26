@@ -4,13 +4,13 @@ import { notFound } from "next/navigation";
 import { starsFor } from "@/components/study/area-grid";
 import { PageHeader } from "@/components/study/page-header";
 import { AreaMark, BlockBar, SectionLabel, Stars, readable } from "@/components/study/visuals";
-import { requireProfile } from "@/lib/auth/session";
+import { requireViewProfile } from "@/lib/auth/session";
 import { getArea, getProgressMap } from "@/lib/data/content";
 import { strings } from "@/lib/strings";
 
 export default async function AreaPage({ params }: PageProps<"/amnen/[subject]/[area]">) {
   const { subject: subjectSlug, area: areaSlug } = await params;
-  const profile = await requireProfile();
+  const profile = await requireViewProfile();
   const [found, progress] = await Promise.all([getArea(subjectSlug, areaSlug), getProgressMap(profile.id)]);
   if (!found) notFound();
   const { subject, area } = found;

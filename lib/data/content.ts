@@ -25,11 +25,12 @@ export const getSubjectsWithAreas = cache(async () => {
   const { data } = await supabase
     .from("subjects")
     .select(
-      "id, slug, name, description, color, icon, areas(id, slug, name, description, color, icon, sort_order, is_hidden, moments(id, is_hidden))",
+      "id, slug, name, description, color, icon, is_hidden, areas(id, slug, name, description, color, icon, sort_order, is_hidden, moments(id, is_hidden))",
     )
     .order("sort_order")
     .order("sort_order", { referencedTable: "areas" });
-  return (data ?? []).map((s) => ({
+  // Admins can read hidden rows, so filter here: the student pages show what a student sees.
+  return (data ?? []).filter((s) => !s.is_hidden).map((s) => ({
     ...s,
     areas: s.areas
       .filter((a) => !a.is_hidden)

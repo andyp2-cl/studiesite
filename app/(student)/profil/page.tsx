@@ -2,12 +2,12 @@ import { Shield } from "lucide-react";
 import Link from "next/link";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { Avatar } from "@/components/study/visuals";
-import { requireProfile } from "@/lib/auth/session";
+import { requireViewProfile } from "@/lib/auth/session";
 import { strings } from "@/lib/strings";
 
 // Minimal profile for step 3 (logout). The full profile comes in steps 4 and 6.
 export default async function ProfilePage() {
-  const profile = await requireProfile();
+  const profile = await requireViewProfile();
 
   return (
     <main>

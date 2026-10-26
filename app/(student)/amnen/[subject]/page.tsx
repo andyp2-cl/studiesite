@@ -1,13 +1,13 @@
 import { notFound } from "next/navigation";
 import { AreaGrid } from "@/components/study/area-grid";
 import { PageHeader } from "@/components/study/page-header";
-import { requireProfile } from "@/lib/auth/session";
+import { requireViewProfile } from "@/lib/auth/session";
 import { getProgressMap, getSubjectsWithAreas } from "@/lib/data/content";
 import { strings } from "@/lib/strings";
 
 export default async function SubjectPage({ params }: PageProps<"/amnen/[subject]">) {
   const { subject: slug } = await params;
-  const profile = await requireProfile();
+  const profile = await requireViewProfile();
   const [subjects, progress] = await Promise.all([getSubjectsWithAreas(), getProgressMap(profile.id)]);
   const subject = subjects.find((s) => s.slug === slug);
   if (!subject) notFound();
