@@ -9,6 +9,7 @@ import { BlockBar, Stars, readable } from "@/components/study/visuals";
 import { levelNameIndex } from "@/lib/gamification";
 import { LEVELS, type Level } from "@/lib/generators/types";
 import { inputToTex } from "@/lib/math/input-to-tex";
+import type { DailyMixStep } from "@/lib/data/content";
 import { getHint, nextTask, saveExplanation, submitAnswer, type PublicTask, type SubmitResult } from "@/lib/practice/actions";
 import { refKey, ROUND_SIZES } from "@/lib/practice/ref";
 import { strings } from "@/lib/strings";
@@ -40,15 +41,11 @@ function outcomeLabel(o: Outcome): string {
 }
 
 export function PracticeSession({
-  momentId,
-  momentName,
-  areaName,
-  areaColor,
-  momentHref,
   firstTask,
   roundSize,
   readings,
-  helpLinks,
+  mix,
+  ...firstMoment
 }: {
   momentId: string;
   momentName: string;
@@ -61,7 +58,11 @@ export function PracticeSession({
   readings: { title: string; body: string }[] | null;
   /** Free study sites searched for this moment, offered after two misses in a row. */
   helpLinks: { label: string; url: string }[];
+  /** "Dagens mix": one step per task, each with its own moment and level. */
+  mix?: DailyMixStep[];
 }) {
+  const [step, setStep] = useState(0);
+  const { momentId, momentName, areaName, areaColor, momentHref, helpLinks } = mix?.[step] ?? firstMoment;
   const [task, setTask] = useState(firstTask);
   const [seen, setSeen] = useState<string[]>([refKey(firstTask.ref)]);
   const [value, setValue] = useState("");
@@ -151,9 +152,11 @@ export function PracticeSession({
 
   function next() {
     if (answered >= roundSize) return setFinished(true);
+    const target = mix?.[answered] ?? { momentId, level };
     startTransition(async () => {
-      const upcoming = await nextTask(momentId, level, seen);
+      const upcoming = await nextTask(target.momentId, target.level, seen);
       if (!upcoming) return setNotice(p.error);
+      if (mix) setStep(answered);
       setTask(upcoming);
       setSeen((keys) => [...keys, refKey(upcoming.ref)]);
       setValue("");
@@ -195,7 +198,7 @@ export function PracticeSession({
       <div className="bg-dots flex min-h-dvh items-center justify-center px-4 py-10">
         <div className="w-full max-w-md border border-border bg-background p-6 sm:p-8">
           <p className="font-mono text-xs tracking-[0.2em] uppercase" style={{ color: readable(areaColor) }}>
-            {readings ? momentName : `${momentName} · ${strings.levels[level]}`}
+            {mix ? strings.home.dailyMix : readings ? momentName : `${momentName} · ${strings.levels[level]}`}
           </p>
           <h1 className="mt-2 text-4xl font-semibold tracking-tight">{p.roundDone}</h1>
           <p className="mt-6 font-mono text-5xl tabular-nums">
@@ -222,22 +225,33 @@ export function PracticeSession({
             ))}
           </ol>
 
-          {stars !== null && <Stars count={stars} className="mt-4 block text-2xl" />}
+          {stars !== null && !mix && <Stars count={stars} className="mt-4 block text-2xl" />}
 
           <div className="mt-8 flex flex-col gap-2">
-            <MoreRounds
-              momentId={momentId}
-              current={level}
-              suggested={nextLevel ?? level}
-              roundSize={roundSize}
-              withLevels={!readings}
-            />
-            <Link
-              href={momentHref}
-              className="flex h-12 items-center justify-center border border-border font-mono text-sm text-muted-foreground hover:text-foreground"
-            >
-              {p.backToMoment}
-            </Link>
+            {mix ? (
+              <Link
+                href="/"
+                className="flex h-12 items-center justify-center gap-2 bg-primary font-mono text-sm font-semibold text-primary-foreground"
+              >
+                {p.backHome} <ArrowRight className="size-4" />
+              </Link>
+            ) : (
+              <>
+                <MoreRounds
+                  momentId={momentId}
+                  current={level}
+                  suggested={nextLevel ?? level}
+                  roundSize={roundSize}
+                  withLevels={!readings}
+                />
+                <Link
+                  href={momentHref}
+                  className="flex h-12 items-center justify-center border border-border font-mono text-sm text-muted-foreground hover:text-foreground"
+                >
+                  {p.backToMoment}
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -257,7 +271,7 @@ export function PracticeSession({
     <div className="flex min-h-dvh w-full flex-col">
       <div className="flex h-14 items-center gap-4 border-b border-border px-4 sm:px-6">
         <Link
-          href={momentHref}
+          href={mix ? "/" : momentHref}
           className="grid size-8 place-items-center border border-border text-muted-foreground hover:text-foreground"
           aria-label={t.close}
         >
@@ -271,7 +285,8 @@ export function PracticeSession({
 
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 pt-8 pb-6 sm:px-6">
         <p className="font-mono text-xs tracking-[0.2em] uppercase" style={{ color: readable(areaColor) }}>
-          {areaName} · {!readings && `${strings.levels[level]} · `}
+          {areaName} · {mix && `${momentName} · `}
+          {!readings && `${strings.levels[level]} · `}
           {t.question(Math.min(answered + (result ? 0 : 1), roundSize), roundSize)}
         </p>
 
@@ -561,7 +576,13 @@ export function PracticeSession({
               (status === "wrong" || status === "revealed") && "bg-foreground text-background",
             )}
           >
-            {!result ? t.check : answered >= roundSize ? p.roundDone : status === "correct" ? t.next : t.similar}
+            {!result
+              ? t.check
+              : answered >= roundSize
+                ? p.roundDone
+                : status === "correct" || (mix && mix[answered].momentId !== momentId)
+                  ? t.next
+                  : t.similar}
             {result && <ArrowRight className="size-4" />}
           </button>
         </div>

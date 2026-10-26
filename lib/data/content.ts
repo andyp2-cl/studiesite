@@ -1,6 +1,10 @@
 import "server-only";
 import { cache } from "react";
-import type { Level } from "@/lib/generators/types";
+import { randomInt } from "node:crypto";
+import { isLevel, type Level } from "@/lib/generators/types";
+import { planMix, type MixAttempt } from "@/lib/practice/mix";
+import { createRng } from "@/lib/random";
+import { searchLinks } from "@/lib/sources/wikipedia";
 import { levelProgress, REQUIRED_CORRECT } from "@/lib/progress";
 import { startOfStockholmDay } from "@/lib/time";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -228,3 +232,50 @@ export async function getReadMomentExtras(momentId: string, areaId: string, user
     ],
   };
 }
+
+/** How many recent answers "Dagens mix" looks at. */
+const MIX_HISTORY = 300;
+
+/** "Dagens mix": 10 steps over practised level moments, with what the practice page shows for each. */
+export async function getDailyMix(userId: string) {
+  const supabase = await createClient();
+  const { data: recent } = await supabase
+    .from("attempts")
+    .select("moment_id, level, correct, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(MIX_HISTORY);
+  const ids = [...new Set((recent ?? []).map((a) => a.moment_id))];
+  if (ids.length === 0) return [];
+
+  // "Läs och svara" moments need their reading text, so they stay out of the mix.
+  const { data: moments } = await supabase
+    .from("moments")
+    .select("id, slug, name, is_hidden, areas(slug, name, color, is_hidden, subjects(slug, name, is_hidden))")
+    .in("id", ids)
+    .eq("mode", "levels");
+  const visible = new Map(
+    (moments ?? [])
+      .filter((m) => m.areas?.subjects && !m.is_hidden && !m.areas.is_hidden && !m.areas.subjects.is_hidden)
+      .map((m) => [m.id, m]),
+  );
+
+  const attempts: MixAttempt[] = (recent ?? [])
+    .filter((a) => visible.has(a.moment_id) && isLevel(a.level))
+    .map((a) => ({ momentId: a.moment_id, level: a.level as Level, correct: a.correct, createdAt: new Date(a.created_at) }));
+
+  return planMix(attempts, new Date(), createRng(randomInt(0, 2 ** 31 - 1))).map((step) => {
+    const m = visible.get(step.momentId)!;
+    const area = m.areas!;
+    return {
+      ...step,
+      momentName: m.name,
+      areaName: area.name,
+      areaColor: area.color,
+      momentHref: `/amnen/${area.subjects!.slug}/${area.slug}/${m.slug}`,
+      helpLinks: searchLinks(m.name, /matem/i.test(area.subjects!.name)),
+    };
+  });
+}
+
+export type DailyMixStep = Awaited<ReturnType<typeof getDailyMix>>[number];

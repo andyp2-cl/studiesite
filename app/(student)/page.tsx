@@ -1,4 +1,4 @@
-import { ArrowRight, Coins, Flame } from "lucide-react";
+import { ArrowRight, Coins, Flame, Shuffle } from "lucide-react";
 import Link from "next/link";
 import { AreaMark, BlockBar, Chip, SectionLabel, Stars, readable } from "@/components/study/visuals";
 import { requireViewProfile } from "@/lib/auth/session";
@@ -71,6 +71,27 @@ export default async function Home() {
                 </Link>
               ))}
             </div>
+          )}
+        </section>
+
+        <section>
+          <SectionLabel>{t.dailyMix}</SectionLabel>
+          {continueItems.length === 0 ? (
+            <p className="border border-dashed border-border p-5 text-sm text-muted-foreground">{t.mixEmpty}</p>
+          ) : (
+            <Link
+              href="/mix"
+              className="group bg-dots flex flex-col gap-4 border border-border p-5 transition-colors hover:border-primary sm:flex-row sm:items-center"
+            >
+              <Shuffle className="size-8 shrink-0 text-primary" />
+              <span className="flex-1">
+                <span className="block text-lg font-semibold">{t.mixTitle}</span>
+                <span className="text-sm text-muted-foreground">{t.dailyMixDescription}</span>
+              </span>
+              <span className="flex h-11 items-center justify-center gap-2 bg-primary px-5 font-mono text-sm font-semibold text-primary-foreground">
+                {t.startMix} <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+              </span>
+            </Link>
           )}
         </section>
 

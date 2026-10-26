@@ -11,12 +11,12 @@ Uppdateras vid varje commit. Senast: 2026-10-26.
 - AI används bara i admin (utkast till frågor), loggat i `ai_calls` med budgettak.
 - Admin: innehåll, användare (årskurs, dagsmål, godkäntgräns, lösenord), statistik, inställningar.
 - Monstersamling (ersatte belöningsbutiken): 60 monster i fyra sällsyntheter, överraskningspaket för mynt.
+- Dagens mix (`/mix`): 10 uppgifter från upp till 4 övade moment, viktade mot nyliga fel och tid sedan senaste övning. "Läs och svara"-moment ingår inte.
 
 ## På gång
 
-1. Dagens mix: 10 uppgifter viktade mot moment med nyliga fel eller som inte övats på länge.
-2. Märken, data: utdelningsregler mot tabellerna `achievements` och `user_achievements`.
-3. Märken, visning: märken på profilen och notis vid nytt märke.
+1. Märken, data: utdelningsregler mot tabellerna `achievements` och `user_achievements`.
+2. Märken, visning: märken på profilen och notis vid nytt märke.
 
 ## Senare
 
@@ -26,4 +26,4 @@ Uppdateras vid varje commit. Senast: 2026-10-26.
 
 ## Kända brister
 
-- Inga kända just nu.
+- Dagens mix är inte provkörd inloggad av Claude, bara via tester och typkontroll.
