@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { MathMarkdown } from "@/components/math/markdown";
 import { PageHeader } from "@/components/study/page-header";
 import { StartPanel } from "@/components/practice/start-panel";
+import { LearnMore } from "@/components/study/learn-more";
 import { ReadMoment } from "@/components/study/read-moment";
 import { SectionLabel, Stars, readable } from "@/components/study/visuals";
 import { requireViewProfile } from "@/lib/auth/session";
@@ -10,6 +11,7 @@ import { getMoment, getReadMomentExtras } from "@/lib/data/content";
 import { getGenerator } from "@/lib/generators";
 import type { Level } from "@/lib/generators/types";
 import { passCorrectFor, suggestedLevel } from "@/lib/progress";
+import { searchLinks } from "@/lib/sources/wikipedia";
 import { strings } from "@/lib/strings";
 
 const t = strings.moment;
@@ -23,6 +25,7 @@ export default async function MomentPage({ params }: PageProps<"/amnen/[subject]
   const { subject, area, moment, intro, deepenings, stars, levelStats } = data;
   const read = moment.mode === "read" ? await getReadMomentExtras(moment.id, area.id, profile.id) : null;
   // Generator moments can always be practised; task-bank moments need published tasks at the level.
+  const learnMore = searchLinks(moment.name, /matem/i.test(subject.name));
   const hasTasks = (level: Level) =>
     data.source === "generator" ? Boolean(getGenerator(data.generatorKey)) : data.taskCounts[level] > 0;
 
@@ -107,6 +110,7 @@ export default async function MomentPage({ params }: PageProps<"/amnen/[subject]
             )}
           </>
         )}
+        <LearnMore links={learnMore} />
       </div>
     </main>
   );

@@ -398,6 +398,9 @@ export const strings = {
     starsTotal: (got: number, max: number) => `${got} av ${max} stjärnor`,
   },
   moment: {
+    learnMore: "Lär dig mer",
+    learnMoreHelp: "Gratis sidor med förklaringar och filmer om det här. Öppnas i en ny flik.",
+    searchOn: (site: string) => `Sök på ${site}`,
     kind: "Moment",
     intro: "Introduktion",
     levels: "Nivåer",
@@ -431,6 +434,14 @@ export const strings = {
     showText: "Visa texten",
   },
   practice: {
+    stuck: {
+      title: "Två fel i rad – ingen fara!",
+      readAgain: "Läs avsnittet som frågan hänvisar till en gång till innan du svarar igen.",
+      math: "Titta på lösningen ovan, prova en lättare nivå eller se en förklaring någon annanstans.",
+      toText: "Tillbaka till texten",
+      easier: (level: number) => `Prova nivå ${level}`,
+      lookAt: (site: string) => `Förklaring på ${site}`,
+    },
     roundDone: "Rundan klar!",
     roundScore: (correct: number, total: number) => `${correct} av ${total} rätt`,
     again: "Kör en runda till",

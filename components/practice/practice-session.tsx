@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, BookOpen, Check, ChevronDown, Eye, Lightbulb, RotateCcw, Sparkles, Star, X } from "lucide-react";
+import { ArrowRight, BookOpen, Check, ChevronDown, ExternalLink, Eye, LifeBuoy, Lightbulb, RotateCcw, Sparkles, Star, X } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
 import { MathMarkdown } from "@/components/math/markdown";
@@ -48,6 +48,7 @@ export function PracticeSession({
   firstTask,
   roundSize,
   readings,
+  helpLinks,
 }: {
   momentId: string;
   momentName: string;
@@ -58,6 +59,8 @@ export function PracticeSession({
   roundSize: number;
   /** "Läs och svara": the reading text, openable while answering. Null for level moments. */
   readings: { title: string; body: string }[] | null;
+  /** Free study sites searched for this moment, offered after two misses in a row. */
+  helpLinks: { label: string; url: string }[];
 }) {
   const [task, setTask] = useState(firstTask);
   const [seen, setSeen] = useState<string[]>([refKey(firstTask.ref)]);
@@ -69,6 +72,7 @@ export function PracticeSession({
   const [explanationSaved, setExplanationSaved] = useState(false);
   const [outcomes, setOutcomes] = useState<Outcome[]>([]);
   const [inARow, setInARow] = useState(0);
+  const [missesInARow, setMissesInARow] = useState(0);
   const [clearedLevel, setClearedLevel] = useState<Level | null>(null);
   const [stars, setStars] = useState<number | null>(null);
   const [roundXp, setRoundXp] = useState(0);
@@ -118,6 +122,7 @@ export function PracticeSession({
       setOutcomes((all) => [...all, { status: res.status, usedHint }]);
       setStars(res.stars);
       setInARow((n) => (res.status === "correct" ? n + 1 : 0));
+      setMissesInARow((n) => (res.status === "correct" ? 0 : n + 1));
       if (res.clearedLevel) setClearedLevel(res.clearedLevel);
       gainXp(res.xp);
       if (res.quizPassed) setNews((items) => [p.quizPassed, ...items]);
@@ -520,6 +525,10 @@ export function PracticeSession({
           </div>
         )}
 
+        {result && result.status !== "correct" && missesInARow >= 2 && (
+          <StuckTip read={Boolean(readings)} momentHref={momentHref} momentId={momentId} level={level} links={helpLinks} />
+        )}
+
         {result && result.attemptId && result.status !== "revealed" && (
           <div className="flex flex-col gap-2">
             <label htmlFor="explain" className="flex items-baseline justify-between">
@@ -577,6 +586,49 @@ export function PracticeSession({
 }
 
 /** "Svaret finns i avsnittet …" plus the reading text, with that section opened. */
+/** After two misses in a row: point back to the text, a lower level, or a free explanation elsewhere. */
+function StuckTip({
+  read,
+  momentHref,
+  momentId,
+  level,
+  links,
+}: {
+  read: boolean;
+  momentHref: string;
+  momentId: string;
+  level: Level;
+  links: { label: string; url: string }[];
+}) {
+  const s = p.stuck;
+  return (
+    <div className="flex flex-col gap-2 border border-primary/40 bg-primary/[0.05] p-4 text-sm">
+      <p className="flex items-center gap-2 font-semibold">
+        <LifeBuoy className="size-4 text-primary" /> {s.title}
+      </p>
+      <p className="text-muted-foreground">{read ? s.readAgain : s.math}</p>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs">
+        {read ? (
+          <Link href={`${momentHref}#las`} className="text-primary hover:underline">
+            {s.toText}
+          </Link>
+        ) : (
+          level > 1 && (
+            <Link href={`/ova/${momentId}?niva=${level - 1}`} className="text-primary hover:underline">
+              {s.easier(level - 1)}
+            </Link>
+          )
+        )}
+        {links.map((l) => (
+          <a key={l.label} href={l.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-primary">
+            {s.lookAt(l.label)} <ExternalLink className="size-3" />
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ReadingReference({ reference, readings }: { reference?: string; readings: { title: string; body: string }[] }) {
   return (
     <div className="flex flex-col gap-2">

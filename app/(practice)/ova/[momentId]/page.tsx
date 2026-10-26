@@ -3,6 +3,7 @@ import { PracticeSession } from "@/components/practice/practice-session";
 import { ROUND_SIZES } from "@/lib/practice/ref";
 import { isLevel, type Level } from "@/lib/generators/types";
 import { nextTask } from "@/lib/practice/actions";
+import { searchLinks } from "@/lib/sources/wikipedia";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function PracticePage({ params, searchParams }: PageProps<"/ova/[momentId]">) {
@@ -14,7 +15,7 @@ export default async function PracticePage({ params, searchParams }: PageProps<"
   const supabase = await createClient();
   const { data: moment } = await supabase
     .from("moments")
-    .select("id, slug, name, mode, areas(slug, name, color, subjects(slug))")
+    .select("id, slug, name, mode, areas(slug, name, color, subjects(slug, name))")
     .eq("id", momentId)
     .maybeSingle();
   if (!moment?.areas?.subjects) notFound();
@@ -45,6 +46,7 @@ export default async function PracticePage({ params, searchParams }: PageProps<"
       firstTask={firstTask}
       roundSize={roundSize}
       readings={readings ? readings.map((r) => ({ title: r.title ?? "", body: r.body_md })) : null}
+      helpLinks={searchLinks(moment.name, /matem/i.test(moment.areas.subjects.name))}
     />
   );
 }
