@@ -423,6 +423,7 @@ export type Database = {
         Row: {
           avatar: string | null
           coins: number
+          collection_theme: string
           created_at: string
           daily_goal_xp: number | null
           display_name: string
@@ -444,6 +445,7 @@ export type Database = {
         Insert: {
           avatar?: string | null
           coins?: number
+          collection_theme?: string
           created_at?: string
           daily_goal_xp?: number | null
           display_name: string
@@ -465,6 +467,7 @@ export type Database = {
         Update: {
           avatar?: string | null
           coins?: number
+          collection_theme?: string
           created_at?: string
           daily_goal_xp?: number | null
           display_name?: string
@@ -827,6 +830,38 @@ export type Database = {
           },
           {
             foreignKeyName: "user_achievements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_cards: {
+        Row: {
+          card_id: number
+          earned_at: string
+          milestone: string
+          theme: string
+          user_id: string
+        }
+        Insert: {
+          card_id: number
+          earned_at?: string
+          milestone: string
+          theme: string
+          user_id: string
+        }
+        Update: {
+          card_id?: number
+          earned_at?: string
+          milestone?: string
+          theme?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_cards_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
