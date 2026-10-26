@@ -11,9 +11,9 @@ const t = strings.admin;
 
 const ITEMS = [
   { href: "/admin/innehall", label: t.nav.content, icon: LayoutGrid, ready: true },
-  { href: "/admin/anvandare", label: t.nav.users, icon: Users, ready: false },
+  { href: "/admin/anvandare", label: t.nav.users, icon: Users, ready: true },
   { href: "/admin/statistik", label: t.nav.stats, icon: ChartColumn, ready: true },
-  { href: "/admin/installningar", label: t.nav.settings, icon: Settings, ready: false },
+  { href: "/admin/installningar", label: t.nav.settings, icon: Settings, ready: true },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
