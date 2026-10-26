@@ -1,6 +1,6 @@
 "use client";
 
-import { House, LayoutGrid, Shield, ShoppingBag, Trophy, User } from "lucide-react";
+import { House, LayoutGrid, Shield, Sparkles, Trophy, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { strings } from "@/lib/strings";
@@ -36,7 +36,7 @@ export function AppShell({
     { href: `${basePath}/`, label: strings.nav.home, icon: House },
     { href: `${basePath}/amnen`, label: strings.nav.subjects, icon: LayoutGrid },
     { href: `${basePath}/topplista`, label: strings.nav.leaderboard, icon: Trophy },
-    { href: `${basePath}/butik`, label: strings.nav.shop, icon: ShoppingBag },
+    { href: `${basePath}/samling`, label: strings.nav.collection, icon: Sparkles },
     { href: `${basePath}/profil`, label: strings.nav.profile, icon: User },
   ];
   const isActive = (href: string) =>

@@ -834,6 +834,35 @@ export type Database = {
           },
         ]
       }
+      user_monsters: {
+        Row: {
+          count: number
+          first_at: string
+          monster_id: number
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          first_at?: string
+          monster_id: number
+          user_id: string
+        }
+        Update: {
+          count?: number
+          first_at?: string
+          monster_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_monsters_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       writing_submissions: {
         Row: {
           ai_call_id: string | null

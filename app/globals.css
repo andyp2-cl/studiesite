@@ -154,6 +154,8 @@
   --animate-correct: correct-bounce 450ms cubic-bezier(0.34, 1.56, 0.64, 1);
   --animate-shake: shake 400ms ease-in-out;
   --animate-xp-float: xp-float 1.2s ease-out forwards;
+  --animate-pack-shake: pack-shake 700ms ease-in-out infinite;
+  --animate-pop-in: pop-in 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes correct-bounce {
@@ -172,6 +174,17 @@
   0% { opacity: 0; transform: translateY(8px) scale(0.8); }
   20% { opacity: 1; transform: translateY(0) scale(1.1); }
   100% { opacity: 0; transform: translateY(-48px) scale(1); }
+}
+
+@keyframes pack-shake {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-6deg) scale(1.03); }
+  75% { transform: rotate(6deg) scale(1.03); }
+}
+
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0.3) rotate(-12deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
 }
 
 @media (prefers-reduced-motion: reduce) {

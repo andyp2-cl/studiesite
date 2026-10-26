@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ChartColumn, Gift, LayoutGrid, Settings, Users } from "lucide-react";
+import { ArrowLeft, ChartColumn, LayoutGrid, Settings, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/shell/app-shell";
@@ -13,7 +13,6 @@ const ITEMS = [
   { href: "/admin/innehall", label: t.nav.content, icon: LayoutGrid, ready: true },
   { href: "/admin/anvandare", label: t.nav.users, icon: Users, ready: true },
   { href: "/admin/statistik", label: t.nav.stats, icon: ChartColumn, ready: true },
-  { href: "/admin/beloningar", label: t.nav.rewards, icon: Gift, ready: true },
   { href: "/admin/installningar", label: t.nav.settings, icon: Settings, ready: true },
 ];
 
