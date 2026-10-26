@@ -3,7 +3,7 @@
 import { ArrowLeft, ChartColumn, LayoutGrid, Settings, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Logo } from "@/components/shell/app-shell";
+import { Logo, SidebarLogout } from "@/components/shell/app-shell";
 import { strings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +21,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-dvh w-full flex-col md:flex-row">
-      <aside className="border-b border-border md:sticky md:top-0 md:h-dvh md:w-56 md:shrink-0 md:border-r md:border-b-0">
+      <aside className="border-b border-border md:sticky md:top-0 md:flex md:h-dvh md:w-56 md:shrink-0 md:flex-col md:border-r md:border-b-0">
         <div className="flex h-14 items-center justify-between border-b border-border px-5">
           <Link href="/admin">
             <Logo />
@@ -61,6 +61,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             {t.toStudentView}
           </Link>
         </nav>
+        <div className="hidden md:flex md:flex-1 md:flex-col">
+          <SidebarLogout />
+        </div>
       </aside>
       <div className="min-w-0 flex-1">{children}</div>
     </div>

@@ -1,8 +1,9 @@
 "use client";
 
-import { House, LayoutGrid, Shield, Sparkles, Trophy, User } from "lucide-react";
+import { House, LayoutGrid, LogOut, Shield, Sparkles, Trophy, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "@/lib/auth/actions";
 import { strings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +15,21 @@ export function Logo() {
       <span className="text-primary">S_</span>
       <span className="lowercase">{strings.app.name}</span>
     </span>
+  );
+}
+
+/** "Logga ut" at the bottom of a sidebar (on mobile it is on the profile page). */
+export function SidebarLogout() {
+  return (
+    <form action={signOut} className="mt-auto border-t border-border">
+      <button
+        type="submit"
+        className="flex w-full items-center gap-3 px-5 py-3 font-mono text-[13px] text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <LogOut className="size-4" />
+        {strings.profile.logout}
+      </button>
+    </form>
   );
 }
 
@@ -72,6 +88,7 @@ export function AppShell({
             </Link>
           )}
         </nav>
+        <SidebarLogout />
       </aside>
 
       <div className="min-w-0 flex-1 pb-20 md:pb-0">{children}</div>
