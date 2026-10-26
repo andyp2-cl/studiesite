@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { levelProgress, suggestedLevel } from "@/lib/progress";
+import { levelProgress, readStars, suggestedLevel } from "@/lib/progress";
 
 const attempts = (pattern: string) => [...pattern].map((c) => c === "1");
 
@@ -28,5 +28,14 @@ describe("suggestedLevel", () => {
     expect(suggestedLevel(0)).toBe(1);
     expect(suggestedLevel(1)).toBe(2);
     expect(suggestedLevel(3)).toBe(3);
+  });
+});
+
+describe("readStars", () => {
+  it("gives one star per milestone", () => {
+    expect(readStars({ read: false, quiz: false, writing: false })).toBe(0);
+    expect(readStars({ read: true, quiz: false, writing: false })).toBe(1);
+    expect(readStars({ read: true, quiz: true, writing: true })).toBe(3);
+    expect(readStars({ read: false, quiz: true, writing: false })).toBe(1);
   });
 });
