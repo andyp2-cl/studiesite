@@ -37,7 +37,7 @@ export default async function Home() {
           </div>
           <h1 className="text-4xl font-semibold tracking-tight sm:text-6xl">
             {greetingFor(new Date())},{" "}
-            <span className="font-serif font-normal text-primary italic">{profile.display_name}</span>.
+            <span className="text-primary">{profile.display_name}</span>.
           </h1>
           <div className="mt-8 max-w-md">
             <div className="mb-2 flex items-baseline justify-between font-mono text-xs">
