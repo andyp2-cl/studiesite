@@ -77,7 +77,7 @@ export function isWithinBudget(spentUsd: number, budgetUsd: number): boolean {
   return budgetUsd > 0 && spentUsd < budgetUsd;
 }
 
-async function monthlyBudgetUsd(): Promise<number> {
+export async function monthlyBudgetUsd(): Promise<number> {
   const { data } = await createAdminClient()
     .from("settings")
     .select("value")
