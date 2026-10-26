@@ -141,7 +141,7 @@ export const strings = {
       questions: "Frågor",
       questionsHelp: "Frågor som rättas automatiskt: flerval, sant/falskt, fritext med godkända svar eller nyckelord, eller tal. Eleven får 5 eller 10 av dem per runda.",
       newQuestion: "Ny fråga",
-      draftsCount: (questions: number, writing: number) => `${questions} frågor och ${writing} skrivuppgifter är utkast.`,
+      draftsCount: (questions: number, writing: number) => `${questions} frågor och ${writing} skrivuppgifter är utkast. Eleven ser dem inte förrän du publicerar dem.`,
       publishAll: "Publicera alla och visa momentet",
       deleteDrafts: "Ta bort alla utkast",
       confirmPublishAll: "Publicera alla utkast i momentet och visa det för eleverna?",
