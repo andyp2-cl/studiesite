@@ -1,6 +1,6 @@
 "use client";
 
-import { House, LayoutGrid, Shield, Trophy, User } from "lucide-react";
+import { House, LayoutGrid, Shield, ShoppingBag, Trophy, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { strings } from "@/lib/strings";
@@ -36,6 +36,7 @@ export function AppShell({
     { href: `${basePath}/`, label: strings.nav.home, icon: House },
     { href: `${basePath}/amnen`, label: strings.nav.subjects, icon: LayoutGrid },
     { href: `${basePath}/topplista`, label: strings.nav.leaderboard, icon: Trophy },
+    { href: `${basePath}/butik`, label: strings.nav.shop, icon: ShoppingBag },
     { href: `${basePath}/profil`, label: strings.nav.profile, icon: User },
   ];
   const isActive = (href: string) =>
@@ -76,7 +77,7 @@ export function AppShell({
       <div className="min-w-0 flex-1 pb-20 md:pb-0">{children}</div>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
-        <ul className="grid grid-cols-4">
+        <ul className="grid grid-cols-5">
           {items.map(({ href, label, icon: NavIcon }) => (
             <li key={href}>
               <Link
