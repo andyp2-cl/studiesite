@@ -160,20 +160,19 @@ export const strings = {
       areaFilled: (done: number, total: number) =>
         done === total ? `Klart: ${done} moment har lästext och frågor och är publicerade.` : `${done} av ${total} moment blev klara. Försök igen för resten.`,
       momentPublished: (sections: number, questions: number) => `Klart: ${sections} lästexter och ${questions} frågor, publicerade.`,
-      areaCost: "Kostar ungefär 1–2 kronor per moment.",
+      areaCost: "Kostar ungefär 5 öre per moment.",
       workingArea: "AI skriver alla moment samtidigt … det tar 2–4 minuter. Stäng inte sidan.",
       momentTitle: "Fyll momentet med AI",
       momentHelp:
-        "AI läser områdets källor och skriver en sammanställning, 8–12 frågor om det viktigaste (mest korta svar) och några skrivuppgifter. Allt blir utkast, och momentet döljs tills du har granskat och publicerat.",
+        "AI läser områdets källor och skriver en sammanställning och 8–12 frågor om det viktigaste (fritext, flerval och sant/falskt). Allt blir utkast, och momentet döljs tills du har granskat och publicerat.",
       momentButton: "Skapa utkast från källor",
       momentAgain: "Det finns redan innehåll. Nya utkast läggs till efter det som finns.",
       working: "AI skriver … det kan ta ett par minuter",
-      momentDone: (sections: number, questions: number, writing: number) =>
-        `Klart: ${sections} lästexter, ${questions} frågor och ${writing} skrivuppgifter som utkast.`,
+      momentDone: (sections: number, questions: number) => `Klart: ${sections} lästexter och ${questions} frågor som utkast.`,
       noSources: "Lägg till minst en inläst källa på området först.",
       nothingUsable: "AI:ns svar gick inte att använda. Försök igen.",
       partlySaved: "Allt kunde inte sparas. Kontrollera momentet och försök igen.",
-      cost: "Kostar ungefär 1–2 kronor per gång.",
+      cost: "Kostar ungefär 5 öre per gång.",
       sectionHint: (section: string) => `Svaret finns i avsnittet **${section}**.`,
     },
     sources: {

@@ -21,7 +21,7 @@ export const maxDuration = 300;
 
 export default async function AdminAreaPage({ params }: PageProps<"/admin/innehall/[subjectId]/[areaId]">) {
   const { subjectId, areaId } = await params;
-  const [area, sources, ai] = await Promise.all([getAdminArea(areaId), getAreaSources(areaId), aiStatus("smart")]);
+  const [area, sources, ai] = await Promise.all([getAdminArea(areaId), getAreaSources(areaId), aiStatus("cheap")]);
   if (!area || area.subject.id !== subjectId) notFound();
   const stages = await getStudentStages();
   const curriculum = await curriculumFor(area.subject.name, stages);

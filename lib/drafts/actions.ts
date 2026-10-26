@@ -61,7 +61,7 @@ export async function draftAngles(areaId: string): Promise<DraftResult> {
   const result = await askClaude({
     purpose: "draft_angles",
     userId: admin.id,
-    tier: "smart",
+    tier: "cheap",
     system,
     prompt,
     maxTokens: 2000,
@@ -97,9 +97,8 @@ export async function draftAngles(areaId: string): Promise<DraftResult> {
 }
 
 /**
- * Drafts reading sections, questions and writing tasks for a moment. The
- * moment is hidden while the admin reviews, since reading sections have no
- * draft state of their own.
+ * Drafts reading sections and questions for a moment. The moment is hidden
+ * while the admin reviews, since reading sections have no draft state of their own.
  */
 export async function draftMoment(momentId: string): Promise<DraftResult> {
   const admin = await requireAdmin();
@@ -109,7 +108,7 @@ export async function draftMoment(momentId: string): Promise<DraftResult> {
 /**
  * Fills every empty "Läs och svara" moment in an area (no reading text and no
  * questions) and publishes it right away: reading text and questions go live,
- * the moment becomes visible. Writing tasks stay drafts until writing opens.
+ * the moment becomes visible.
  */
 export async function fillArea(areaId: string): Promise<DraftResult> {
   const admin = await requireAdmin();
@@ -152,7 +151,7 @@ async function fillMoment(adminId: string, momentId: string, publish: boolean): 
   const result = await askClaude({
     purpose: "draft_moment",
     userId: adminId,
-    tier: "smart",
+    tier: "cheap",
     system,
     prompt,
     maxTokens: 16_000,
@@ -186,15 +185,7 @@ async function fillMoment(adminId: string, momentId: string, publish: boolean): 
     })),
   ];
 
-  const { data: writingLast } = await supabase
-    .from("writing_tasks")
-    .select("sort_order")
-    .eq("moment_id", momentId)
-    .order("sort_order", { ascending: false })
-    .limit(1);
-  let writingOrder = (writingLast?.[0]?.sort_order ?? -1) + 1;
-
-  const [blocksResult, tasksResult, writingResult] = await Promise.all([
+  const [blocksResult, tasksResult] = await Promise.all([
     supabase.from("content_blocks").insert(blockRows),
     supabase.from("tasks").insert(
       draft.questions.map((q) => ({
@@ -210,21 +201,9 @@ async function fillMoment(adminId: string, momentId: string, publish: boolean): 
         source: "ai" as const,
       })),
     ),
-    draft.writing.length
-      ? supabase.from("writing_tasks").insert(
-          draft.writing.map((w) => ({
-            moment_id: momentId,
-            prompt_md: w.prompt,
-            min_chars: w.minChars,
-            rubric_md: w.rubric,
-            status: "draft" as const,
-            sort_order: writingOrder++,
-          })),
-        )
-      : Promise.resolve({ error: null }),
   ]);
-  if (blocksResult.error || tasksResult.error || writingResult.error) {
-    console.error("drafts: could not save", blocksResult.error ?? tasksResult.error ?? writingResult.error);
+  if (blocksResult.error || tasksResult.error) {
+    console.error("drafts: could not save", blocksResult.error ?? tasksResult.error);
     refresh();
     return fail(t.partlySaved);
   }
@@ -233,6 +212,6 @@ async function fillMoment(adminId: string, momentId: string, publish: boolean): 
     ok: true,
     summary: publish
       ? t.momentPublished(draft.sections.length, draft.questions.length)
-      : t.momentDone(draft.sections.length, draft.questions.length, draft.writing.length),
+      : t.momentDone(draft.sections.length, draft.questions.length),
   };
 }

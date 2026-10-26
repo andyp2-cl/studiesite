@@ -16,7 +16,7 @@ export function anglesPrompt(input: { subject: string; area: string; existing: s
   return {
     system: `${AUDIENCE}${withCurriculum(input.curriculum)}
 
-Split the topic into 3–4 study moments ("vinklar"). Each moment is studied on its own: a reading text of about 600–900 words, a quiz and a few writing tasks.
+Split the topic into 3–4 study moments ("vinklar"). Each moment is studied on its own: a reading text of about 600–900 words and a quiz.
 Moments should not overlap and together should cover what a student at this age should know about the topic.
 Give each moment a short Swedish name (max 5 words) and a one-sentence description for the student.`,
     prompt: `Subject: ${input.subject}
@@ -51,9 +51,7 @@ questions: 8–12 questions answerable from the reading sections alone, in the o
 - "choice": 3–4 plausible options, "correct_index" 0-based. "true_false": a clear statement, "correct_boolean"; make about half of them false.
 - Fill fields that do not apply to the type with empty arrays, 0 or false.
 - "section": the exact title of the reading section that contains the answer.
-- "explanation": one sentence shown after answering that says why the answer is right.
-
-writing: 2–3 tasks where the student writes a longer answer in their own words: explain causes, consequences or compare, not just repeat facts. "min_chars" 300–600. "rubric": a short Markdown list of what a good answer contains, used by the AI that gives feedback (never shown to the student).`,
+- "explanation": one sentence shown after answering that says why the answer is right.`,
     prompt: `Subject: ${input.subject}
 Area: ${input.area}
 Moment: ${input.moment}${input.description ? ` – ${input.description}` : ""}

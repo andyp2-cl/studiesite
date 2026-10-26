@@ -78,13 +78,9 @@ describe("parseMomentDraft", () => {
       question({ prompt: "Utan svar" }),
       question({ type: "essay", prompt: "Okänd typ" }),
     ],
-    writing: [
-      { prompt: "Varför förlorade Sverige stormaktsställningen?", min_chars: 10, rubric: "Orsaker" },
-      { prompt: "", min_chars: 300, rubric: "" },
-    ],
   };
 
-  it("turns the AI reply into reading sections, questions and writing tasks", () => {
+  it("turns the AI reply into reading sections and questions", () => {
     const parsed = parseMomentDraft(draft)!;
     expect(parsed.intro).toBe("Karl XII blev kung som 15-åring.");
     expect(parsed.sections).toEqual([{ title: "Krigen", body: "Text om krigen." }]);
@@ -93,7 +89,6 @@ describe("parseMomentDraft", () => {
     expect(parsed.questions[0].section).toBe("Krigen");
     expect(parsed.questions[1].section).toBe("");
     expect(parsed.questions[1]).toMatchObject({ answer: { kind: "choice", index: 1 }, choices: ["Ryssland", "Norge"] });
-    expect(parsed.writing).toEqual([{ prompt: "Varför förlorade Sverige stormaktsställningen?", minChars: 50, rubric: "Orsaker" }]);
   });
 
   it("gives short-answer questions an answer key the checker accepts", () => {

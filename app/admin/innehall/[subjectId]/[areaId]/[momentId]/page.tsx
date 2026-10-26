@@ -106,7 +106,7 @@ function TaskList({ moment, base, read }: { moment: AdminMoment; base: string; r
 
 export default async function AdminMomentPage({ params }: PageProps<"/admin/innehall/[subjectId]/[areaId]/[momentId]">) {
   const { subjectId, areaId, momentId } = await params;
-  const [moment, ai] = await Promise.all([getAdminMoment(momentId), aiStatus("smart")]);
+  const [moment, ai] = await Promise.all([getAdminMoment(momentId), aiStatus("cheap")]);
   if (!moment || moment.area.id !== areaId || moment.subject.id !== subjectId) notFound();
 
   const base = `/admin/innehall/${subjectId}/${areaId}/${momentId}`;

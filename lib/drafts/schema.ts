@@ -61,7 +61,7 @@ export function parseAngles(json: unknown, existing: string[] = []): Angle[] {
 }
 
 // ---------------------------------------------------------------------------
-// A moment: reading text, questions with short answers, writing tasks.
+// A moment: reading text and questions. Writing tasks are written by hand.
 // ---------------------------------------------------------------------------
 
 export const momentDraftSchema = {
@@ -96,21 +96,8 @@ export const momentDraftSchema = {
         additionalProperties: false,
       },
     },
-    writing: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          prompt: { type: "string" },
-          min_chars: { type: "integer" },
-          rubric: { type: "string" },
-        },
-        required: ["prompt", "min_chars", "rubric"],
-        additionalProperties: false,
-      },
-    },
   },
-  required: ["intro", "sections", "questions", "writing"],
+  required: ["intro", "sections", "questions"],
   additionalProperties: false,
 };
 
@@ -123,12 +110,10 @@ export type DraftQuestion = {
   /** Title of the reading section with the answer ("" if the AI named none that exists). */
   section: string;
 };
-export type DraftWriting = { prompt: string; minChars: number; rubric: string };
 export type MomentDraft = {
   intro: string;
   sections: { title: string; body: string }[];
   questions: DraftQuestion[];
-  writing: DraftWriting[];
 };
 
 const QUESTION_TYPE: Record<string, TaskType> = { short: "free_text", choice: "multiple_choice", true_false: "true_false" };
@@ -169,15 +154,6 @@ export function parseMomentDraft(json: unknown): MomentDraft | null {
     .map((q) => parseQuestion(q as Record<string, unknown>, sectionTitles))
     .filter((q): q is DraftQuestion => q !== null)
     .slice(0, 30);
-  const writing = (Array.isArray(d.writing) ? d.writing : [])
-    .map((w) => ({
-      prompt: text(w?.prompt, 5000),
-      minChars: Math.min(Math.max(Math.round(Number(w?.min_chars)) || 300, 50), 5000),
-      rubric: text(w?.rubric, 5000),
-    }))
-    .filter((w) => w.prompt)
-    .slice(0, 5);
-
   if (sections.length === 0 || questions.length === 0) return null;
-  return { intro: text(d.intro, 2000), sections, questions, writing };
+  return { intro: text(d.intro, 2000), sections, questions };
 }
