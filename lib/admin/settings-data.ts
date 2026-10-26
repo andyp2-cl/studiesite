@@ -1,6 +1,7 @@
 import "server-only";
 import { monthSpendUsd } from "@/lib/ai";
 import { requireAdmin } from "@/lib/auth/session";
+import { stagesFor, type Stage } from "@/lib/curriculum";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // Read-side for /admin/anvandare and /admin/installningar.
@@ -37,4 +38,11 @@ export async function getStudentAccounts() {
     dailyGoalXp: p.daily_goal_xp,
     passCorrect: p.pass_correct,
   }));
+}
+
+/** School stages of the students (from their grades), for the curriculum excerpt. */
+export async function getStudentStages(): Promise<Stage[]> {
+  await requireAdmin();
+  const { data } = await createAdminClient().from("profiles").select("grade").eq("role", "student");
+  return stagesFor((data ?? []).map((p) => p.grade));
 }

@@ -1,11 +1,13 @@
 "use server";
 
 import { refresh } from "next/cache";
+import { getStudentStages } from "@/lib/admin/settings-data";
 import { askClaude } from "@/lib/ai";
 import { requireAdmin } from "@/lib/auth/session";
 import type { Json } from "@/lib/database.types";
 import { uniqueSlug } from "@/lib/slug";
 import { strings } from "@/lib/strings";
+import { curriculumFor, curriculumForPrompt } from "@/lib/curriculum";
 import { createClient } from "@/lib/supabase/server";
 import { anglesPrompt, momentPrompt } from "./prompts";
 import { anglesSchema, momentDraftSchema, parseAngles, parseMomentDraft, sourcesForPrompt } from "./schema";
@@ -30,6 +32,11 @@ async function readySources(areaId: string) {
   return sourcesForPrompt(data ?? []);
 }
 
+/** Lgr22 central content for the subject at the students' stages ("" if unavailable). */
+async function curriculum(subject: string) {
+  return curriculumForPrompt(await curriculumFor(subject, await getStudentStages()));
+}
+
 /** Proposes 3–4 angles for an area and creates them as hidden "Läs och svara" moments. */
 export async function draftAngles(areaId: string): Promise<DraftResult> {
   const admin = await requireAdmin();
@@ -44,7 +51,13 @@ export async function draftAngles(areaId: string): Promise<DraftResult> {
   if (!sources) return fail(t.noSources);
 
   const existing = area.moments.map((m) => m.name);
-  const { system, prompt } = anglesPrompt({ subject: area.subjects.name, area: area.name, existing, sources });
+  const { system, prompt } = anglesPrompt({
+    subject: area.subjects.name,
+    area: area.name,
+    existing,
+    sources,
+    curriculum: await curriculum(area.subjects.name),
+  });
   const result = await askClaude({
     purpose: "draft_angles",
     userId: admin.id,
@@ -107,6 +120,7 @@ export async function draftMoment(momentId: string): Promise<DraftResult> {
     description: moment.description ?? "",
     siblings: moment.areas.moments.filter((m) => m.id !== moment.id).map((m) => m.name),
     sources,
+    curriculum: await curriculum(moment.areas.subjects.name),
   });
   const result = await askClaude({
     purpose: "draft_moment",

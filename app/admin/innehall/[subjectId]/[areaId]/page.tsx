@@ -1,3 +1,4 @@
+import { BookMarked, ChevronDown } from "lucide-react";
 import { notFound } from "next/navigation";
 import { AdminHeader } from "@/components/admin/admin-header";
 import { CreateForm } from "@/components/admin/create-form";
@@ -8,7 +9,9 @@ import { SourceFinder } from "@/components/admin/source-finder";
 import { SourcesPanel } from "@/components/admin/sources-panel";
 import { SectionLabel } from "@/components/study/visuals";
 import { getAdminArea, getAreaSources } from "@/lib/admin/data";
+import { getStudentStages } from "@/lib/admin/settings-data";
 import { aiStatus } from "@/lib/ai";
+import { curriculumFor } from "@/lib/curriculum";
 import { strings } from "@/lib/strings";
 
 const t = strings.admin;
@@ -20,6 +23,8 @@ export default async function AdminAreaPage({ params }: PageProps<"/admin/inneha
   const { subjectId, areaId } = await params;
   const [area, sources, ai] = await Promise.all([getAdminArea(areaId), getAreaSources(areaId), aiStatus("smart")]);
   if (!area || area.subject.id !== subjectId) notFound();
+  const stages = await getStudentStages();
+  const curriculum = await curriculumFor(area.subject.name, stages);
 
   const describe = (m: (typeof area.moments)[number]) =>
     m.source === "generator" && m.generators
@@ -37,6 +42,29 @@ export default async function AdminAreaPage({ params }: PageProps<"/admin/inneha
         title={area.name}
       />
       <div className="mx-auto flex max-w-4xl flex-col gap-12 px-4 py-10 sm:px-8">
+        <details className="group border border-border">
+          <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3">
+            <BookMarked className="size-4 text-primary" />
+            <span className="flex-1 font-semibold">{t.sources.curriculum}</span>
+            <ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="flex flex-col gap-4 px-4 pb-5">
+            <p className="text-sm text-muted-foreground">
+              {t.sources.curriculumHelp(stages.map((s) => t.sources.curriculumStage(s).toLowerCase()).join(" och "))}
+            </p>
+            {curriculum ? (
+              curriculum.map((c) => (
+                <div key={c.stage}>
+                  <p className="mb-2 font-mono text-[11px] tracking-[0.2em] text-primary uppercase">{t.sources.curriculumStage(c.stage)}</p>
+                  <p className="text-sm leading-relaxed whitespace-pre-line">{c.text}</p>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">{t.sources.curriculumMissing}</p>
+            )}
+          </div>
+        </details>
+
         {/* Sources first: they are what moments are created from. */}
         <section>
           <SectionLabel>{t.sources.title}</SectionLabel>
