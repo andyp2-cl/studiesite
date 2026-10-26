@@ -5,12 +5,14 @@ import { requireProfile } from "@/lib/auth/session";
 import { getGenerator } from "@/lib/generators";
 import { isLevel, type Figure, type Level, type SolutionStep } from "@/lib/generators/types";
 import { checkAnswer, type CheckResult, type RetryReason } from "@/lib/math/check-answer";
+import { EXPLANATION_MIN_CHARS, EXPLANATION_XP, XP_FOR_LEVEL } from "@/lib/gamification";
 import { levelProgress, WINDOW } from "@/lib/progress";
 import { createRng } from "@/lib/random";
 import { strings } from "@/lib/strings";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { checkTaskAnswer, correctAnswerDisplay, type TaskAnswer, type TaskType } from "@/lib/tasks/answers";
+import { awardXp, type XpAward } from "@/lib/xp";
 
 // The answer key never leaves the server before the student has answered (or
 // asked for the answer). Generated tasks: the client gets the prompt and a
@@ -44,6 +46,8 @@ export type SubmitResult =
       /** Set when this answer cleared the level (a new star). */
       clearedLevel: Level | null;
       stars: number;
+      /** XP for a correct answer; null when nothing was awarded (wrong, or answered before). */
+      xp: XpAward | null;
     }
   | { status: "error" };
 
@@ -231,6 +235,7 @@ export async function submitAnswer(input: {
 
   // Answering the same generated task twice (double click, back button) is recorded once.
   let attemptId: string | null = null;
+  let xp: XpAward | null = null;
   if (task.record.generator_seed !== null) {
     const { data: existing } = await admin
       .from("attempts")
@@ -263,6 +268,7 @@ export async function submitAnswer(input: {
       .single();
     if (error) return { status: "error" };
     attemptId = inserted.id;
+    if (correct) xp = await awardXp(profile.id, XP_FOR_LEVEL[level], "correct_answer", attemptId);
   }
 
   // Level progress: 8 of the latest 10 at this level clears it.
@@ -297,19 +303,39 @@ export async function submitAnswer(input: {
     level: { correct: progress.correct, attempts: progress.attempts },
     clearedLevel,
     stars,
+    xp,
   };
 }
 
-/** "Hur tänkte du?" – stored on the attempt and shown to the admin. */
-export async function saveExplanation(attemptId: string, text: string): Promise<boolean> {
+/**
+ * "Hur tänkte du?" – stored on the attempt and shown to the admin. The first
+ * explanation of at least EXPLANATION_MIN_CHARS on an attempt gives XP.
+ */
+export async function saveExplanation(attemptId: string, text: string): Promise<{ saved: boolean; xp: XpAward | null }> {
   const profile = await requireProfile();
   const explanation = String(text ?? "").trim().slice(0, 2000);
-  if (typeof attemptId !== "string" || !explanation) return false;
+  if (typeof attemptId !== "string" || !explanation) return { saved: false, xp: null };
 
-  const { error, count } = await createAdminClient()
+  const admin = createAdminClient();
+  const { data: attempt } = await admin
+    .from("attempts")
+    .select("explanation_text")
+    .eq("id", attemptId)
+    .eq("user_id", profile.id)
+    .maybeSingle();
+  if (!attempt) return { saved: false, xp: null };
+
+  const { error, count } = await admin
     .from("attempts")
     .update({ explanation_text: explanation }, { count: "exact" })
     .eq("id", attemptId)
     .eq("user_id", profile.id);
-  return !error && count === 1;
+  if (error || count !== 1) return { saved: false, xp: null };
+
+  const first = !attempt.explanation_text?.trim();
+  const xp =
+    first && explanation.length >= EXPLANATION_MIN_CHARS
+      ? await awardXp(profile.id, EXPLANATION_XP, "explanation", attemptId)
+      : null;
+  return { saved: true, xp };
 }

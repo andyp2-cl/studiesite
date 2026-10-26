@@ -3,8 +3,10 @@ import Link from "next/link";
 import { AreaMark, BlockBar, Chip, SectionLabel, Stars, readable } from "@/components/study/visuals";
 import { requireProfile } from "@/lib/auth/session";
 import { getContinueItems, getDailyGoal, getProgressMap, getSubjectsWithAreas, getTodayXp } from "@/lib/data/content";
+import { profileStreak } from "@/lib/gamification";
 import { greetingFor } from "@/lib/greeting";
 import { strings } from "@/lib/strings";
+import { stockholmDate } from "@/lib/time";
 
 const t = strings.home;
 
@@ -24,7 +26,7 @@ export default async function Home() {
         <div className="mx-auto max-w-5xl px-4 pt-10 pb-8 sm:px-8 sm:pt-14">
           <div className="mb-6 flex flex-wrap gap-2">
             <Chip>
-              <Flame className="size-3.5 text-orange-500" /> {t.dayStreak(profile.streak)}
+              <Flame className="size-3.5 text-orange-500" /> {t.dayStreak(profileStreak(profile, stockholmDate()))}
             </Chip>
             <Chip>
               <Coins className="size-3.5 text-amber-400" /> {profile.coins} {strings.profile.stats.coins.toLowerCase()}

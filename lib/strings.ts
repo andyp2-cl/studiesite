@@ -290,6 +290,10 @@ export const strings = {
     nextLevel: (level: string) => `Fortsätt på ${level.toLowerCase()}`,
     levelCleared: (level: string) => `${level} klar!`,
     levelClearedBody: "Du fick en ny stjärna och har låst upp nästa nivå och en ny fördjupning.",
+    xpGained: (xp: number) => `+${xp} XP`,
+    roundXp: (xp: number) => `${xp} XP den här rundan`,
+    levelUp: (level: number, name: string) => `Nivå ${level}! Du är nu ${name.toLowerCase()}.`,
+    goalReached: (streak: number) => `Dagsmålet klart! ${streak} ${streak === 1 ? "dag" : "dagar"} i rad.`,
     retry: {
       unreadable: "Vi kunde inte läsa ditt svar. Kolla tecknen och försök igen.",
       "not-simplified": "Rätt värde – men förkorta så långt det går.",

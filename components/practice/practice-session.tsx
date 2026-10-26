@@ -1,17 +1,19 @@
 "use client";
 
-import { ArrowRight, Check, Eye, Lightbulb, RotateCcw, Star, X } from "lucide-react";
+import { ArrowRight, Check, Eye, Lightbulb, RotateCcw, Sparkles, Star, X } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
 import { MathMarkdown } from "@/components/math/markdown";
 import { Tex } from "@/components/math/tex";
 import { BlockBar, Stars, readable } from "@/components/study/visuals";
+import { levelNameIndex } from "@/lib/gamification";
 import type { Level } from "@/lib/generators/types";
 import { inputToTex } from "@/lib/math/input-to-tex";
 import { getHint, nextTask, saveExplanation, submitAnswer, type PublicTask, type SubmitResult } from "@/lib/practice/actions";
 import { refKey, ROUND_SIZES } from "@/lib/practice/ref";
 import { strings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
+import type { XpAward } from "@/lib/xp";
 
 const t = strings.task;
 const p = strings.practice;
@@ -66,6 +68,8 @@ export function PracticeSession({
   const [inARow, setInARow] = useState(0);
   const [clearedLevel, setClearedLevel] = useState<Level | null>(null);
   const [stars, setStars] = useState<number | null>(null);
+  const [roundXp, setRoundXp] = useState(0);
+  const [news, setNews] = useState<string[]>([]);
   const [finished, setFinished] = useState(false);
   const [pending, startTransition] = useTransition();
   const shownAt = useRef(0);
@@ -112,7 +116,18 @@ export function PracticeSession({
       setStars(res.stars);
       setInARow((n) => (res.status === "correct" ? n + 1 : 0));
       if (res.clearedLevel) setClearedLevel(res.clearedLevel);
+      gainXp(res.xp);
     });
+  }
+
+  function gainXp(xp: XpAward | null) {
+    if (!xp) return;
+    setRoundXp((total) => total + xp.xp);
+    const items = [
+      xp.levelUp && p.levelUp(xp.level, strings.levelNames[levelNameIndex(xp.level)]),
+      xp.goalReached && p.goalReached(xp.streak),
+    ].filter((n): n is string => Boolean(n));
+    if (items.length) setNews(items);
   }
 
   function showHint() {
@@ -138,6 +153,7 @@ export function PracticeSession({
       setHint(null);
       setExplanation("");
       setExplanationSaved(false);
+      setNews([]);
       shownAt.current = performance.now();
       requestAnimationFrame(() => inputRef.current?.focus());
     });
@@ -147,8 +163,10 @@ export function PracticeSession({
     if (!result?.attemptId || !explanation.trim()) return;
     const attemptId = result.attemptId;
     startTransition(async () => {
-      if (await saveExplanation(attemptId, explanation)) setExplanationSaved(true);
-      else setNotice(p.error);
+      const res = await saveExplanation(attemptId, explanation);
+      if (!res.saved) return setNotice(p.error);
+      setExplanationSaved(true);
+      gainXp(res.xp);
     });
   }
 
@@ -176,6 +194,7 @@ export function PracticeSession({
             <span className="text-muted-foreground">/{roundSize}</span>
           </p>
           <p className="mt-1 font-mono text-xs text-muted-foreground">{parts.join(" · ")}</p>
+          {roundXp > 0 && <p className="mt-3 font-mono text-sm font-semibold text-primary">{p.roundXp(roundXp)}</p>}
 
           <ol className="mt-6 border border-border">
             {outcomes.map((o, i) => (
@@ -261,6 +280,13 @@ export function PracticeSession({
           {areaName} · {strings.levels[level]} · {t.question(Math.min(answered + (result ? 0 : 1), roundSize), roundSize)}
         </p>
 
+        {news.map((item) => (
+          <div key={item} className="flex items-start gap-3 border border-primary/60 bg-primary/[0.08] p-4">
+            <Sparkles className="mt-0.5 size-5 shrink-0 text-primary" />
+            <p className="font-semibold">{item}</p>
+          </div>
+        ))}
+
         {clearedLevel && result?.clearedLevel && (
           <div className="flex items-start gap-3 border border-amber-400/60 bg-amber-400/[0.08] p-4">
             <Star className="mt-0.5 size-5 shrink-0 fill-amber-400 text-amber-400" />
@@ -280,6 +306,14 @@ export function PracticeSession({
             status === "revealed" && "border-amber-400/60",
           )}
         >
+          {result?.status === "correct" && result.xp && (
+            <span
+              aria-live="polite"
+              className="pointer-events-none absolute top-3 right-4 animate-xp-float font-mono text-sm font-semibold text-primary"
+            >
+              {p.xpGained(result.xp.xp)}
+            </span>
+          )}
           <MathMarkdown>{task.prompt}</MathMarkdown>
           {task.figure && (
             <div
