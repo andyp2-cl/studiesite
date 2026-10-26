@@ -13,14 +13,14 @@ Uppdateras vid varje commit. Senast: 2026-10-26.
 - "Logga ut" längst ner i sidomenyn (dator) och på Profil (mobil), både för elever och i admin.
 - Dagens mix (`/mix`): 10 uppgifter från upp till 4 övade moment, viktade mot nyliga fel och tid sedan senaste övning. "Läs och svara"-moment ingår inte.
 - Kortsamling (ersätter monstren): fotbollsspelare (546 kort) eller artister (721 kort) i brons, silver och guld, riktiga namn och enkla ritade bilder. Data i `lib/cards/football.ts` och `music.ts`, en rad per kort; nya kort läggs sist i sin nivå. Samlingssidan visar elevens kort och hur många som finns kvar per nivå.
-- Kortutdelning: ett kort när alla synliga moment i ett matteområde klarat Lätt (brons), Medel (silver) och Svår (guld), och silver när alla quiz i ett faktaområde är klara. Delas ut när svaret sparas (med en notis i övningen) och kontrolleras även när samlingssidan öppnas, så redan klarade områden ger kort i efterhand.
+- Kortutdelning: ett kort när alla synliga moment i ett matteområde klarat Lätt (brons), Medel (silver) och Svår (guld), och silver när alla quiz i ett faktaområde är klara. Delas ut när svaret sparas och kontrolleras även när samlingssidan öppnas, så redan klarade områden ger kort i efterhand. I övningen visas det nya kortet med länk till samlingen.
+- Admin väljer kortsamling per elev under Användare (Herman: fotboll, Märta: artister).
 
 ## På gång
 
 Belöningar är sparsamma: bara kort, och bara för stora milstolpar.
 
 1. Ta bort mynt och monsterpaket (även tabellen `user_monsters`).
-2. Admin väljer tema per elev (fotboll eller musik), och en snyggare notis när ett nytt kort delas ut.
 
 Märken (achievements) byggs inte: korten är den enda samlingen.
 

@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import type { ActionResult } from "@/lib/admin/content-actions";
 import { createStudent, resetPassword, updateSiteSettings, updateStudent } from "@/lib/admin/user-actions";
 import { GRADES, suggestedForGrade } from "@/lib/admin/user-input";
+import { THEMES, type Theme } from "@/lib/cards/catalog";
 import { strings } from "@/lib/strings";
 import { Button, Field, inputClass, Message } from "./ui";
 
@@ -43,6 +44,7 @@ export type StudentRow = {
   grade: number | null;
   dailyGoalXp: number | null;
   passCorrect: number | null;
+  collectionTheme: Theme;
 };
 
 export function StudentForm({ student, siteGoal }: { student: StudentRow; siteGoal: number }) {
@@ -50,6 +52,7 @@ export function StudentForm({ student, siteGoal }: { student: StudentRow; siteGo
   const [grade, setGrade] = useState(student.grade ? String(student.grade) : "");
   const [dailyGoalXp, setDailyGoalXp] = useState(student.dailyGoalXp ? String(student.dailyGoalXp) : "");
   const [passCorrect, setPassCorrect] = useState(student.passCorrect ? String(student.passCorrect) : "");
+  const [collectionTheme, setCollectionTheme] = useState<Theme>(student.collectionTheme);
   const [password, setPassword] = useState("");
   const save = useAction(t.saved);
   const reset = useAction(t.passwordChanged);
@@ -67,7 +70,7 @@ export function StudentForm({ student, siteGoal }: { student: StudentRow; siteGo
         className="flex flex-col gap-4"
         onSubmit={(e) => {
           e.preventDefault();
-          save.run(() => updateStudent(student.id, { displayName, grade, dailyGoalXp, passCorrect }));
+          save.run(() => updateStudent(student.id, { displayName, grade, dailyGoalXp, passCorrect, collectionTheme }));
         }}
       >
         <div className="grid gap-4 sm:grid-cols-2">
@@ -99,6 +102,20 @@ export function StudentForm({ student, siteGoal }: { student: StudentRow; siteGo
               onChange={(e) => setPassCorrect(e.target.value)}
               className={inputClass}
             />
+          </Field>
+          <Field label={t.collectionTheme} htmlFor={id("theme")} hint={t.collectionThemeHint}>
+            <select
+              id={id("theme")}
+              value={collectionTheme}
+              onChange={(e) => setCollectionTheme(e.target.value as Theme)}
+              className={inputClass}
+            >
+              {THEMES.map((theme) => (
+                <option key={theme} value={theme}>
+                  {t.themes[theme]}
+                </option>
+              ))}
+            </select>
           </Field>
         </div>
         {suggestion && (

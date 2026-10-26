@@ -3,12 +3,14 @@
 import { ArrowRight, BookOpen, Check, ChevronDown, ExternalLink, Eye, LifeBuoy, Lightbulb, RotateCcw, Sparkles, Star, X } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
+import { CardArt } from "@/components/cards/card-art";
 import { MathMarkdown } from "@/components/math/markdown";
 import { Tex } from "@/components/math/tex";
 import { BlockBar, Stars, readable } from "@/components/study/visuals";
 import { levelNameIndex } from "@/lib/gamification";
 import { LEVELS, type Level } from "@/lib/generators/types";
 import { inputToTex } from "@/lib/math/input-to-tex";
+import type { Card } from "@/lib/cards/catalog";
 import type { DailyMixStep } from "@/lib/data/content";
 import { getHint, nextTask, saveExplanation, submitAnswer, type PublicTask, type SubmitResult } from "@/lib/practice/actions";
 import { refKey, ROUND_SIZES } from "@/lib/practice/ref";
@@ -78,6 +80,7 @@ export function PracticeSession({
   const [stars, setStars] = useState<number | null>(null);
   const [roundXp, setRoundXp] = useState(0);
   const [news, setNews] = useState<string[]>([]);
+  const [wonCards, setWonCards] = useState<Card[]>([]);
   const [finished, setFinished] = useState(false);
   const [pending, startTransition] = useTransition();
   const shownAt = useRef(0);
@@ -127,8 +130,7 @@ export function PracticeSession({
       if (res.clearedLevel) setClearedLevel(res.clearedLevel);
       gainXp(res.xp);
       if (res.quizPassed) setNews((items) => [p.quizPassed, ...items]);
-      const cards = res.cards.map((c) => p.newCard(c.name, strings.collection.tier[c.tier].toLowerCase()));
-      if (cards.length) setNews((items) => [...cards, ...items]);
+      if (res.cards.length) setWonCards(res.cards);
     });
   }
 
@@ -168,6 +170,7 @@ export function PracticeSession({
       setExplanation("");
       setExplanationSaved(false);
       setNews([]);
+      setWonCards([]);
       shownAt.current = performance.now();
       requestAnimationFrame(() => inputRef.current?.focus());
     });
@@ -297,6 +300,24 @@ export function PracticeSession({
             <Sparkles className="mt-0.5 size-5 shrink-0 text-primary" />
             <p className="font-semibold">{item}</p>
           </div>
+        ))}
+
+        {wonCards.map((card) => (
+          <Link
+            key={card.id}
+            href="/samling"
+            className="flex animate-pop-in items-center gap-4 border border-amber-400/70 bg-amber-400/[0.08] p-4 hover:bg-amber-400/[0.12]"
+          >
+            <CardArt card={card} className="w-16 shrink-0" />
+            <div className="min-w-0">
+              <p className="font-mono text-[11px] tracking-[0.2em] text-amber-300 uppercase">{p.newCardTitle}</p>
+              <p className="text-lg font-semibold">{card.name}</p>
+              <p className="text-sm text-muted-foreground">
+                {strings.collection.tier[card.tier]} · {card.role} · {card.country}
+              </p>
+              <p className="mt-1 font-mono text-xs text-primary">{p.toCollection}</p>
+            </div>
+          </Link>
         ))}
 
         {clearedLevel && result?.clearedLevel && (

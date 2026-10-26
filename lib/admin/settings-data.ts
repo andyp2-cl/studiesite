@@ -1,6 +1,7 @@
 import "server-only";
 import { monthSpendUsd } from "@/lib/ai";
 import { requireAdmin } from "@/lib/auth/session";
+import { isTheme } from "@/lib/cards/catalog";
 import { stagesFor, type Stage } from "@/lib/curriculum";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -27,7 +28,7 @@ export async function getStudentAccounts() {
   await requireAdmin();
   const { data } = await createAdminClient()
     .from("profiles")
-    .select("id, username, display_name, grade, daily_goal_xp, pass_correct")
+    .select("id, username, display_name, grade, daily_goal_xp, pass_correct, collection_theme")
     .eq("role", "student")
     .order("display_name");
   return (data ?? []).map((p) => ({
@@ -37,6 +38,7 @@ export async function getStudentAccounts() {
     grade: p.grade,
     dailyGoalXp: p.daily_goal_xp,
     passCorrect: p.pass_correct,
+    collectionTheme: isTheme(p.collection_theme) ? p.collection_theme : ("football" as const),
   }));
 }
 

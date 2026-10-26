@@ -12,8 +12,14 @@ describe("parseStudentSettings", () => {
   it("accepts empty optional fields as site defaults", () => {
     expect(parseStudentSettings({ displayName: " Märta ", grade: "7", dailyGoalXp: "", passCorrect: "" })).toEqual({
       ok: true,
-      value: { displayName: "Märta", grade: 7, dailyGoalXp: null, passCorrect: null },
+      value: { displayName: "Märta", grade: 7, dailyGoalXp: null, passCorrect: null, collectionTheme: "football" },
     });
+  });
+
+  it("takes the card series the student collects", () => {
+    const parsed = parseStudentSettings({ displayName: "Märta", collectionTheme: "music" });
+    expect(parsed.ok && parsed.value.collectionTheme).toBe("music");
+    expect(parseStudentSettings({ displayName: "H", collectionTheme: "monsters" })).toEqual({ ok: false, field: "collectionTheme" });
   });
 
   it("rejects out-of-range values with the field name", () => {

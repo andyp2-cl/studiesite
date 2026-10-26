@@ -1,4 +1,5 @@
 import { normalizeUsername } from "@/lib/auth/username";
+import { isTheme, type Theme } from "@/lib/cards/catalog";
 
 // Validation for the admin user and settings forms. Pure, so it is tested
 // without a database; the server actions call these before writing.
@@ -22,7 +23,13 @@ const optionalInt = (raw: unknown, min: number, max: number): number | null | un
   return Number.isInteger(n) && n >= min && n <= max ? n : undefined;
 };
 
-export type StudentSettings = { displayName: string; grade: number | null; dailyGoalXp: number | null; passCorrect: number | null };
+export type StudentSettings = {
+  displayName: string;
+  grade: number | null;
+  dailyGoalXp: number | null;
+  passCorrect: number | null;
+  collectionTheme: Theme;
+};
 
 export function parseStudentSettings(input: Record<string, unknown>): Parsed<StudentSettings> {
   const displayName = String(input.displayName ?? "").trim();
@@ -33,7 +40,9 @@ export function parseStudentSettings(input: Record<string, unknown>): Parsed<Stu
   if (dailyGoalXp === undefined) return { ok: false, field: "dailyGoalXp" };
   const passCorrect = optionalInt(input.passCorrect, 5, 10);
   if (passCorrect === undefined) return { ok: false, field: "passCorrect" };
-  return { ok: true, value: { displayName, grade, dailyGoalXp, passCorrect } };
+  const collectionTheme = input.collectionTheme ?? "football";
+  if (!isTheme(collectionTheme)) return { ok: false, field: "collectionTheme" };
+  return { ok: true, value: { displayName, grade, dailyGoalXp, passCorrect, collectionTheme } };
 }
 
 export type NewStudent = { username: string; displayName: string; password: string; grade: number | null };

@@ -19,10 +19,10 @@ export async function updateStudent(id: string, input: Record<string, unknown>):
   await requireAdmin();
   const parsed = parseStudentSettings(input);
   if (!parsed.ok) return fail(t.invalid[parsed.field as keyof typeof t.invalid] ?? strings.admin.errors.generic);
-  const { displayName, grade, dailyGoalXp, passCorrect } = parsed.value;
+  const { displayName, grade, dailyGoalXp, passCorrect, collectionTheme } = parsed.value;
   const { error } = await createAdminClient()
     .from("profiles")
-    .update({ display_name: displayName, grade, daily_goal_xp: dailyGoalXp, pass_correct: passCorrect })
+    .update({ display_name: displayName, grade, daily_goal_xp: dailyGoalXp, pass_correct: passCorrect, collection_theme: collectionTheme })
     .eq("id", id)
     .eq("role", "student");
   if (error) return fail(strings.admin.errors.generic);
