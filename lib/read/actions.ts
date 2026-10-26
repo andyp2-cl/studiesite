@@ -1,7 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
-import { requireProfile } from "@/lib/auth/session";
+import { getViewProfile, requireProfile } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { reachMilestone } from "./progress";
 
@@ -9,6 +9,8 @@ import { reachMilestone } from "./progress";
 export async function markRead(momentId: string): Promise<boolean> {
   const profile = await requireProfile();
   if (typeof momentId !== "string") return false;
+  // An admin viewing as a student would mark it read on the admin account.
+  if ((await getViewProfile())?.id !== profile.id) return false;
   // RLS: students only get visible moments.
   const supabase = await createClient();
   const { data: moment } = await supabase.from("moments").select("id, mode").eq("id", momentId).maybeSingle();

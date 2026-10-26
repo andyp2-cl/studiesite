@@ -1,7 +1,7 @@
 "use server";
 
 import { randomInt } from "node:crypto";
-import { requireProfile } from "@/lib/auth/session";
+import { getViewProfile, requireProfile } from "@/lib/auth/session";
 import { awardCards } from "@/lib/cards/award";
 import type { Card } from "@/lib/cards/catalog";
 import { getGenerator } from "@/lib/generators";
@@ -74,6 +74,8 @@ const INPUT_FOR: Record<TaskType, PublicTask["input"]> = {
 async function loadPractice(momentId: unknown, level: unknown) {
   if (typeof momentId !== "string" || !isLevel(level)) return null;
   const profile = await requireProfile();
+  // An admin viewing as a student would save answers on the admin account.
+  if ((await getViewProfile())?.id !== profile.id) return null;
   const supabase = await createClient();
 
   // RLS: only visible moments are returned. All levels are open to choose.

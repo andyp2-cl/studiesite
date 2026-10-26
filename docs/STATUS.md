@@ -10,6 +10,7 @@ Uppdateras vid varje commit. Senast: 2026-10-26.
 - Hjälp i rätt läge: tips efter två missar i rad (tillbaka till texten, lättare nivå, förklaring på en gratis sajt) och "Lär dig mer"-länkar.
 - AI används bara i admin, med den billiga modellen (Haiku), loggat i `ai_calls` med budgettak. "Skapa moment med frågor" på ett område delar upp det i 3–4 moment och fyller alla med lästext och 8–12 frågor (fritext, flerval, sant/falskt) som publiceras direkt. Tomma moment kan fyllas på samma sätt. Fyll ett enskilt moment ger fortfarande utkast att granska. AI skriver inga skrivuppgifter. Ungefär 5 öre per moment.
 - Admin: innehåll, användare (årskurs, dagsmål, godkäntgräns, lösenord), statistik, inställningar.
+- "Visa som" i admin är bara för att titta: raden blir gul och övning och "Jag har läst" är spärrade (svaren skulle annars sparas på adminkontot). Barnen loggar in själva.
 - "Logga ut" längst ner i sidomenyn (dator) och på Profil (mobil), både för elever och i admin.
 - Dagens mix (`/mix`): 10 uppgifter från upp till 4 övade moment, viktade mot nyliga fel och tid sedan senaste övning. "Läs och svara"-moment ingår inte.
 - Kortsamling (ersätter monstren): fotbollsspelare (546 kort) eller artister (721 kort) i brons, silver och guld, riktiga namn och enkla ritade bilder. Data i `lib/cards/football.ts` och `music.ts`, en rad per kort; nya kort läggs sist i sin nivå. Samlingssidan visar elevens kort och hur många som finns kvar per nivå.
@@ -36,4 +37,3 @@ Märken (achievements) byggs inte: korten är den enda samlingen.
 - Migrationen `20261026220000_drop_coins_and_monsters.sql` ska köras live (`npm run db:push`) efter att Vercel har publicerat koden som inte längre läser mynten.
 - Dagens mix, kortsamlingen och kortutdelningen är inte provkörda inloggade av Claude, bara via tester, typkontroll och en läsfråga mot databasen.
 - Kortens position, genre och land är skrivna ur minnet och kan innehålla enstaka fel. Rättas direkt i datafilerna.
-- När admin "Visar som" en elev sparas svar på adminkontot, inte elevens. Barnen ska logga in själva för att öva.

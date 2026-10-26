@@ -379,7 +379,11 @@ export const strings = {
   viewAs: {
     label: "Visa som",
     me: "Mig",
-    note: "Svar du ger här sparas på ditt eget konto.",
+    note: (name: string) => `Du är inloggad som admin och tittar som ${name}. Övning är avstängd.`,
+    blockedTitle: (name: string) => `Du tittar som ${name}`,
+    blockedBody: (name: string) =>
+      `Du är inloggad som admin. Svar här skulle sparas på ditt konto, inte på ${name}s, så övning är avstängd. Logga ut så att ${name} kan logga in själv.`,
+    backHome: "Tillbaka",
   },
   nav: {
     home: "Hem",

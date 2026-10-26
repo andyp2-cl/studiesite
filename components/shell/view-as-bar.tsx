@@ -15,7 +15,12 @@ export function ViewAsBar({ students, current }: { students: { id: string; name:
   const viewing = students.find((s) => s.id === current);
 
   return (
-    <div className="sticky top-0 z-30 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border bg-background/95 px-4 py-2 backdrop-blur sm:px-8">
+    <div
+      className={cn(
+        "sticky top-0 z-30 flex flex-wrap items-center gap-x-4 gap-y-2 border-b px-4 py-2 backdrop-blur sm:px-8",
+        viewing ? "border-amber-400/60 bg-amber-950/90" : "border-border bg-background/95",
+      )}
+    >
       <span className="flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
         <Eye className="size-3.5" /> {t.label}
       </span>
@@ -35,7 +40,7 @@ export function ViewAsBar({ students, current }: { students: { id: string; name:
           </button>
         ))}
       </div>
-      {viewing && <span className="font-mono text-[11px] text-muted-foreground">{t.note}</span>}
+      {viewing && <span className="font-mono text-[11px] text-amber-300">{t.note(viewing.name)}</span>}
     </div>
   );
 }
