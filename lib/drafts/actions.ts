@@ -103,6 +103,33 @@ export async function draftAngles(areaId: string): Promise<DraftResult> {
  */
 export async function draftMoment(momentId: string): Promise<DraftResult> {
   const admin = await requireAdmin();
+  return fillMoment(admin.id, momentId, false);
+}
+
+/**
+ * Fills every empty "Läs och svara" moment in an area (no reading text and no
+ * questions) and publishes it right away: reading text and questions go live,
+ * the moment becomes visible. Writing tasks stay drafts until writing opens.
+ */
+export async function fillArea(areaId: string): Promise<DraftResult> {
+  const admin = await requireAdmin();
+  const supabase = await createClient();
+  const { data: moments } = await supabase
+    .from("moments")
+    .select("id, tasks(count), content_blocks(count)")
+    .eq("area_id", areaId)
+    .eq("mode", "read");
+  const empty = (moments ?? []).filter((m) => !m.tasks[0]?.count && !m.content_blocks[0]?.count);
+  if (empty.length === 0) return fail(t.nothingToFill);
+
+  // In parallel, so the whole area fits in one request (maxDuration on the page).
+  const results = await Promise.all(empty.map((m) => fillMoment(admin.id, m.id, true)));
+  const done = results.filter((r) => r.ok).length;
+  if (done === 0) return results[0];
+  return { ok: true, summary: t.areaFilled(done, empty.length) };
+}
+
+async function fillMoment(adminId: string, momentId: string, publish: boolean): Promise<DraftResult> {
   const supabase = await createClient();
   const { data: moment } = await supabase
     .from("moments")
@@ -124,7 +151,7 @@ export async function draftMoment(momentId: string): Promise<DraftResult> {
   });
   const result = await askClaude({
     purpose: "draft_moment",
-    userId: admin.id,
+    userId: adminId,
     tier: "smart",
     system,
     prompt,
@@ -140,7 +167,7 @@ export async function draftMoment(momentId: string): Promise<DraftResult> {
 
   const { error: hideError } = await supabase
     .from("moments")
-    .update({ is_hidden: true, mode: "read", source: "tasks" })
+    .update({ is_hidden: !publish, mode: "read", source: "tasks" })
     .eq("id", momentId);
   if (hideError) return fail(strings.admin.errors.generic);
 
@@ -179,7 +206,7 @@ export async function draftMoment(momentId: string): Promise<DraftResult> {
         choices: q.choices,
         solution_md: q.solution || null,
         hint_md: q.section ? t.sectionHint(q.section) : null,
-        status: "draft" as const,
+        status: publish ? ("published" as const) : ("draft" as const),
         source: "ai" as const,
       })),
     ),
@@ -202,5 +229,10 @@ export async function draftMoment(momentId: string): Promise<DraftResult> {
     return fail(t.partlySaved);
   }
   refresh();
-  return { ok: true, summary: t.momentDone(draft.sections.length, draft.questions.length, draft.writing.length) };
+  return {
+    ok: true,
+    summary: publish
+      ? t.momentPublished(draft.sections.length, draft.questions.length)
+      : t.momentDone(draft.sections.length, draft.questions.length, draft.writing.length),
+  };
 }

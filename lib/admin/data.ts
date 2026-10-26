@@ -36,7 +36,7 @@ export async function getAdminArea(id: string) {
   const { data } = await supabase
     .from("areas")
     .select(
-      "id, name, slug, description, color, icon, is_hidden, subjects(id, name), moments(id, name, slug, is_hidden, sort_order, source, generators(generator_key), tasks(count))",
+      "id, name, slug, description, color, icon, is_hidden, subjects(id, name), moments(id, name, slug, is_hidden, sort_order, source, mode, generators(generator_key), tasks(count), content_blocks(count))",
     )
     .eq("id", id)
     .order("sort_order", { referencedTable: "moments" })
@@ -45,7 +45,7 @@ export async function getAdminArea(id: string) {
   return {
     ...data,
     subject: data.subjects,
-    moments: data.moments.map((m) => ({ ...m, taskCount: m.tasks[0]?.count ?? 0 })),
+    moments: data.moments.map((m) => ({ ...m, taskCount: m.tasks[0]?.count ?? 0, blockCount: m.content_blocks[0]?.count ?? 0 })),
   };
 }
 

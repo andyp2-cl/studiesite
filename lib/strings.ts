@@ -150,9 +150,18 @@ export const strings = {
     },
     drafts: {
       anglesTitle: "Skapa moment med AI",
-      anglesHelp: "AI läser källorna och föreslår 3–4 vinklar. De skapas som dolda moment som du sedan fyller med AI eller själv.",
-      anglesButton: "Föreslå vinklar",
-      anglesDone: (n: number) => `${n} nya moment skapade. De är dolda tills du visar dem.`,
+      anglesHelp:
+        "AI läser källorna, delar upp området i 3–4 moment och skriver lästext och 8–12 frågor till varje (fritext, flerval och sant/falskt). Allt publiceras direkt så att eleverna kan börja. Du kan alltid ändra eller dölja i efterhand.",
+      anglesButton: "Skapa moment med frågor",
+      anglesDone: (n: number) => `${n} nya moment skapade.`,
+      fillEmpty: (n: number) => (n === 1 ? "Fyll det tomma momentet" : `Fyll de ${n} tomma momenten`),
+      fillEmptyHelp: "Moment utan lästext och frågor fylls med AI och publiceras direkt.",
+      nothingToFill: "Det finns inga tomma moment att fylla.",
+      areaFilled: (done: number, total: number) =>
+        done === total ? `Klart: ${done} moment har lästext och frågor och är publicerade.` : `${done} av ${total} moment blev klara. Försök igen för resten.`,
+      momentPublished: (sections: number, questions: number) => `Klart: ${sections} lästexter och ${questions} frågor, publicerade.`,
+      areaCost: "Kostar ungefär 1–2 kronor per moment.",
+      workingArea: "AI skriver alla moment samtidigt … det tar 2–4 minuter. Stäng inte sidan.",
       momentTitle: "Fyll momentet med AI",
       momentHelp:
         "AI läser områdets källor och skriver en sammanställning, 8–12 frågor om det viktigaste (mest korta svar) och några skrivuppgifter. Allt blir utkast, och momentet döljs tills du har granskat och publicerat.",

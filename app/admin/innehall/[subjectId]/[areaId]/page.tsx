@@ -90,7 +90,12 @@ export default async function AdminAreaPage({ params }: PageProps<"/admin/inneha
           <CreateForm kind="moment" parentId={area.id} label={t.content.newMoment} />
           {sources.length > 0 && (
             <div className="mt-6">
-              <DraftPanel kind="area" id={area.id} unavailable={ai.available ? null : strings.ai[ai.reason]} />
+              <DraftPanel
+                kind="area"
+                id={area.id}
+                unavailable={ai.available ? null : strings.ai[ai.reason]}
+                emptyMoments={area.moments.filter((m) => m.mode === "read" && !m.taskCount && !m.blockCount).length}
+              />
             </div>
           )}
         </section>
