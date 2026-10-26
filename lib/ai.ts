@@ -25,6 +25,8 @@ export type AiRequest = {
   /** Ask for JSON matching this schema; the parsed value is returned in `json`. */
   jsonSchema?: Record<string, unknown>;
   effort?: "low" | "medium" | "high";
+  /** Long drafts take a while; defaults to 60 s. */
+  timeoutMs?: number;
 };
 
 export type AiResult =
@@ -133,16 +135,19 @@ export async function askClaude(req: AiRequest): Promise<AiResult> {
 
   let response: Anthropic.Message;
   try {
-    response = await getClient().messages.create({
-      model,
-      max_tokens: req.maxTokens,
-      system: req.system,
-      messages: [{ role: "user", content: req.prompt }],
-      output_config: {
-        effort: req.effort ?? (req.tier === "cheap" ? "low" : "medium"),
-        ...(req.jsonSchema ? { format: { type: "json_schema", schema: req.jsonSchema } } : {}),
+    response = await getClient().messages.create(
+      {
+        model,
+        max_tokens: req.maxTokens,
+        system: req.system,
+        messages: [{ role: "user", content: req.prompt }],
+        output_config: {
+          effort: req.effort ?? (req.tier === "cheap" ? "low" : "medium"),
+          ...(req.jsonSchema ? { format: { type: "json_schema", schema: req.jsonSchema } } : {}),
+        },
       },
-    });
+      req.timeoutMs ? { timeout: req.timeoutMs } : undefined,
+    );
   } catch (error) {
     console.error(`ai: ${req.purpose} failed`, error);
     return { ok: false, reason: "error" };

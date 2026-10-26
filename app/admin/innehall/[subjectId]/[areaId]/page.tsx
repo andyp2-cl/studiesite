@@ -1,18 +1,23 @@
 import { notFound } from "next/navigation";
 import { AdminHeader } from "@/components/admin/admin-header";
 import { CreateForm } from "@/components/admin/create-form";
+import { DraftPanel } from "@/components/admin/draft-panel";
 import { NodeForm } from "@/components/admin/node-form";
 import { SortableList } from "@/components/admin/sortable-list";
 import { SourcesPanel } from "@/components/admin/sources-panel";
 import { SectionLabel } from "@/components/study/visuals";
 import { getAdminArea, getAreaSources } from "@/lib/admin/data";
+import { aiStatus } from "@/lib/ai";
 import { strings } from "@/lib/strings";
 
 const t = strings.admin;
 
+// AI drafting (server actions on this page) can take a couple of minutes.
+export const maxDuration = 300;
+
 export default async function AdminAreaPage({ params }: PageProps<"/admin/innehall/[subjectId]/[areaId]">) {
   const { subjectId, areaId } = await params;
-  const [area, sources] = await Promise.all([getAdminArea(areaId), getAreaSources(areaId)]);
+  const [area, sources, ai] = await Promise.all([getAdminArea(areaId), getAreaSources(areaId), aiStatus("smart")]);
   if (!area || area.subject.id !== subjectId) notFound();
 
   const describe = (m: (typeof area.moments)[number]) =>
@@ -51,6 +56,11 @@ export default async function AdminAreaPage({ params }: PageProps<"/admin/inneha
             }))}
           />
           <CreateForm kind="moment" parentId={area.id} label={t.content.newMoment} />
+          {sources.length > 0 && (
+            <div className="mt-6">
+              <DraftPanel kind="area" id={area.id} unavailable={ai.available ? null : strings.ai[ai.reason]} />
+            </div>
+          )}
         </section>
 
         <section>

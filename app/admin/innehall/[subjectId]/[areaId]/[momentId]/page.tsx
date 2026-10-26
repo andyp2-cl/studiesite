@@ -2,6 +2,7 @@ import { ArrowRight, Plus } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminHeader } from "@/components/admin/admin-header";
+import { DraftPanel } from "@/components/admin/draft-panel";
 import {
   DeepeningsEditor,
   IntroEditor,
@@ -14,6 +15,7 @@ import { NodeForm } from "@/components/admin/node-form";
 import { MathMarkdown } from "@/components/math/markdown";
 import { SectionLabel } from "@/components/study/visuals";
 import { getAdminMoment } from "@/lib/admin/data";
+import { aiStatus } from "@/lib/ai";
 import { generatorKeys } from "@/lib/generators";
 import { LEVELS } from "@/lib/generators/types";
 import { mathSubject } from "@/lib/seed/math";
@@ -22,6 +24,9 @@ import type { TaskType } from "@/lib/tasks/answers";
 import { cn } from "@/lib/utils";
 
 const t = strings.admin;
+
+// AI drafting (a server action on this page) can take a couple of minutes.
+export const maxDuration = 300;
 
 /** Human label for a generator: the seeded moment that uses it. */
 function generatorLabel(key: string): string {
@@ -100,7 +105,7 @@ function TaskList({ moment, base, read }: { moment: AdminMoment; base: string; r
 
 export default async function AdminMomentPage({ params }: PageProps<"/admin/innehall/[subjectId]/[areaId]/[momentId]">) {
   const { subjectId, areaId, momentId } = await params;
-  const moment = await getAdminMoment(momentId);
+  const [moment, ai] = await Promise.all([getAdminMoment(momentId), aiStatus("smart")]);
   if (!moment || moment.area.id !== areaId || moment.subject.id !== subjectId) notFound();
 
   const base = `/admin/innehall/${subjectId}/${areaId}/${momentId}`;
@@ -125,6 +130,13 @@ export default async function AdminMomentPage({ params }: PageProps<"/admin/inne
 
         {read ? (
           <>
+            <DraftPanel
+              kind="moment"
+              id={moment.id}
+              unavailable={ai.available ? null : strings.ai[ai.reason]}
+              hasContent={moment.readings.length > 0 || moment.tasks.length > 0}
+            />
+
             <section>
               <SectionLabel>{t.read.intro}</SectionLabel>
               <Help>{t.read.introHelp}</Help>

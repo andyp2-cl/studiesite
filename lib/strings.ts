@@ -143,6 +143,24 @@ export const strings = {
       newQuestion: "Ny fråga",
       questionsCount: (published: number, total: number) => `${published} publicerade av ${total}`,
     },
+    drafts: {
+      anglesTitle: "Skapa moment med AI",
+      anglesHelp: "AI läser källorna och föreslår 3–4 vinklar. De skapas som dolda moment som du sedan fyller med AI eller själv.",
+      anglesButton: "Föreslå vinklar",
+      anglesDone: (n: number) => `${n} nya moment skapade. De är dolda tills du visar dem.`,
+      momentTitle: "Fyll momentet med AI",
+      momentHelp:
+        "AI läser områdets källor och skriver en sammanställning, 15–20 frågor med korta svar och några skrivuppgifter. Allt blir utkast, och momentet döljs tills du har granskat och publicerat.",
+      momentButton: "Skapa utkast från källor",
+      momentAgain: "Det finns redan innehåll. Nya utkast läggs till efter det som finns.",
+      working: "AI skriver … det kan ta ett par minuter",
+      momentDone: (sections: number, questions: number, writing: number) =>
+        `Klart: ${sections} lästexter, ${questions} frågor och ${writing} skrivuppgifter som utkast.`,
+      noSources: "Lägg till minst en inläst källa på området först.",
+      nothingUsable: "AI:ns svar gick inte att använda. Försök igen.",
+      partlySaved: "Allt kunde inte sparas. Kontrollera momentet och försök igen.",
+      cost: "Kostar ungefär 1–2 kronor per gång.",
+    },
     sources: {
       title: "Källor",
       help: "Länkar och texter som AI använder för att skapa moment i det här området. Eleverna ser dem som \"Läs mer\".",
