@@ -1,6 +1,13 @@
 // All user-facing text lives here (Swedish), so it is easy to tweak in one place.
 
 export const strings = {
+  ai: {
+    not_configured: "AI är inte inkopplat än.",
+    budget_reached: "Månadens AI-budget är slut. Det fungerar igen nästa månad.",
+    refused: "AI:n kunde inte svara på det här.",
+    truncated: "AI-svaret blev för långt. Försök igen.",
+    error: "Något gick fel med AI:n. Försök igen om en stund.",
+  },
   app: {
     name: "Studiesite",
     shortName: "Studiesite",
