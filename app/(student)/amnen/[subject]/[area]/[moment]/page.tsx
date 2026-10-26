@@ -9,7 +9,7 @@ import { requireViewProfile } from "@/lib/auth/session";
 import { getMoment, getReadMomentExtras } from "@/lib/data/content";
 import { getGenerator } from "@/lib/generators";
 import type { Level } from "@/lib/generators/types";
-import { suggestedLevel } from "@/lib/progress";
+import { passCorrectFor, suggestedLevel } from "@/lib/progress";
 import { strings } from "@/lib/strings";
 
 const t = strings.moment;
@@ -17,7 +17,7 @@ const t = strings.moment;
 export default async function MomentPage({ params }: PageProps<"/amnen/[subject]/[area]/[moment]">) {
   const { subject: s, area: a, moment: m } = await params;
   const profile = await requireViewProfile();
-  const data = await getMoment(s, a, m, profile.id);
+  const data = await getMoment(s, a, m, profile.id, passCorrectFor(profile));
   if (!data) notFound();
 
   const { subject, area, moment, intro, deepenings, stars, levelStats } = data;
@@ -45,6 +45,7 @@ export default async function MomentPage({ params }: PageProps<"/amnen/[subject]
             intro={intro}
             readings={data.readings}
             questionCount={data.taskCounts[1]}
+            passCorrect={data.passCorrect}
             writingTasks={read.writingTasks}
             sources={read.sources}
             milestones={read.milestones}
@@ -56,6 +57,7 @@ export default async function MomentPage({ params }: PageProps<"/amnen/[subject]
               <StartPanel
                 momentId={moment.id}
                 suggested={suggestedLevel(stars)}
+                passCorrect={data.passCorrect}
                 levels={{
                   1: { done: stars >= 1, correct: levelStats[1].correct, hasTasks: hasTasks(1) },
                   2: { done: stars >= 2, correct: levelStats[2].correct, hasTasks: hasTasks(2) },

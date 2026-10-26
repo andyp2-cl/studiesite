@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import type { Level } from "@/lib/generators/types";
-import { levelProgress } from "@/lib/progress";
+import { levelProgress, REQUIRED_CORRECT } from "@/lib/progress";
 import { startOfStockholmDay } from "@/lib/time";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -66,7 +66,13 @@ export async function getArea(subjectSlug: string, areaSlug: string) {
 
 export type LevelStats = Record<Level, { correct: number; attempts: number }>;
 
-export async function getMoment(subjectSlug: string, areaSlug: string, momentSlug: string, userId: string) {
+export async function getMoment(
+  subjectSlug: string,
+  areaSlug: string,
+  momentSlug: string,
+  userId: string,
+  passCorrect: number = REQUIRED_CORRECT,
+) {
   const found = await getArea(subjectSlug, areaSlug);
   const summary = found?.area.moments.find((m) => m.slug === momentSlug);
   if (!found || !summary) return null;
@@ -113,7 +119,11 @@ export async function getMoment(subjectSlug: string, areaSlug: string, momentSlu
     body: unlocked.get(d.id)?.body_md ?? null,
   }));
 
-  const byLevel = (level: Level) => levelProgress((attempts ?? []).filter((a) => a.level === level).map((a) => a.correct));
+  const byLevel = (level: Level) =>
+    levelProgress(
+      (attempts ?? []).filter((a) => a.level === level).map((a) => a.correct),
+      passCorrect,
+    );
   const levelStats: LevelStats = { 1: byLevel(1), 2: byLevel(2), 3: byLevel(3) };
 
   return {
@@ -130,6 +140,7 @@ export async function getMoment(subjectSlug: string, areaSlug: string, momentSlu
     deepenings,
     stars: progressMap.get(summary.id)?.stars ?? 0,
     levelStats,
+    passCorrect,
   };
 }
 
@@ -174,7 +185,9 @@ export async function getTodayXp(userId: string): Promise<number> {
   return (data ?? []).reduce((sum, e) => sum + e.amount, 0);
 }
 
-export async function getDailyGoal(): Promise<number> {
+/** The student's own daily goal, else the site default from settings. */
+export async function getDailyGoal(profile: { daily_goal_xp: number | null }): Promise<number> {
+  if (profile.daily_goal_xp) return profile.daily_goal_xp;
   const supabase = await createClient();
   const { data } = await supabase.from("settings").select("value").eq("key", "daily_goal_xp").maybeSingle();
   return typeof data?.value === "number" ? data.value : 50;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { levelProgress, readStars, suggestedLevel } from "@/lib/progress";
+import { levelProgress, passCorrectFor, readStars, suggestedLevel } from "@/lib/progress";
 
 const attempts = (pattern: string) => [...pattern].map((c) => c === "1");
 
@@ -37,5 +37,18 @@ describe("readStars", () => {
     expect(readStars({ read: true, quiz: false, writing: false })).toBe(1);
     expect(readStars({ read: true, quiz: true, writing: true })).toBe(3);
     expect(readStars({ read: false, quiz: true, writing: false })).toBe(1);
+  });
+});
+
+describe("per-student pass bar", () => {
+  it("clears with fewer correct when the student's bar is lower", () => {
+    const seven = [true, true, true, true, true, true, true, false, false, false];
+    expect(levelProgress(seven).cleared).toBe(false);
+    expect(levelProgress(seven, 7).cleared).toBe(true);
+  });
+
+  it("falls back to 8 of 10", () => {
+    expect(passCorrectFor({ pass_correct: null })).toBe(8);
+    expect(passCorrectFor({ pass_correct: 7 })).toBe(7);
   });
 });

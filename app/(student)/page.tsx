@@ -17,7 +17,7 @@ export default async function Home() {
     getSubjectsWithAreas(),
     getProgressMap(profile.id),
     getTodayXp(profile.id),
-    getDailyGoal(),
+    getDailyGoal(profile),
   ]);
 
   return (

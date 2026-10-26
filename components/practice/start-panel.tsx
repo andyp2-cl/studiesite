@@ -6,7 +6,6 @@ import { useState } from "react";
 import { BlockBar } from "@/components/study/visuals";
 import { LEVELS, type Level } from "@/lib/generators/types";
 import { ROUND_SIZES } from "@/lib/practice/ref";
-import { REQUIRED_CORRECT } from "@/lib/progress";
 import { strings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
@@ -20,10 +19,13 @@ export function StartPanel({
   momentId,
   levels,
   suggested,
+  passCorrect,
 }: {
   momentId: string;
   levels: Record<Level, LevelInfo>;
   suggested: Level;
+  /** Correct answers of the latest 10 needed to clear a level. */
+  passCorrect: number;
 }) {
   const firstAvailable = LEVELS.find((l) => levels[l].hasTasks);
   const [level, setLevel] = useState<Level>(levels[suggested].hasTasks ? suggested : (firstAvailable ?? suggested));
@@ -57,20 +59,20 @@ export function StartPanel({
               </span>
               <span className="font-semibold">{strings.levels[l]}</span>
               <BlockBar
-                value={info.done ? REQUIRED_CORRECT : info.correct}
-                max={REQUIRED_CORRECT}
-                cells={REQUIRED_CORRECT}
+                value={info.done ? passCorrect : info.correct}
+                max={passCorrect}
+                cells={passCorrect}
                 color={info.done ? "var(--success)" : undefined}
                 className={cn(!info.hasTasks && "opacity-40")}
               />
               <span className="font-mono text-[11px] leading-tight text-muted-foreground">
-                {!info.hasTasks ? t.noTasksAtLevel : info.done ? t.levelDone : `${info.correct}/${REQUIRED_CORRECT} rätt`}
+                {!info.hasTasks ? t.noTasksAtLevel : info.done ? t.levelDone : `${info.correct}/${passCorrect} rätt`}
               </span>
             </button>
           );
         })}
       </div>
-      <p className="font-mono text-[11px] text-muted-foreground">{t.levelRule}</p>
+      <p className="font-mono text-[11px] text-muted-foreground">{t.levelRule(passCorrect)}</p>
 
       <div className="flex flex-wrap items-center gap-3">
         <span className="font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">{p.roundSize}</span>

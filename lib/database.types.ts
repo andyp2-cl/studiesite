@@ -424,11 +424,14 @@ export type Database = {
           avatar: string | null
           coins: number
           created_at: string
+          daily_goal_xp: number | null
           display_name: string
           freeze_refilled_week: string | null
+          grade: number | null
           id: string
           last_active_date: string | null
           level: number
+          pass_correct: number | null
           role: Database["public"]["Enums"]["user_role"]
           sound_enabled: boolean
           streak: number
@@ -442,11 +445,14 @@ export type Database = {
           avatar?: string | null
           coins?: number
           created_at?: string
+          daily_goal_xp?: number | null
           display_name: string
           freeze_refilled_week?: string | null
+          grade?: number | null
           id: string
           last_active_date?: string | null
           level?: number
+          pass_correct?: number | null
           role?: Database["public"]["Enums"]["user_role"]
           sound_enabled?: boolean
           streak?: number
@@ -460,11 +466,14 @@ export type Database = {
           avatar?: string | null
           coins?: number
           created_at?: string
+          daily_goal_xp?: number | null
           display_name?: string
           freeze_refilled_week?: string | null
+          grade?: number | null
           id?: string
           last_active_date?: string | null
           level?: number
+          pass_correct?: number | null
           role?: Database["public"]["Enums"]["user_role"]
           sound_enabled?: boolean
           streak?: number

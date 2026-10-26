@@ -6,7 +6,7 @@ import { getGenerator } from "@/lib/generators";
 import { isLevel, type Figure, type Level, type SolutionStep } from "@/lib/generators/types";
 import { checkAnswer, type CheckResult, type RetryReason } from "@/lib/math/check-answer";
 import { EXPLANATION_MIN_CHARS, EXPLANATION_XP, XP_FOR_LEVEL } from "@/lib/gamification";
-import { levelProgress, WINDOW } from "@/lib/progress";
+import { levelProgress, passCorrectFor, WINDOW } from "@/lib/progress";
 import { createRng } from "@/lib/random";
 import { reachMilestone } from "@/lib/read/progress";
 import { strings } from "@/lib/strings";
@@ -280,7 +280,7 @@ export async function submitAnswer(input: {
     if (correct) xp = await awardXp(profile.id, XP_FOR_LEVEL[level], "correct_answer", attemptId);
   }
 
-  // Level progress: 8 of the latest 10 at this level clears it.
+  // Level progress: 8 of the latest 10 at this level clears it (or the student's own bar).
   const { data: recent } = await admin
     .from("attempts")
     .select("correct")
@@ -289,7 +289,7 @@ export async function submitAnswer(input: {
     .eq("level", level)
     .order("created_at", { ascending: false })
     .limit(WINDOW);
-  const progress = levelProgress((recent ?? []).map((r) => r.correct));
+  const progress = levelProgress((recent ?? []).map((r) => r.correct), passCorrectFor(profile));
 
   let stars = practice.stars;
   let clearedLevel: Level | null = null;

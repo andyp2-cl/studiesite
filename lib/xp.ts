@@ -27,13 +27,13 @@ export async function awardXp(
   if (!Number.isInteger(amount) || amount <= 0) return null;
   const admin = createAdminClient();
   const now = new Date();
-  const goal = await dailyGoal(admin);
+  const siteGoal = await dailyGoal(admin);
 
   for (let tries = 0; tries < MAX_TRIES; tries++) {
     const [{ data: row }, { data: today }] = await Promise.all([
       admin
         .from("profiles")
-        .select("xp, coins, level, streak, streak_freezes, freeze_refilled_week, last_active_date")
+        .select("xp, coins, level, streak, streak_freezes, freeze_refilled_week, last_active_date, daily_goal_xp")
         .eq("id", userId)
         .single(),
       admin.from("xp_events").select("amount").eq("user_id", userId).gte("created_at", startOfStockholmDay(now).toISOString()),
@@ -50,7 +50,7 @@ export async function awardXp(
       lastActiveDate: row.last_active_date,
     };
     const todayXp = (today ?? []).reduce((sum, e) => sum + e.amount, 0);
-    const out = applyXp(profile, amount, todayXp, goal, stockholmDate(now));
+    const out = applyXp(profile, amount, todayXp, row.daily_goal_xp ?? siteGoal, stockholmDate(now));
 
     const { count } = await admin
       .from("profiles")

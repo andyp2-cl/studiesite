@@ -13,6 +13,7 @@ export type ReadMomentProps = {
   intro: string;
   readings: { id: string; title: string; body: string }[];
   questionCount: number;
+  passCorrect: number;
   writingTasks: { id: string; prompt_md: string; min_chars: number }[];
   sources: { id: string; title: string; url: string | null; content: string | null }[];
   milestones: ReadMilestones;
@@ -45,7 +46,7 @@ function Steps({ milestones }: { milestones: ReadMilestones }) {
   );
 }
 
-export function ReadMoment({ momentId, intro, readings, questionCount, writingTasks, sources, milestones }: ReadMomentProps) {
+export function ReadMoment({ momentId, intro, readings, questionCount, passCorrect, writingTasks, sources, milestones }: ReadMomentProps) {
   return (
     <>
       <Steps milestones={milestones} />
@@ -78,7 +79,7 @@ export function ReadMoment({ momentId, intro, readings, questionCount, writingTa
           <div className="flex flex-col gap-4 border border-border p-5">
             <p className="flex items-center gap-2 text-sm text-muted-foreground">
               {milestones.quiz && <Check className="size-4 text-success" />}
-              {t.quizHelp(questionCount)}
+              {t.quizHelp(questionCount, passCorrect)}
             </p>
             <QuizStart momentId={momentId} />
           </div>
