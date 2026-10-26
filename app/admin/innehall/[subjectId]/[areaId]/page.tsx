@@ -4,6 +4,7 @@ import { CreateForm } from "@/components/admin/create-form";
 import { DraftPanel } from "@/components/admin/draft-panel";
 import { NodeForm } from "@/components/admin/node-form";
 import { SortableList } from "@/components/admin/sortable-list";
+import { SourceFinder } from "@/components/admin/source-finder";
 import { SourcesPanel } from "@/components/admin/sources-panel";
 import { SectionLabel } from "@/components/study/visuals";
 import { getAdminArea, getAreaSources } from "@/lib/admin/data";
@@ -40,7 +41,10 @@ export default async function AdminAreaPage({ params }: PageProps<"/admin/inneha
         <section>
           <SectionLabel>{t.sources.title}</SectionLabel>
           <p className="-mt-2 mb-4 text-sm text-muted-foreground">{t.sources.help}</p>
-          <SourcesPanel areaId={area.id} sources={sources} />
+          <div className="flex flex-col gap-4">
+            <SourcesPanel areaId={area.id} sources={sources} />
+            <SourceFinder areaId={area.id} initialQuery={area.name} math={/matem/i.test(area.subject.name)} />
+          </div>
         </section>
 
         <section>

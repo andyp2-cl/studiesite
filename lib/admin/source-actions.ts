@@ -3,6 +3,7 @@
 import { refresh } from "next/cache";
 import { requireAdmin } from "@/lib/auth/session";
 import { fetchReadable, isSafeUrl, MAX_SOURCE_CHARS } from "@/lib/sources/extract";
+import { articleUrl, searchWikipedia, wikipediaArticle, type WikiArticle, type WikiHit } from "@/lib/sources/wikipedia";
 import { strings } from "@/lib/strings";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "./content-actions";
@@ -95,4 +96,53 @@ export async function deleteSource(id: string): Promise<ActionResult> {
   if (error) return fail(e.generic);
   refresh();
   return { ok: true };
+}
+
+export type WikiSuggestion = WikiHit & { url: string; added: boolean };
+
+/** Free: searches Swedish Wikipedia for an area's topic and marks articles already added. */
+export async function findWikipedia(areaId: string, rawQuery: string): Promise<{ ok: true; hits: WikiSuggestion[] } | { ok: false; error: string }> {
+  await requireAdmin();
+  const query = String(rawQuery ?? "").trim().slice(0, 100);
+  if (!query) return fail(e.query) as { ok: false; error: string };
+  let hits: WikiHit[];
+  try {
+    hits = await searchWikipedia(query);
+  } catch {
+    return fail(e.wikipedia) as { ok: false; error: string };
+  }
+  const supabase = await createClient();
+  const { data } = await supabase.from("sources").select("url").eq("area_id", areaId);
+  const added = new Set((data ?? []).map((s) => s.url));
+  return { ok: true, hits: hits.map((h) => ({ ...h, url: articleUrl(h.title), added: added.has(articleUrl(h.title)) })) };
+}
+
+/** Adds a Wikipedia article as a source, read through the API as clean text. */
+export async function addWikipedia(areaId: string, title: string): Promise<ActionResult> {
+  await requireAdmin();
+  let article: WikiArticle | null;
+  try {
+    article = await wikipediaArticle(String(title ?? "").slice(0, 300));
+  } catch {
+    return fail(e.wikipedia);
+  }
+  if (!article) return fail(e.wikipedia);
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("sources")
+    .insert({
+      area_id: areaId,
+      url: article.url,
+      title: `Wikipedia: ${article.title}`,
+      content: article.text.slice(0, MAX_SOURCE_CHARS),
+      status: "ready",
+      fetched_at: new Date().toISOString(),
+      sort_order: await nextOrder(areaId),
+    })
+    .select("id")
+    .single();
+  if (error) return fail(e.generic);
+  refresh();
+  return { ok: true, id: data.id };
 }
