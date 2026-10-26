@@ -10,7 +10,7 @@ comment on column public.profiles.collection_theme is 'Which card series the stu
 create table public.user_cards (
   user_id uuid not null references public.profiles (id) on delete cascade,
   theme text not null check (theme in ('football', 'music')),
-  card_id smallint not null check (card_id between 1 and 500),
+  card_id smallint not null check (card_id between 1 and 5000),
   milestone text not null,
   earned_at timestamptz not null default now(),
   primary key (user_id, theme, card_id),

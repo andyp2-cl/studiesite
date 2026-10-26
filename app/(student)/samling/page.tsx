@@ -34,29 +34,34 @@ export default async function CollectionPage() {
         </div>
       </PageHeader>
       <div className="mx-auto flex max-w-3xl flex-col gap-10 px-4 py-10 sm:px-8">
-        {[...TIERS].reverse().map((tier) => (
-          <section key={tier}>
-            <p className={cn("mb-3 font-mono text-[11px] tracking-[0.2em] uppercase", TIER_TEXT[tier])}>{t.tier[tier]}</p>
-            <ul className="grid grid-cols-3 gap-3 sm:grid-cols-5">
-              {cards
-                .filter((c) => c.tier === tier)
-                .map((c) => {
-                  const have = owned.has(c.id);
-                  return (
-                    <li key={c.id} className={cn("flex flex-col gap-1.5", !have && "opacity-50")}>
-                      <CardArt card={c} hidden={!have} className="w-full" />
-                      <span className="truncate text-center text-xs font-semibold">{have ? c.name : t.unknown}</span>
-                      {have && (
-                        <span className="truncate text-center font-mono text-[10px] text-muted-foreground">
-                          {c.role} · {c.country}
-                        </span>
-                      )}
+        {/* Only collected cards are drawn: a series has hundreds, so missing ones are just counted. */}
+        {[...TIERS].reverse().map((tier) => {
+          const inTier = cards.filter((c) => c.tier === tier);
+          const mine = inTier.filter((c) => owned.has(c.id));
+          return (
+            <section key={tier}>
+              <p className={cn("mb-3 flex justify-between font-mono text-[11px] tracking-[0.2em] uppercase", TIER_TEXT[tier])}>
+                <span>{t.tier[tier]}</span>
+                <span className="text-muted-foreground">{t.tierCount(mine.length, inTier.length)}</span>
+              </p>
+              {mine.length === 0 ? (
+                <p className="border border-dashed border-border p-4 text-sm text-muted-foreground">{t.noneYet}</p>
+              ) : (
+                <ul className="grid grid-cols-3 gap-3 sm:grid-cols-5">
+                  {mine.map((c) => (
+                    <li key={c.id} className="flex flex-col gap-1.5">
+                      <CardArt card={c} className="w-full" />
+                      <span className="truncate text-center text-xs font-semibold">{c.name}</span>
+                      <span className="truncate text-center font-mono text-[10px] text-muted-foreground">
+                        {c.role} · {c.country}
+                      </span>
                     </li>
-                  );
-                })}
-            </ul>
-          </section>
-        ))}
+                  ))}
+                </ul>
+              )}
+            </section>
+          );
+        })}
       </div>
     </main>
   );

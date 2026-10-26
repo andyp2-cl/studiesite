@@ -1,8 +1,12 @@
-// The collectible cards: one series per theme (football players or music
-// artists), real names with drawn pictures (components/cards/card-art.tsx), so
-// there are no image files. Cards are earned for big milestones only, never
+// The collectible cards: one series per theme (football players in football.ts,
+// music artists in music.ts), real names with simple drawn pictures
+// (components/cards/card-art.tsx), so there are no image files. Over 500 cards
+// per theme, so a series is never finished. Cards are earned for big milestones only, never
 // bought: an area cleared at Lätt gives bronze, Medel silver, Svår gold, and a
 // finished fact area silver. A milestone always gives a card the student lacks.
+
+import { FOOTBALL } from "./football";
+import { MUSIC } from "./music";
 
 export type Theme = "football" | "music";
 export type Tier = "bronze" | "silver" | "gold";
@@ -13,127 +17,42 @@ export const TIERS: readonly Tier[] = ["bronze", "silver", "gold"];
 /** role: position for players, genre for artists. */
 export type Card = { id: number; theme: Theme; tier: Tier; name: string; role: string; country: string };
 
-type Row = [name: string, role: string, country: string];
+const POSITIONS: Record<string, string> = { M: "Målvakt", F: "Försvarare", MF: "Mittfältare", A: "Anfallare" };
 
-const FOOTBALL: Record<Tier, Row[]> = {
-  bronze: [
-    ["Emil Forsberg", "Mittfältare", "Sverige"],
-    ["Victor Lindelöf", "Försvarare", "Sverige"],
-    ["Robin Olsen", "Målvakt", "Sverige"],
-    ["Magdalena Eriksson", "Försvarare", "Sverige"],
-    ["Filippa Angeldal", "Mittfältare", "Sverige"],
-    ["Johanna Rytting Kaneryd", "Anfallare", "Sverige"],
-    ["Zećira Mušović", "Målvakt", "Sverige"],
-    ["Nathalie Björn", "Försvarare", "Sverige"],
-    ["Martin Ødegaard", "Mittfältare", "Norge"],
-    ["Bukayo Saka", "Anfallare", "England"],
-    ["Phil Foden", "Mittfältare", "England"],
-    ["Pedri", "Mittfältare", "Spanien"],
-    ["Rodri", "Mittfältare", "Spanien"],
-    ["Antoine Griezmann", "Anfallare", "Frankrike"],
-    ["Alisson Becker", "Målvakt", "Brasilien"],
-    ["Achraf Hakimi", "Försvarare", "Marocko"],
-    ["Son Heung-min", "Anfallare", "Sydkorea"],
-    ["Alessia Russo", "Anfallare", "England"],
-    ["Caroline Graham Hansen", "Anfallare", "Norge"],
-    ["Lena Oberdorf", "Mittfältare", "Tyskland"],
-  ],
-  silver: [
-    ["Alexander Isak", "Anfallare", "Sverige"],
-    ["Viktor Gyökeres", "Anfallare", "Sverige"],
-    ["Dejan Kulusevski", "Mittfältare", "Sverige"],
-    ["Stina Blackstenius", "Anfallare", "Sverige"],
-    ["Kosovare Asllani", "Mittfältare", "Sverige"],
-    ["Hedvig Lindahl", "Målvakt", "Sverige"],
-    ["Henrik Larsson", "Anfallare", "Sverige"],
-    ["Kevin De Bruyne", "Mittfältare", "Belgien"],
-    ["Mohamed Salah", "Anfallare", "Egypten"],
-    ["Jude Bellingham", "Mittfältare", "England"],
-    ["Harry Kane", "Anfallare", "England"],
-    ["Virgil van Dijk", "Försvarare", "Nederländerna"],
-    ["Luka Modrić", "Mittfältare", "Kroatien"],
-    ["Ada Hegerberg", "Anfallare", "Norge"],
-  ],
-  gold: [
-    ["Zlatan Ibrahimović", "Anfallare", "Sverige"],
-    ["Lionel Messi", "Anfallare", "Argentina"],
-    ["Cristiano Ronaldo", "Anfallare", "Portugal"],
-    ["Kylian Mbappé", "Anfallare", "Frankrike"],
-    ["Erling Haaland", "Anfallare", "Norge"],
-    ["Aitana Bonmatí", "Mittfältare", "Spanien"],
-    ["Alexia Putellas", "Mittfältare", "Spanien"],
-    ["Pelé", "Anfallare", "Brasilien"],
-  ],
-};
+/**
+ * Card numbers start at these per tier (room for 1000 each), so adding a card
+ * at the end of any tier list never renumbers the cards students already have.
+ */
+export const TIER_START: Record<Tier, number> = { bronze: 1, silver: 1001, gold: 2001 };
+const TIER_SIZE = 1000;
 
-const MUSIC: Record<Tier, Row[]> = {
-  bronze: [
-    ["Molly Sandén", "Pop", "Sverige"],
-    ["Benjamin Ingrosso", "Pop", "Sverige"],
-    ["Veronica Maggio", "Pop", "Sverige"],
-    ["Miriam Bryant", "Pop", "Sverige"],
-    ["Tove Lo", "Pop", "Sverige"],
-    ["First Aid Kit", "Folk", "Sverige"],
-    ["Laleh", "Pop", "Sverige"],
-    ["Darin", "Pop", "Sverige"],
-    ["Hov1", "Pop", "Sverige"],
-    ["Smith & Thell", "Pop", "Sverige"],
-    ["Felix Sandman", "Pop", "Sverige"],
-    ["Imagine Dragons", "Rock", "USA"],
-    ["Shakira", "Pop", "Colombia"],
-    ["Lady Gaga", "Pop", "USA"],
-    ["Justin Bieber", "Pop", "Kanada"],
-    ["The Weeknd", "R&B", "Kanada"],
-    ["Rihanna", "Pop", "Barbados"],
-    ["Alan Walker", "Elektroniskt", "Norge"],
-    ["Sigrid", "Pop", "Norge"],
-    ["Måneskin", "Rock", "Italien"],
-  ],
-  silver: [
-    ["Billie Eilish", "Pop", "USA"],
-    ["Dua Lipa", "Pop", "Storbritannien"],
-    ["Bruno Mars", "Pop", "USA"],
-    ["Adele", "Pop", "Storbritannien"],
-    ["Harry Styles", "Pop", "Storbritannien"],
-    ["Olivia Rodrigo", "Pop", "USA"],
-    ["Sabrina Carpenter", "Pop", "USA"],
-    ["Ariana Grande", "Pop", "USA"],
-    ["Loreen", "Pop", "Sverige"],
-    ["Måns Zelmerlöw", "Pop", "Sverige"],
-    ["Swedish House Mafia", "Elektroniskt", "Sverige"],
-    ["Robyn", "Pop", "Sverige"],
-    ["Coldplay", "Rock", "Storbritannien"],
-    ["Queen", "Rock", "Storbritannien"],
-  ],
-  gold: [
-    ["Taylor Swift", "Pop", "USA"],
-    ["ABBA", "Pop", "Sverige"],
-    ["Avicii", "Elektroniskt", "Sverige"],
-    ["Zara Larsson", "Pop", "Sverige"],
-    ["Michael Jackson", "Pop", "USA"],
-    ["The Beatles", "Rock", "Storbritannien"],
-    ["Beyoncé", "R&B", "USA"],
-    ["Ed Sheeran", "Pop", "Storbritannien"],
-  ],
-};
-
-function series(theme: Theme, rows: Record<Tier, Row[]>): Card[] {
-  return TIERS.flatMap((tier) => rows[tier].map((row) => ({ tier, row }))).map(({ tier, row: [name, role, country] }, i) => ({
-    id: i + 1,
-    theme,
-    tier,
-    name,
-    role,
-    country,
-  }));
+/** Lines "name|role|country" per tier into numbered cards. */
+export function parseSeries(theme: Theme, rows: Record<Tier, string>): Card[] {
+  return TIERS.flatMap((tier) =>
+    rows[tier]
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .slice(0, TIER_SIZE)
+      .map((line, i) => {
+        const [name, role, country] = line.split("|").map((part) => part.trim());
+        const label = theme === "football" ? (POSITIONS[role] ?? role) : role;
+        return { id: TIER_START[tier] + i, theme, tier, name, role: label, country };
+      }),
+  );
 }
 
 export const CARDS: Record<Theme, readonly Card[]> = {
-  football: series("football", FOOTBALL),
-  music: series("music", MUSIC),
+  football: parseSeries("football", FOOTBALL),
+  music: parseSeries("music", MUSIC),
 };
 
-export const cardById = (theme: Theme, id: number): Card | undefined => CARDS[theme][id - 1];
+const BY_ID: Record<Theme, Map<number, Card>> = {
+  football: new Map(CARDS.football.map((c) => [c.id, c])),
+  music: new Map(CARDS.music.map((c) => [c.id, c])),
+};
+
+export const cardById = (theme: Theme, id: number): Card | undefined => BY_ID[theme].get(id);
 
 export const isTheme = (value: unknown): value is Theme => THEMES.includes(value as Theme);
 

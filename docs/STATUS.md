@@ -11,7 +11,7 @@ Uppdateras vid varje commit. Senast: 2026-10-26.
 - AI används bara i admin (utkast till frågor), loggat i `ai_calls` med budgettak.
 - Admin: innehåll, användare (årskurs, dagsmål, godkäntgräns, lösenord), statistik, inställningar.
 - Dagens mix (`/mix`): 10 uppgifter från upp till 4 övade moment, viktade mot nyliga fel och tid sedan senaste övning. "Läs och svara"-moment ingår inte.
-- Kortsamling (ersätter monstren): fotbollsspelare eller artister, 42 kort per tema (20 brons, 14 silver, 8 guld), riktiga namn och ritade bilder. Samlingssidan visar albumet för elevens tema.
+- Kortsamling (ersätter monstren): fotbollsspelare (546 kort) eller artister (721 kort) i brons, silver och guld, riktiga namn och enkla ritade bilder. Data i `lib/cards/football.ts` och `music.ts`, en rad per kort; nya kort läggs sist i sin nivå. Samlingssidan visar elevens kort och hur många som finns kvar per nivå.
 
 ## På gång
 
@@ -32,4 +32,5 @@ Märken (achievements) byggs inte: korten är den enda samlingen.
 ## Kända brister
 
 - Dagens mix och kortsamlingen är inte provkörda inloggade av Claude, bara via tester och typkontroll.
+- Kortens position, genre och land är skrivna ur minnet och kan innehålla enstaka fel. Rättas direkt i datafilerna.
 - Migrationen `20261026200000_cards.sql` måste köras live: `npm run db:push` och sedan `npm run db:types`. Tills dess visar samlingen fotbollskort utan några tagna kort.

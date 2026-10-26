@@ -361,7 +361,8 @@ export const strings = {
     howTo: "Kort är sällsynta: du får ett när du klarar ett helt område. I matte ger Lätt brons, Medel silver och Svår guld. Ett klart faktaområde ger silver.",
     progress: (have: number, total: number) => `${have} av ${total} kort`,
     tier: { bronze: "Brons", silver: "Silver", gold: "Guld" },
-    unknown: "???",
+    tierCount: (have: number, total: number) => `${have} av ${total}`,
+    noneYet: "Inga kort här än.",
   },
   viewAs: {
     label: "Visa som",

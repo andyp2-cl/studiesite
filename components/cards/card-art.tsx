@@ -21,22 +21,10 @@ const initials = (name: string) =>
     .join("")
     .toUpperCase();
 
-/** A card, or a face-down card when not collected yet. */
-export function CardArt({ card, hidden = false, className }: { card: Card; hidden?: boolean; className?: string }) {
+export function CardArt({ card, className }: { card: Card; className?: string }) {
   const [light, dark] = FRAME[card.tier];
   const hue = (card.id * 47 + (card.theme === "music" ? 180 : 0)) % 360;
   const gradient = `card-${card.theme}-${card.id}`;
-
-  if (hidden) {
-    return (
-      <svg viewBox="0 0 100 130" className={cn("block", className)} role="img" aria-label="?">
-        <rect x="2" y="2" width="96" height="126" rx="8" fill="var(--muted)" stroke={dark} strokeWidth="3" strokeOpacity="0.5" />
-        <text x="50" y="76" textAnchor="middle" fontSize="34" fontWeight="700" fill="var(--muted-foreground)">
-          ?
-        </text>
-      </svg>
-    );
-  }
 
   return (
     <svg viewBox="0 0 100 130" className={cn("block", className)} role="img" aria-label={card.name}>
