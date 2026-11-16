@@ -531,6 +531,8 @@ export const strings = {
     chooseLevel: "Nivå",
     start: (n: number) => `Starta ${n} frågor`,
     newRound: (n: number) => `${n} nya frågor`,
+    noMore: "Inga fler nya frågor här. Det som finns är redan använt.",
+    loading: "Hämtar frågor …",
     moreTitle: "Öva mer",
     sameLevel: "nu",
     summaryParts: {

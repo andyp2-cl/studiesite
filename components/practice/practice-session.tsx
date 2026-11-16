@@ -12,8 +12,8 @@ import { LEVELS, type Level } from "@/lib/generators/types";
 import { inputToTex } from "@/lib/math/input-to-tex";
 import type { Card } from "@/lib/cards/catalog";
 import type { DailyMixStep } from "@/lib/data/content";
-import { getHint, nextTask, saveExplanation, submitAnswer, type PublicTask, type SubmitResult } from "@/lib/practice/actions";
-import { refKey, ROUND_SIZES } from "@/lib/practice/ref";
+import { getHint, nextTask, practiceMenu, saveExplanation, submitAnswer, type PracticeMenu, type PublicTask, type SubmitResult } from "@/lib/practice/actions";
+import { refKey } from "@/lib/practice/ref";
 import { strings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 import type { XpAward } from "@/lib/xp";
@@ -82,6 +82,7 @@ export function PracticeSession({
   const [news, setNews] = useState<string[]>([]);
   const [wonCards, setWonCards] = useState<Card[]>([]);
   const [finished, setFinished] = useState(false);
+  const [rounds, setRounds] = useState<PracticeMenu["rounds"]>({ 1: [], 2: [], 3: [] });
   const [pending, startTransition] = useTransition();
   const shownAt = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -154,12 +155,25 @@ export function PracticeSession({
     });
   }
 
+  function finishRound() {
+    startTransition(async () => {
+      const menu = await practiceMenu(momentId);
+      setRounds(menu.rounds);
+      setFinished(true);
+    });
+  }
+
   function next() {
-    if (answered >= roundSize) return setFinished(true);
+    if (answered >= roundSize) return finishRound();
     const target = mix?.[answered] ?? { momentId, level };
     startTransition(async () => {
       const upcoming = await nextTask(target.momentId, target.level, seen);
-      if (!upcoming) return setNotice(p.error);
+      if (!upcoming) {
+        const menu = await practiceMenu(momentId);
+        setRounds(menu.rounds);
+        setFinished(true);
+        return;
+      }
       if (mix) setStep(answered);
       setTask(upcoming);
       setSeen((keys) => [...keys, refKey(upcoming.ref)]);
@@ -248,6 +262,7 @@ export function PracticeSession({
                   suggested={nextLevel ?? level}
                   roundSize={roundSize}
                   withLevels={!readings}
+                  rounds={rounds}
                 />
                 <Link
                   href={momentHref}
@@ -622,14 +637,18 @@ function MoreRounds({
   suggested,
   roundSize,
   withLevels,
+  rounds,
 }: {
   momentId: string;
   current: Level;
   suggested: Level;
   roundSize: number;
   withLevels: boolean;
+  rounds: PracticeMenu["rounds"];
 }) {
   const [chosen, setChosen] = useState<Level>(suggested);
+  const sizes = rounds[chosen];
+  const highlight = sizes.includes(roundSize) ? roundSize : sizes[sizes.length - 1];
   return (
     <div className="flex flex-col gap-2">
       <p className="font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">{p.moreTitle}</p>
@@ -653,20 +672,24 @@ function MoreRounds({
           ))}
         </div>
       )}
-      <div className="grid grid-cols-2 gap-2">
-        {ROUND_SIZES.map((n) => (
-          <a
-            key={n}
-            href={`/ova/${momentId}?niva=${chosen}&antal=${n}`}
-            className={cn(
-              "flex h-12 items-center justify-center gap-2 font-mono text-sm font-semibold",
-              n === roundSize ? "bg-primary text-primary-foreground" : "border border-border",
-            )}
-          >
-            {chosen === current ? <RotateCcw className="size-4" /> : <ArrowRight className="size-4" />} {p.newRound(n)}
-          </a>
-        ))}
-      </div>
+      {sizes.length === 0 ? (
+        <p className="border border-dashed border-border p-4 text-sm text-muted-foreground">{p.noMore}</p>
+      ) : (
+        <div className={cn("grid gap-2", sizes.length > 1 && "grid-cols-2")}>
+          {sizes.map((n) => (
+            <a
+              key={n}
+              href={`/ova/${momentId}?niva=${chosen}&antal=${n}`}
+              className={cn(
+                "flex h-12 items-center justify-center gap-2 font-mono text-sm font-semibold",
+                n === highlight ? "bg-primary text-primary-foreground" : "border border-border",
+              )}
+            >
+              {chosen === current ? <RotateCcw className="size-4" /> : <ArrowRight className="size-4" />} {p.newRound(n)}
+            </a>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

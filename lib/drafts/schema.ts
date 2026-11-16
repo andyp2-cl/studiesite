@@ -141,6 +141,33 @@ function parseQuestion(q: Record<string, unknown>, sectionTitles: Map<string, st
   };
 }
 
+/** Questions added to a moment that already has its reading text. Empty when none are usable. */
+export function parseMoreQuestions(json: unknown, sectionTitles: string[]): DraftQuestion[] {
+  const titles = new Map(sectionTitles.map((title) => [title.toLowerCase(), title]));
+  const questions = (json as { questions?: unknown })?.questions;
+  if (!Array.isArray(questions)) return [];
+  const seen = new Set<string>();
+  const out: DraftQuestion[] = [];
+  for (const q of questions) {
+    const parsed = parseQuestion(q as Record<string, unknown>, titles);
+    // The hint points at a section. A question that names none of them is dropped.
+    if (!parsed?.section) continue;
+    const key = parsed.prompt.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(parsed);
+    if (out.length >= 12) break;
+  }
+  return out;
+}
+
+export const moreQuestionsSchema = {
+  type: "object",
+  properties: { questions: momentDraftSchema.properties.questions },
+  required: ["questions"],
+  additionalProperties: false,
+};
+
 export function parseMomentDraft(json: unknown): MomentDraft | null {
   const d = json as Record<string, unknown> | null;
   if (!d || typeof d !== "object") return null;

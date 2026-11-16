@@ -1,8 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { PracticeSession } from "@/components/practice/practice-session";
-import { ROUND_SIZES } from "@/lib/practice/ref";
 import { isLevel, type Level } from "@/lib/generators/types";
-import { nextTask } from "@/lib/practice/actions";
+import { nextTask, prepareRound } from "@/lib/practice/actions";
 import { searchLinks } from "@/lib/sources/wikipedia";
 import { createClient } from "@/lib/supabase/server";
 
@@ -10,7 +9,7 @@ export default async function PracticePage({ params, searchParams }: PageProps<"
   const { momentId } = await params;
   const { niva, antal } = await searchParams;
   const level: Level = isLevel(Number(niva)) ? (Number(niva) as Level) : 1;
-  const roundSize = ROUND_SIZES.find((n) => n === Number(antal)) ?? 10;
+  const requested = Number(antal);
 
   const supabase = await createClient();
   const { data: moment } = await supabase
@@ -21,8 +20,10 @@ export default async function PracticePage({ params, searchParams }: PageProps<"
   if (!moment?.areas?.subjects) notFound();
 
   const momentHref = `/amnen/${moment.areas.subjects.slug}/${moment.areas.slug}/${moment.slug}`;
-  // nextTask returns null if the moment has no generator or no published tasks at this level.
+  // A round is only as long as the new questions we can actually give.
   const read = moment.mode === "read";
+  const roundSize = await prepareRound(moment.id, read ? 1 : level, Number.isInteger(requested) ? requested : 10);
+  if (!roundSize) redirect(momentHref);
   const firstTask = await nextTask(moment.id, read ? 1 : level);
   if (!firstTask) redirect(momentHref);
 

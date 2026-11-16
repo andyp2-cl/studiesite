@@ -59,3 +59,33 @@ ${input.siblings.length ? `Other moments in the area (leave their content out): 
 ${curriculumBlock(input.curriculum)}${input.sources}`,
   };
 }
+
+/** More quiz questions for a reading the student has already been questioned on. */
+export function moreQuestionsPrompt(input: {
+  moment: string;
+  sections: { title: string; body: string }[];
+  existing: string[];
+  count: number;
+}) {
+  const reading = input.sections.map((s) => `## ${s.title}\n${s.body}`).join("\n\n");
+  return {
+    system: `${AUDIENCE}
+
+The student has already answered the questions listed below. Write ${input.count} new quiz questions from the reading sections alone.
+Ask only about important facts that are in the text and not already covered. Never ask about minor details (names of minor people, exact days, anecdotes). Prefer understanding over pure recall. At most two questions may ask for a year.
+If the text does not contain enough unused material for at least 5 such questions, return an empty questions array. Do not pad with trivia.
+- Mix the types: about 40 % "short", 30 % "choice" and 30 % "true_false".
+- "short": one to three words. "accepted" lists every reasonable way to write the answer. Leave "keywords" empty unless the answer is a phrase; then put 1–2 essential words.
+- "choice": 3–4 plausible options, "correct_index" 0-based. "true_false": a clear statement, "correct_boolean"; about half of them false.
+- Fill unused fields with empty arrays, 0 or false.
+- "section": the exact title of the reading section that contains the answer.
+- "explanation": one sentence, in Swedish, saying why the answer is right.`,
+    prompt: `Moment: ${input.moment}
+
+Questions that already exist (do not repeat or rephrase these):
+${input.existing.map((q) => `- ${q}`).join("\n")}
+
+Reading sections:
+${reading}`,
+  };
+}

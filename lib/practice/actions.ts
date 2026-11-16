@@ -4,10 +4,15 @@ import { randomInt } from "node:crypto";
 import { getViewProfile, requireProfile } from "@/lib/auth/session";
 import { awardCards } from "@/lib/cards/award";
 import type { Card } from "@/lib/cards/catalog";
+import { askClaude, aiStatus } from "@/lib/ai";
+import type { Json } from "@/lib/database.types";
+import { moreQuestionsPrompt } from "@/lib/drafts/prompts";
+import { moreQuestionsSchema, parseMoreQuestions } from "@/lib/drafts/schema";
 import { getGenerator } from "@/lib/generators";
-import { isLevel, type Figure, type Level, type SolutionStep } from "@/lib/generators/types";
+import { isLevel, LEVELS, type Figure, type Generator, type Level, type SolutionStep } from "@/lib/generators/types";
 import { checkAnswer, type CheckResult, type RetryReason } from "@/lib/math/check-answer";
 import { EXPLANATION_MIN_CHARS, EXPLANATION_XP, XP_FOR_LEVEL } from "@/lib/gamification";
+import { offeredRounds, quizClosedKey, readingCanSupportMore, wordCount } from "@/lib/practice/rounds";
 import { levelProgress, passCorrectFor, WINDOW } from "@/lib/progress";
 import { createRng } from "@/lib/random";
 import { reachMilestone } from "@/lib/read/progress";
@@ -61,8 +66,10 @@ export type SubmitResult =
   | { status: "error" };
 
 const MAX_SEED = 2 ** 31 - 1;
-/** How many recent tasks to avoid repeating (covers the previous round of up to 10). */
-const AVOID_RECENT = 10;
+/** Generated prompts to avoid, so a new round is not the one just finished. */
+const PROMPT_HISTORY = 200;
+/** Random seeds tried before giving up on a question the student has not seen. */
+const SAMPLE_TRIES = 40;
 const INPUT_FOR: Record<TaskType, PublicTask["input"]> = {
   numeric: "math",
   expression: "math",
@@ -103,38 +110,77 @@ async function loadPractice(momentId: unknown, level: unknown) {
 
 type Practice = NonNullable<Awaited<ReturnType<typeof loadPractice>>>;
 
-async function recentAttempts(practice: Practice, column: "generator_seed" | "task_id") {
+/** Published tasks at this level that this student has not already answered. */
+async function unseenBank(userId: string, momentId: string, level: Level): Promise<number> {
+  const admin = createAdminClient();
+  const [{ data: tasks }, { data: attempts }] = await Promise.all([
+    admin.from("tasks").select("id").eq("moment_id", momentId).eq("level", level).eq("status", "published"),
+    admin
+      .from("attempts")
+      .select("task_id")
+      .eq("user_id", userId)
+      .eq("moment_id", momentId)
+      .eq("level", level)
+      .not("task_id", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(1000),
+  ]);
+  const done = new Set((attempts ?? []).map((a) => a.task_id));
+  return (tasks ?? []).filter((t) => !done.has(t.id)).length;
+}
+
+/** Prompts this student has already been given, recreated from their seeds. */
+async function usedPrompts(userId: string, momentId: string, level: Level, generator: Generator): Promise<Set<string>> {
   const { data } = await createAdminClient()
     .from("attempts")
-    .select("generator_seed, task_id")
-    .eq("user_id", practice.profile.id)
-    .eq("moment_id", practice.moment.id)
-    .eq("level", practice.level)
-    .not(column, "is", null)
+    .select("generator_seed")
+    .eq("user_id", userId)
+    .eq("moment_id", momentId)
+    .eq("level", level)
+    .not("generator_seed", "is", null)
     .order("created_at", { ascending: false })
-    .limit(AVOID_RECENT);
-  return data ?? [];
-}
-
-/** A generated task whose prompt was not shown this round or in the latest attempts. */
-async function pickGeneratedTask(practice: Practice, seen: Set<string>): Promise<PublicTask> {
-  const generator = practice.generator!;
-  const recentSeeds = (await recentAttempts(practice, "generator_seed")).map((a) => a.generator_seed!);
-  const seenSeeds = [...seen].filter((k) => k.startsWith("g")).map((k) => Number(k.slice(1)));
-  const avoidPrompts = new Set(
-    [...recentSeeds, ...seenSeeds].filter(Number.isInteger).map((s) => generator.generate(practice.level, s).prompt),
-  );
-
-  let seed = randomInt(0, MAX_SEED);
-  let task = generator.generate(practice.level, seed);
-  for (let tries = 0; tries < 30 && avoidPrompts.has(task.prompt); tries++) {
-    seed = randomInt(0, MAX_SEED);
-    task = generator.generate(practice.level, seed);
+    .limit(PROMPT_HISTORY);
+  const prompts = new Set<string>();
+  for (const row of data ?? []) {
+    if (row.generator_seed === null) continue;
+    prompts.add(generator.generate(level, row.generator_seed).prompt);
   }
-  return { ref: { kind: "generator", seed }, level: practice.level, prompt: task.prompt, figure: task.figure, input: "math" };
+  return prompts;
 }
 
-/** A published task, avoiding this round and the student's latest attempts when possible. */
+/** How many new prompts a sample can find. Stops once a full round of 10 is possible. */
+function sampleFresh(generator: Generator, level: Level, used: Set<string>): number {
+  const seen = new Set(used);
+  let fresh = 0;
+  for (let i = 0; i < SAMPLE_TRIES && fresh < 10; i++) {
+    const prompt = generator.generate(level, randomInt(0, MAX_SEED)).prompt;
+    if (seen.has(prompt)) continue;
+    seen.add(prompt);
+    fresh++;
+  }
+  return fresh;
+}
+
+/** A generated task the student has not already been shown. Null when the generator has nothing new. */
+async function pickGeneratedTask(practice: Practice, seen: Set<string>): Promise<PublicTask | null> {
+  const generator = practice.generator!;
+  const avoid = await usedPrompts(practice.profile.id, practice.moment.id, practice.level, generator);
+  for (const key of seen) {
+    if (!key.startsWith("g")) continue;
+    const seed = Number(key.slice(1));
+    if (Number.isInteger(seed)) avoid.add(generator.generate(practice.level, seed).prompt);
+  }
+
+  for (let tries = 0; tries < SAMPLE_TRIES; tries++) {
+    const seed = randomInt(0, MAX_SEED);
+    const task = generator.generate(practice.level, seed);
+    if (avoid.has(task.prompt)) continue;
+    return { ref: { kind: "generator", seed }, level: practice.level, prompt: task.prompt, figure: task.figure, input: "math" };
+  }
+  return null;
+}
+
+/** A published task the student has not answered. Never falls back to one they have already had. */
 async function pickBankTask(practice: Practice, seen: Set<string>): Promise<PublicTask | null> {
   const { data: tasks } = await createAdminClient()
     .from("tasks")
@@ -144,10 +190,18 @@ async function pickBankTask(practice: Practice, seen: Set<string>): Promise<Publ
     .eq("status", "published");
   if (!tasks?.length) return null;
 
-  const recent = new Set((await recentAttempts(practice, "task_id")).map((a) => a.task_id));
-  const notThisRound = tasks.filter((t) => !seen.has(`t${t.id}`));
-  const fresh = notThisRound.filter((t) => !recent.has(t.id));
-  const pool = fresh.length ? fresh : notThisRound.length ? notThisRound : tasks;
+  const { data: attempts } = await createAdminClient()
+    .from("attempts")
+    .select("task_id")
+    .eq("user_id", practice.profile.id)
+    .eq("moment_id", practice.moment.id)
+    .eq("level", practice.level)
+    .not("task_id", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(1000);
+  const attempted = new Set((attempts ?? []).map((a) => a.task_id));
+  const pool = tasks.filter((t) => !seen.has(`t${t.id}`) && !attempted.has(t.id));
+  if (!pool.length) return null;
   const task = pool[randomInt(0, pool.length)];
 
   const rng = createRng(randomInt(0, MAX_SEED));
@@ -170,6 +224,150 @@ export async function nextTask(momentId: string, level: Level, seen: string[] = 
   if (!practice) return null;
   const seenSet = new Set(Array.isArray(seen) ? seen.slice(0, 20).map(String) : []);
   return practice.generator ? pickGeneratedTask(practice, seenSet) : pickBankTask(practice, seenSet);
+}
+
+export type PracticeMenu = {
+  /** Sizes that can be filled with questions this student has not had. Empty: offer nothing. */
+  rounds: Record<Level, number[]>;
+  /** Those sizes still have to be written from the reading. There is nothing left to repeat. */
+  generate: boolean;
+};
+
+const NO_ROUNDS: Record<Level, number[]> = { 1: [], 2: [], 3: [] };
+
+/** Which new rounds to offer. Uses the person the page is showing (a student, when an admin looks as them). */
+export async function practiceMenu(momentId: string): Promise<PracticeMenu> {
+  const profile = (await getViewProfile()) ?? (await requireProfile());
+  return menuFor(profile.id, momentId);
+}
+
+async function menuFor(userId: string, momentId: string): Promise<PracticeMenu> {
+  const admin = createAdminClient();
+  const { data: moment } = await admin
+    .from("moments")
+    .select("id, mode, source, generators(generator_key)")
+    .eq("id", momentId)
+    .maybeSingle();
+  const rounds: Record<Level, number[]> = { ...NO_ROUNDS };
+  if (!moment) return { rounds, generate: false };
+
+  if (moment.mode === "read") {
+    const offer = await readOffer(userId, momentId);
+    rounds[1] = offer.sizes;
+    return { rounds, generate: offer.generate };
+  }
+
+  const generator = moment.source === "generator" ? getGenerator(moment.generators?.generator_key) : null;
+  for (const level of LEVELS) {
+    rounds[level] = generator
+      ? offeredRounds(sampleFresh(generator, level, await usedPrompts(userId, momentId, level, generator)))
+      : offeredRounds(await unseenBank(userId, momentId, level));
+  }
+  return { rounds, generate: false };
+}
+
+/** Another round from the reading, but only when the text was not already used up. */
+async function readOffer(userId: string, momentId: string): Promise<{ sizes: number[]; generate: boolean }> {
+  const unseen = await unseenBank(userId, momentId, 1);
+  if (unseen > 0) return { sizes: offeredRounds(unseen), generate: false };
+
+  const admin = createAdminClient();
+  const [{ data: blocks }, { data: tasks }, { data: closed }] = await Promise.all([
+    admin.from("content_blocks").select("body_md").eq("moment_id", momentId).eq("type", "reading"),
+    admin.from("tasks").select("id").eq("moment_id", momentId).eq("level", 1).eq("status", "published"),
+    admin.from("settings").select("key").eq("key", quizClosedKey(momentId)).maybeSingle(),
+  ]);
+  const words = wordCount((blocks ?? []).map((b) => b.body_md).join("\n"));
+  if (closed || !readingCanSupportMore(words, tasks?.length ?? 0)) return { sizes: [], generate: false };
+  const ai = await aiStatus("cheap");
+  if (!ai.available) return { sizes: [], generate: false };
+  return { sizes: offeredRounds(0, true), generate: true };
+}
+
+/**
+ * Writes a new batch of quiz questions from the reading. Does nothing when the
+ * text cannot support more, or when the model finds nothing left worth asking.
+ */
+async function writeMoreQuestions(userId: string, momentId: string, count: number): Promise<void> {
+  if ((await unseenBank(userId, momentId, 1)) > 0) return;
+  const admin = createAdminClient();
+  const [{ data: moment }, { data: blocks }, { data: tasks }, { data: closed }] = await Promise.all([
+    admin.from("moments").select("name, mode").eq("id", momentId).maybeSingle(),
+    admin.from("content_blocks").select("title, body_md").eq("moment_id", momentId).eq("type", "reading").order("sort_order"),
+    admin.from("tasks").select("prompt_md").eq("moment_id", momentId).eq("level", 1).eq("status", "published"),
+    admin.from("settings").select("key").eq("key", quizClosedKey(momentId)).maybeSingle(),
+  ]);
+  if (!moment || moment.mode !== "read" || !blocks?.length || closed) return;
+  const existing = (tasks ?? []).map((t) => t.prompt_md);
+  if (!readingCanSupportMore(wordCount(blocks.map((b) => b.body_md).join("\n")), existing.length)) return;
+
+  const { system, prompt } = moreQuestionsPrompt({
+    moment: moment.name,
+    sections: blocks.map((b) => ({ title: b.title ?? "", body: b.body_md })),
+    existing: existing.slice(0, 40),
+    count,
+  });
+  const result = await askClaude({
+    purpose: "more_questions",
+    userId,
+    tier: "cheap",
+    system,
+    prompt,
+    maxTokens: 4_000,
+    jsonSchema: moreQuestionsSchema,
+    timeoutMs: 90_000,
+  });
+  if (!result.ok) return;
+
+  const taken = new Set(existing.map((p) => p.trim().toLowerCase()));
+  const fresh = parseMoreQuestions(
+    result.json,
+    blocks.map((b) => b.title ?? ""),
+  ).filter((q) => !taken.has(q.prompt.toLowerCase()));
+  const close = () => admin.from("settings").upsert({ key: quizClosedKey(momentId), value: true });
+  if (fresh.length === 0) {
+    await close();
+    return;
+  }
+
+  const { error } = await admin.from("tasks").insert(
+    fresh.map((q) => ({
+      moment_id: momentId,
+      level: 1 as const,
+      type: q.type,
+      prompt_md: q.prompt,
+      answer: q.answer as unknown as Json,
+      choices: q.choices,
+      solution_md: q.solution || null,
+      hint_md: q.section ? strings.admin.drafts.sectionHint(q.section) : null,
+      status: "published" as const,
+      source: "ai" as const,
+    })),
+  );
+  if (error) {
+    console.error("practice: could not save new questions", error);
+    return;
+  }
+  // Fewer than a small round means the text is used up. Don't ask the model again.
+  if (fresh.length < 5) await close();
+}
+
+/**
+ * The round size to start, using only new questions. When the reading can
+ * support more, writes them first. Null when there is nothing new to offer.
+ */
+export async function prepareRound(momentId: string, level: Level, requested: number): Promise<number | null> {
+  const profile = await requireProfile();
+  if ((await getViewProfile())?.id !== profile.id || !isLevel(level)) return null;
+  let menu = await menuFor(profile.id, momentId);
+  if (menu.generate && level === 1) {
+    await writeMoreQuestions(profile.id, momentId, requested === 5 ? 5 : 10);
+    menu = await menuFor(profile.id, momentId);
+    if (menu.generate) return null;
+  }
+  const sizes = menu.rounds[level];
+  if (sizes.includes(requested)) return requested;
+  return sizes.length ? sizes[sizes.length - 1] : null;
 }
 
 type Loaded = {

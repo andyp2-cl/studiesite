@@ -3,7 +3,6 @@
 import { ArrowRight, Check } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { ROUND_SIZES } from "@/lib/practice/ref";
 import { markRead } from "@/lib/read/actions";
 import { strings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
@@ -33,13 +32,16 @@ export function MarkReadButton({ momentId, done }: { momentId: string; done: boo
 }
 
 /** Round size and start for the questions of a "Läs och svara" moment (no levels). */
-export function QuizStart({ momentId }: { momentId: string }) {
-  const [count, setCount] = useState<(typeof ROUND_SIZES)[number]>(10);
+export function QuizStart({ momentId, sizes }: { momentId: string; sizes: number[] }) {
+  const [count, setCount] = useState(sizes.includes(10) ? 10 : (sizes.at(-1) ?? 10));
+  if (sizes.length === 0) {
+    return <p className="text-sm text-muted-foreground">{p.noMore}</p>;
+  }
   return (
     <div className="flex flex-wrap items-center gap-3">
       <span className="font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">{p.roundSize}</span>
       <div className="flex border border-border font-mono text-sm" role="radiogroup" aria-label={p.roundSize}>
-        {ROUND_SIZES.map((n) => (
+        {sizes.map((n) => (
           <button
             key={n}
             type="button"
@@ -47,7 +49,7 @@ export function QuizStart({ momentId }: { momentId: string }) {
             aria-checked={count === n}
             onClick={() => setCount(n)}
             className={cn(
-              "w-12 border-r border-border py-2 last:border-r-0",
+              "min-w-12 border-r border-border px-3 py-2 last:border-r-0",
               count === n ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
             )}
           >

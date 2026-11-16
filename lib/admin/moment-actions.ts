@@ -4,6 +4,7 @@ import { refresh } from "next/cache";
 import { requireAdmin } from "@/lib/auth/session";
 import { getGenerator } from "@/lib/generators";
 import { isLevel } from "@/lib/generators/types";
+import { quizClosedKey } from "@/lib/practice/rounds";
 import { strings } from "@/lib/strings";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "./content-actions";
@@ -61,6 +62,7 @@ export async function saveBlock(input: BlockInput): Promise<ActionResult> {
   if (input.id) {
     const { error } = await supabase.from("content_blocks").update(fields).eq("id", input.id);
     if (error) return fail(e.generic);
+    if (input.type === "reading") await supabase.from("settings").delete().eq("key", quizClosedKey(input.momentId));
     refresh();
     return { ok: true, id: input.id };
   }
@@ -87,6 +89,7 @@ export async function saveBlock(input: BlockInput): Promise<ActionResult> {
     .select("id")
     .single();
   if (error) return fail(e.generic);
+  if (input.type === "reading") await supabase.from("settings").delete().eq("key", quizClosedKey(input.momentId));
   refresh();
   return { ok: true, id: data.id };
 }
@@ -94,8 +97,10 @@ export async function saveBlock(input: BlockInput): Promise<ActionResult> {
 export async function deleteBlock(id: string): Promise<ActionResult> {
   await requireAdmin();
   const supabase = await createClient();
+  const { data: block } = await supabase.from("content_blocks").select("moment_id, type").eq("id", id).maybeSingle();
   const { error } = await supabase.from("content_blocks").delete().eq("id", id).in("type", ["deepening", "reading"]);
   if (error) return fail(e.generic);
+  if (block?.type === "reading") await supabase.from("settings").delete().eq("key", quizClosedKey(block.moment_id));
   refresh();
   return { ok: true };
 }

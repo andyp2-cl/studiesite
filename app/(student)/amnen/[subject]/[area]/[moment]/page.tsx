@@ -10,6 +10,7 @@ import { requireViewProfile } from "@/lib/auth/session";
 import { getMoment, getReadMomentExtras } from "@/lib/data/content";
 import { getGenerator } from "@/lib/generators";
 import type { Level } from "@/lib/generators/types";
+import { practiceMenu } from "@/lib/practice/actions";
 import { passCorrectFor, suggestedLevel } from "@/lib/progress";
 import { searchLinks } from "@/lib/sources/wikipedia";
 import { strings } from "@/lib/strings";
@@ -26,6 +27,7 @@ export default async function MomentPage({ params }: PageProps<"/amnen/[subject]
   const read = moment.mode === "read" ? await getReadMomentExtras(moment.id, area.id, profile.id) : null;
   // Generator moments can always be practised; task-bank moments need published tasks at the level.
   const learnMore = searchLinks(moment.name, /matem/i.test(subject.name));
+  const menu = await practiceMenu(moment.id);
   const hasTasks = (level: Level) =>
     data.source === "generator" ? Boolean(getGenerator(data.generatorKey)) : data.taskCounts[level] > 0;
 
@@ -48,6 +50,7 @@ export default async function MomentPage({ params }: PageProps<"/amnen/[subject]
             intro={intro}
             readings={data.readings}
             questionCount={data.taskCounts[1]}
+            rounds={menu.rounds[1]}
             passCorrect={data.passCorrect}
             writingTasks={read.writingTasks}
             sources={read.sources}
@@ -62,9 +65,9 @@ export default async function MomentPage({ params }: PageProps<"/amnen/[subject]
                 suggested={suggestedLevel(stars)}
                 passCorrect={data.passCorrect}
                 levels={{
-                  1: { done: stars >= 1, correct: levelStats[1].correct, hasTasks: hasTasks(1) },
-                  2: { done: stars >= 2, correct: levelStats[2].correct, hasTasks: hasTasks(2) },
-                  3: { done: stars >= 3, correct: levelStats[3].correct, hasTasks: hasTasks(3) },
+                  1: { done: stars >= 1, correct: levelStats[1].correct, hasTasks: hasTasks(1), rounds: menu.rounds[1] },
+                  2: { done: stars >= 2, correct: levelStats[2].correct, hasTasks: hasTasks(2), rounds: menu.rounds[2] },
+                  3: { done: stars >= 3, correct: levelStats[3].correct, hasTasks: hasTasks(3), rounds: menu.rounds[3] },
                 }}
               />
             </section>

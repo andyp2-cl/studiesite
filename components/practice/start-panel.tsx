@@ -5,14 +5,13 @@ import Link from "next/link";
 import { useState } from "react";
 import { BlockBar } from "@/components/study/visuals";
 import { LEVELS, type Level } from "@/lib/generators/types";
-import { ROUND_SIZES } from "@/lib/practice/ref";
 import { strings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
 const t = strings.moment;
 const p = strings.practice;
 
-export type LevelInfo = { done: boolean; correct: number; hasTasks: boolean };
+export type LevelInfo = { done: boolean; correct: number; hasTasks: boolean; rounds: number[] };
 
 /** Pick any level and a round of 5 or 10 questions, then start. */
 export function StartPanel({
@@ -27,11 +26,14 @@ export function StartPanel({
   /** Correct answers of the latest 10 needed to clear a level. */
   passCorrect: number;
 }) {
-  const firstAvailable = LEVELS.find((l) => levels[l].hasTasks);
-  const [level, setLevel] = useState<Level>(levels[suggested].hasTasks ? suggested : (firstAvailable ?? suggested));
-  const [count, setCount] = useState<(typeof ROUND_SIZES)[number]>(10);
+  const withTasks = LEVELS.find((l) => levels[l].hasTasks);
+  const withRounds = LEVELS.find((l) => levels[l].rounds.length > 0);
+  const startLevel = levels[suggested].rounds.length > 0 ? suggested : (withRounds ?? suggested);
+  const [level, setLevel] = useState<Level>(startLevel);
+  const sizes = levels[level].rounds;
+  const [count, setCount] = useState(sizes.includes(10) ? 10 : (sizes.at(-1) ?? 10));
 
-  if (!firstAvailable) {
+  if (!withTasks) {
     return <p className="border border-dashed border-border p-4 text-sm text-muted-foreground">{p.noTasks}</p>;
   }
 
@@ -47,7 +49,11 @@ export function StartPanel({
               role="radio"
               aria-checked={level === l}
               disabled={!info.hasTasks}
-              onClick={() => setLevel(l)}
+              onClick={() => {
+                setLevel(l);
+                const next = levels[l].rounds;
+                setCount(next.includes(count) ? count : (next.at(-1) ?? count));
+              }}
               className={cn(
                 "flex flex-col gap-3 p-3 text-left transition-colors hover:bg-card disabled:cursor-not-allowed disabled:text-muted-foreground disabled:hover:bg-transparent sm:p-4",
                 level === l && "bg-primary/[0.07] outline outline-1 -outline-offset-1 outline-primary",
@@ -74,33 +80,39 @@ export function StartPanel({
       </div>
       <p className="font-mono text-[11px] text-muted-foreground">{t.levelRule(passCorrect)}</p>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">{p.roundSize}</span>
-        <div className="flex border border-border font-mono text-sm" role="radiogroup" aria-label={p.roundSize}>
-          {ROUND_SIZES.map((n) => (
-            <button
-              key={n}
-              type="button"
-              role="radio"
-              aria-checked={count === n}
-              onClick={() => setCount(n)}
-              className={cn(
-                "w-12 border-r border-border py-2 last:border-r-0",
-                count === n ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
-      </div>
+      {sizes.length === 0 ? (
+        <p className="border border-dashed border-border p-4 text-sm text-muted-foreground">{p.noMore}</p>
+      ) : (
+        <>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">{p.roundSize}</span>
+            <div className="flex border border-border font-mono text-sm" role="radiogroup" aria-label={p.roundSize}>
+              {sizes.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  role="radio"
+                  aria-checked={count === n}
+                  onClick={() => setCount(n)}
+                  className={cn(
+                    "min-w-12 border-r border-border px-3 py-2 last:border-r-0",
+                    count === n ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
 
-      <Link
-        href={`/ova/${momentId}?niva=${level}&antal=${count}`}
-        className="flex w-full items-center justify-center gap-2 bg-primary py-3.5 font-mono text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 sm:w-fit sm:px-8"
-      >
-        {t.start(strings.levels[level])} · {count} <ArrowRight className="size-4" />
-      </Link>
+          <Link
+            href={`/ova/${momentId}?niva=${level}&antal=${count}`}
+            className="flex w-full items-center justify-center gap-2 bg-primary py-3.5 font-mono text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 sm:w-fit sm:px-8"
+          >
+            {t.start(strings.levels[level])} · {count} <ArrowRight className="size-4" />
+          </Link>
+        </>
+      )}
     </div>
   );
 }

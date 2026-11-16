@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { checkTaskAnswer } from "@/lib/tasks/answers";
-import { parseAngles, parseMomentDraft, sourcesForPrompt } from "./schema";
+import { parseAngles, parseMomentDraft, parseMoreQuestions, sourcesForPrompt } from "./schema";
 
 describe("sourcesForPrompt", () => {
   it("shares the space between sources and skips empty ones", () => {
@@ -96,6 +96,22 @@ describe("parseMomentDraft", () => {
     expect(checkTaskAnswer(answer, "poltava").status).toBe("correct");
     expect(checkTaskAnswer(answer, "Slaget vid Poltava!").status).toBe("correct");
     expect(checkTaskAnswer(answer, "Narva").status).toBe("wrong");
+  });
+
+  it("keeps new questions that belong to a known section and drops the rest", () => {
+    const questions = parseMoreQuestions(
+      {
+        questions: [
+          question({ prompt: "Ny fråga?", accepted: ["ja"], section: "Krigen", explanation: "Därför." }),
+          question({ prompt: "Ny fråga?", accepted: ["ja"], section: "Krigen" }),
+          question({ prompt: "Okänt avsnitt", accepted: ["nej"], section: "Finns inte" }),
+          question({ prompt: "Utan svar" }),
+        ],
+      },
+      ["Krigen"],
+    );
+    expect(questions.map((q) => q.prompt)).toEqual(["Ny fråga?"]);
+    expect(questions[0].section).toBe("Krigen");
   });
 
   it("rejects a draft without reading text or questions", () => {
