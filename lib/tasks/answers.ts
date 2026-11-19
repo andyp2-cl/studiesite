@@ -89,6 +89,24 @@ export function normalizeText(s: string): string {
 }
 
 /**
+ * True when a shortened answer keeps the important part of an accepted one:
+ * "intressant" for "vad intressant", "fråga" for "en fråga". The words must
+ * appear in the same order, include the longest word and be at least half
+ * of the words, so "en" or "gammal" (for "hur gammal är han") still count as wrong.
+ * Both arguments are already normalized.
+ */
+export function isCoreOf(given: string, accepted: string): boolean {
+  const target = accepted.split(" ");
+  const words = given.split(" ");
+  if (words.length >= target.length || words.length * 2 < target.length) return false;
+  const longest = target.reduce((a, b) => (b.length > a.length ? b : a));
+  if (!words.includes(longest)) return false;
+  let i = 0;
+  for (const word of target) if (word === words[i]) i++;
+  return i === words.length;
+}
+
+/**
  * Checks a student's input. Choice tasks send the chosen index ("0", "1" …),
  * true/false tasks send "true" or "false".
  */
@@ -106,7 +124,7 @@ export function checkTaskAnswer(answer: TaskAnswer, input: string): CheckResult 
       const given = normalizeText(input);
       if (!given) return { status: "retry", reason: "unreadable" };
       // Exact match with an accepted answer, or all keywords present.
-      if (answer.accepted.some((a) => normalizeText(a) === given)) return { status: "correct" };
+      if (answer.accepted.some((a) => normalizeText(a) === given || isCoreOf(given, normalizeText(a)))) return { status: "correct" };
       const words = answer.keywords.map(normalizeText);
       if (words.length > 0 && words.every((w) => given.includes(w))) return { status: "correct" };
       return { status: "wrong" };

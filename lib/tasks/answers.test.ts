@@ -85,3 +85,20 @@ describe("free text", () => {
     expect(status(answer, "Man måste ha samma täljare")).toBe("wrong");
   });
 });
+
+describe("shortened free-text answers", () => {
+  const text = (...accepted: string[]): TaskAnswer => ({ kind: "text", accepted, keywords: [] });
+
+  it("accepts the important part of a phrase", () => {
+    expect(checkTaskAnswer(text("Vad intressant!"), "Intressant").status).toBe("correct");
+    expect(checkTaskAnswer(text("en fråga"), "fråga").status).toBe("correct");
+    expect(checkTaskAnswer(text("¡Qué interesante!"), "interesante").status).toBe("correct");
+  });
+
+  it("still rejects too little or the wrong word", () => {
+    expect(checkTaskAnswer(text("en fråga"), "en").status).toBe("wrong");
+    expect(checkTaskAnswer(text("Hur gammal är han"), "gammal").status).toBe("wrong");
+    expect(checkTaskAnswer(text("Vad intressant!"), "vad").status).toBe("wrong");
+    expect(checkTaskAnswer(text("Vad intressant!"), "intressant vad").status).toBe("wrong");
+  });
+});
