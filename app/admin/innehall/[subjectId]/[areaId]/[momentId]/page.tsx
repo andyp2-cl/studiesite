@@ -13,6 +13,7 @@ import {
   WritingTasksEditor,
 } from "@/components/admin/moment-editors";
 import { NodeForm } from "@/components/admin/node-form";
+import { VocabImport } from "@/components/admin/vocab-import";
 import { MathMarkdown } from "@/components/math/markdown";
 import { SectionLabel } from "@/components/study/visuals";
 import { getAdminMoment } from "@/lib/admin/data";
@@ -23,6 +24,7 @@ import { mathSubject } from "@/lib/seed/math";
 import { strings } from "@/lib/strings";
 import type { TaskType } from "@/lib/tasks/answers";
 import { cn } from "@/lib/utils";
+import { isLanguageSubject } from "@/lib/vocab/vocab";
 
 const t = strings.admin;
 
@@ -130,6 +132,14 @@ export default async function AdminMomentPage({ params }: PageProps<"/admin/inne
           <SectionLabel>{t.moment.mode}</SectionLabel>
           <ModePanel momentId={moment.id} mode={moment.mode} />
         </section>
+
+        {isLanguageSubject(moment.subject.slug) && (
+          <section>
+            <SectionLabel>{t.vocab.title}</SectionLabel>
+            <Help>{t.vocab.help}</Help>
+            <VocabImport momentId={moment.id} language={moment.subject.name.toLowerCase()} />
+          </section>
+        )}
 
         {read ? (
           <>

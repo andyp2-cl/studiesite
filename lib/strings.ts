@@ -148,6 +148,27 @@ export const strings = {
       confirmDeleteDrafts: "Ta bort alla frågor och skrivuppgifter som är utkast? Lästexterna och det som redan är publicerat ligger kvar.",
       questionsCount: (published: number, total: number) => `${published} publicerade av ${total}`,
     },
+    vocab: {
+      title: "Glosor",
+      help: "Klistra in glosorna, ett par per rad: ordet, ett tankstreck och betydelsen, t.ex. perdón – ursäkta, förlåt. Det blir en lästext med glosorna och förhörsfrågor som publiceras direkt. Inget AI, ingen kostnad.",
+      label: "Glosor",
+      placeholder: "perdón – ursäkta, förlåt\nuna pregunta – en fråga\ntiene – (han/hon/den) har",
+      kinds: "Frågor att skapa",
+      kindLabels: {
+        toSwedish: "Vad betyder ordet? (skriv på svenska)",
+        toForeign: (language: string) => `Hur säger man det på ${language}? (skriv ordet)`,
+        choice: "Vad betyder ordet? (flerval)",
+      },
+      tips: "Komma eller frågetecken skiljer flera rätta svar åt (ursäkta, förlåt). Ord inom parentes kan utelämnas, och han/hon/den godtar vart och ett. Accenter och ¿ ¡ behöver eleven inte skriva.",
+      preview: (words: number, questions: number) => `${words} glosor ger ${questions} frågor.`,
+      rejected: (n: number) => (n === 1 ? "1 rad saknar tankstreck och hoppas över:" : `${n} rader saknar tankstreck och hoppas över:`),
+      button: "Skapa lästext och frågor",
+      working: "Sparar …",
+      done: (words: number, questions: number) => `Klart: ${words} glosor och ${questions} frågor, publicerade.`,
+      noPairs: "Hittade inga glosor. Skriv ett par per rad med tankstreck mellan, t.ex. hola – hej.",
+      noKinds: "Välj minst en sorts fråga.",
+      readingTitle: "Glosor",
+    },
     drafts: {
       anglesTitle: "Skapa moment med AI",
       anglesHelp:

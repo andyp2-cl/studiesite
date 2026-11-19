@@ -1,6 +1,6 @@
 # Läge
 
-Uppdateras vid varje commit. Senast: 2026-10-26.
+Uppdateras vid varje commit. Senast: 2026-11-19.
 
 ## Klart
 
@@ -9,6 +9,7 @@ Uppdateras vid varje commit. Senast: 2026-10-26.
 - Gamification: XP, nivåer, dagsmål (standard 150 XP, förslag 150 till och med åk 6 och 180 från åk 7), streak med frys, topplista.
 - Hjälp i rätt läge: tips efter två missar i rad (tillbaka till texten, lättare nivå, förklaring på en gratis sajt) och "Lär dig mer"-länkar.
 - AI används bara i admin, med den billiga modellen (Haiku), loggat i `ai_calls` med budgettak. "Skapa moment med frågor" på ett område delar upp det i 3–4 moment och fyller alla med lästext och 8–12 frågor (fritext, flerval, sant/falskt) som publiceras direkt. Tomma moment kan fyllas på samma sätt. Fyll ett enskilt moment ger fortfarande utkast att granska. AI skriver inga skrivuppgifter. Ungefär 5 öre per moment.
+- Glosor (språkämnen): i ett moment klistrar admin in glosor, ett par per rad (`perdón – ursäkta, förlåt`). Det blir en lästext "Glosor" och publicerade frågor: vad betyder ordet (fritext), hur säger man det på språket (fritext) och flerval där de andra glosornas betydelser är fel alternativ. Komma och frågetecken skiljer rätta svar åt, ord inom parentes kan utelämnas, han/hon/den godtar vart och ett, och accenter och ¿ ¡ behöver eleven inte skriva. Momentet blir "Läs och svara". Ingen AI.
 - Admin: innehåll, användare (årskurs, dagsmål, godkäntgräns, lösenord), statistik, inställningar.
 - "Visa som" i admin är bara för att titta: raden blir gul och övning och "Jag har läst" är spärrade (svaren skulle annars sparas på adminkontot). Barnen loggar in själva.
 - "Logga ut" längst ner i sidomenyn (dator) och på Profil (mobil), både för elever och i admin.
