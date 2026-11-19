@@ -102,3 +102,20 @@ describe("shortened free-text answers", () => {
     expect(checkTaskAnswer(text("Vad intressant!"), "intressant vad").status).toBe("wrong");
   });
 });
+
+describe("accents and small typos", () => {
+  const text = (...accepted: string[]): TaskAnswer => ({ kind: "text", accepted, keywords: [] });
+
+  it("ignores foreign accents and ¿ ¡ but keeps å ä ö", () => {
+    expect(checkTaskAnswer(text("¿Cuántos años tiene?"), "cuantos anos tiene").status).toBe("correct");
+    expect(checkTaskAnswer(text("dieciséis"), "dieciseis").status).toBe("correct");
+    expect(checkTaskAnswer(text("år"), "ar").status).toBe("wrong");
+  });
+
+  it("accepts one slip in a longer answer", () => {
+    expect(checkTaskAnswer(text("¿Cuántos años tiene?"), "cuantos anos tienes").status).toBe("correct");
+    expect(checkTaskAnswer(text("sexton"), "sextn").status).toBe("correct");
+    expect(checkTaskAnswer(text("sexton"), "sextio").status).toBe("wrong");
+    expect(checkTaskAnswer(text("har"), "hat").status).toBe("wrong");
+  });
+});

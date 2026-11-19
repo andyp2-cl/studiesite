@@ -79,13 +79,47 @@ export function buildAnswer(type: TaskType, draft: AnswerDraft): { answer: TaskA
   }
 }
 
-/** Lower-case, no punctuation, single spaces – for comparing free text. */
+/**
+ * Lower-case, no punctuation, single spaces – for comparing free text.
+ * Foreign accents are dropped (é → e, ñ → n) but å, ä and ö are kept,
+ * since they make different Swedish words.
+ */
 export function normalizeText(s: string): string {
   return s
     .toLowerCase()
+    .normalize("NFD")
+    .replace(/å/g, "å")
+    .replace(/ä/g, "ä")
+    .replace(/ö/g, "ö")
+    .replace(/[̀-ͯ]/g, "")
     .replace(/[.,!?¿¡;:"'()]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+/** Levenshtein distance, stopping early once it exceeds max. */
+function editDistance(a: string, b: string, max: number): number {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i];
+    for (let j = 1; j <= b.length; j++) {
+      row[j] = Math.min(prev[j] + 1, row[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    if (Math.min(...row) > max) return max + 1;
+    prev = row;
+  }
+  return prev[b.length];
+}
+
+/**
+ * A small slip counts as right: one wrong, missing or extra letter from 5
+ * letters ("tienes" for "tiene" in a phrase), two from 12. Short words must be exact.
+ * Both arguments are already normalized.
+ */
+export function isTypoOf(given: string, accepted: string): boolean {
+  const allowed = accepted.length >= 12 ? 2 : accepted.length >= 5 ? 1 : 0;
+  return allowed > 0 && editDistance(given, accepted, allowed) <= allowed;
 }
 
 /**
@@ -123,8 +157,12 @@ export function checkTaskAnswer(answer: TaskAnswer, input: string): CheckResult 
     case "text": {
       const given = normalizeText(input);
       if (!given) return { status: "retry", reason: "unreadable" };
-      // Exact match with an accepted answer, or all keywords present.
-      if (answer.accepted.some((a) => normalizeText(a) === given || isCoreOf(given, normalizeText(a)))) return { status: "correct" };
+      // Exact match, a small typo, or the important part of an accepted answer.
+      const matches = (a: string) => {
+        const target = normalizeText(a);
+        return target === given || isTypoOf(given, target) || isCoreOf(given, target);
+      };
+      if (answer.accepted.some(matches)) return { status: "correct" };
       const words = answer.keywords.map(normalizeText);
       if (words.length > 0 && words.every((w) => given.includes(w))) return { status: "correct" };
       return { status: "wrong" };
