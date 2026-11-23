@@ -61,8 +61,49 @@ export function parseAngles(json: unknown, existing: string[] = []): Angle[] {
 }
 
 // ---------------------------------------------------------------------------
-// A moment: reading text and questions. Writing tasks are written by hand.
+// A moment: reading text, questions and a writing task.
 // ---------------------------------------------------------------------------
+
+function writingSchema() {
+  return {
+    type: "array",
+    items: {
+      type: "object",
+      properties: { prompt: { type: "string" }, rubric: { type: "string" }, min_chars: { type: "integer" } },
+      required: ["prompt", "rubric", "min_chars"],
+      additionalProperties: false,
+    },
+  };
+}
+
+export const writingDraftSchema = {
+  type: "object",
+  properties: { writing: writingSchema() },
+  required: ["writing"],
+  additionalProperties: false,
+};
+
+export type DraftWriting = { prompt: string; rubric: string; minChars: number };
+
+export const MIN_WRITING_CHARS = 150;
+export const MAX_WRITING_CHARS = 1500;
+
+/** Writing tasks from the AI: a prompt and a rubric are required, the length is kept sensible. */
+export function parseWriting(json: unknown): DraftWriting[] {
+  const items = (json as { writing?: unknown })?.writing;
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((w) => {
+      const minChars = Math.round(Number(w?.min_chars));
+      return {
+        prompt: text(w?.prompt, 1000),
+        rubric: text(w?.rubric, 2000),
+        minChars: Number.isFinite(minChars) ? Math.min(MAX_WRITING_CHARS, Math.max(MIN_WRITING_CHARS, minChars)) : 300,
+      };
+    })
+    .filter((w) => w.prompt && w.rubric)
+    .slice(0, 2);
+}
 
 export const momentDraftSchema = {
   type: "object",
@@ -96,8 +137,9 @@ export const momentDraftSchema = {
         additionalProperties: false,
       },
     },
+    writing: writingSchema(),
   },
-  required: ["intro", "sections", "questions"],
+  required: ["intro", "sections", "questions", "writing"],
   additionalProperties: false,
 };
 
@@ -114,6 +156,7 @@ export type MomentDraft = {
   intro: string;
   sections: { title: string; body: string }[];
   questions: DraftQuestion[];
+  writing: DraftWriting[];
 };
 
 const QUESTION_TYPE: Record<string, TaskType> = { short: "free_text", choice: "multiple_choice", true_false: "true_false" };
@@ -182,7 +225,7 @@ export function parseMomentDraft(json: unknown): MomentDraft | null {
     .filter((q): q is DraftQuestion => q !== null)
     .slice(0, 30);
   if (sections.length === 0 || questions.length === 0) return null;
-  return { intro: text(d.intro, 2000), sections, questions };
+  return { intro: text(d.intro, 2000), sections, questions, writing: parseWriting(d) };
 }
 
 // ---------------------------------------------------------------------------

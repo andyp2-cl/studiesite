@@ -10,14 +10,16 @@ import { strings } from "@/lib/strings";
 import { curriculumFor, curriculumForPrompt } from "@/lib/curriculum";
 import { createClient } from "@/lib/supabase/server";
 import { photosForAi } from "./photos";
-import { anglesPrompt, momentPrompt, photoPrompt } from "./prompts";
+import { anglesPrompt, momentPrompt, photoPrompt, writingPrompt } from "./prompts";
 import {
   anglesSchema,
   momentDraftSchema,
   parseAngles,
   parseMomentDraft,
   parsePhotoDraft,
+  parseWriting,
   photoDraftSchema,
+  writingDraftSchema,
   sourcesForPrompt,
   type MomentDraft,
 } from "./schema";
@@ -239,6 +241,55 @@ export async function draftFromPhoto(momentId: string, form: FormData): Promise<
 }
 
 /**
+ * Writes a writing task (with a rubric for the AI feedback) from a moment's
+ * reading text. Published right away: the admin sees it in the editor and can
+ * change or hide it there.
+ */
+export async function draftWritingTask(momentId: string): Promise<DraftResult> {
+  const admin = await requireAdmin();
+  const supabase = await createClient();
+  const [{ data: moment }, { data: blocks }, { data: existing }] = await Promise.all([
+    supabase.from("moments").select("name").eq("id", momentId).maybeSingle(),
+    supabase.from("content_blocks").select("title, body_md").eq("moment_id", momentId).eq("type", "reading").order("sort_order"),
+    supabase.from("writing_tasks").select("prompt_md, sort_order").eq("moment_id", momentId),
+  ]);
+  if (!moment) return fail(strings.admin.errors.generic);
+  if (!blocks?.length) return fail(t.writing.noReading);
+
+  const { system, prompt } = writingPrompt({
+    moment: moment.name,
+    sections: blocks.map((b) => ({ title: b.title ?? "", body: b.body_md })),
+    existing: (existing ?? []).map((w) => w.prompt_md),
+  });
+  const result = await askClaude({
+    purpose: "draft_writing",
+    userId: admin.id,
+    tier: "cheap",
+    system,
+    prompt,
+    maxTokens: 2_000,
+    jsonSchema: writingDraftSchema,
+    effort: "low",
+    timeoutMs: 90_000,
+  });
+  if (!result.ok) return fail(strings.ai[result.reason]);
+  const [writing] = parseWriting(result.json);
+  if (!writing) return fail(t.nothingUsable);
+
+  const { error } = await supabase.from("writing_tasks").insert({
+    moment_id: momentId,
+    prompt_md: writing.prompt,
+    rubric_md: writing.rubric,
+    min_chars: writing.minChars,
+    sort_order: Math.max(-1, ...(existing ?? []).map((w) => w.sort_order)) + 1,
+    status: "published",
+  });
+  if (error) return fail(strings.admin.errors.generic);
+  refresh();
+  return { ok: true, summary: t.writing.done };
+}
+
+/**
  * Saves drafted reading sections and questions to a moment, after whatever it
  * already has. Unpublished drafts hide the moment, since reading sections have
  * no draft state of their own.
@@ -267,7 +318,10 @@ async function saveDraft(momentId: string, draft: MomentDraft, publish: boolean)
     })),
   ];
 
-  const [blocksResult, tasksResult] = await Promise.all([
+  const { data: writingRows } = await supabase.from("writing_tasks").select("sort_order").eq("moment_id", momentId);
+  let writingOrder = Math.max(-1, ...(writingRows ?? []).map((w) => w.sort_order)) + 1;
+
+  const [blocksResult, tasksResult, writingResult] = await Promise.all([
     supabase.from("content_blocks").insert(blockRows),
     supabase.from("tasks").insert(
       draft.questions.map((q) => ({
@@ -283,9 +337,22 @@ async function saveDraft(momentId: string, draft: MomentDraft, publish: boolean)
         source: "ai" as const,
       })),
     ),
+    draft.writing.length
+      ? supabase.from("writing_tasks").insert(
+          draft.writing.map((w) => ({
+            moment_id: momentId,
+            prompt_md: w.prompt,
+            rubric_md: w.rubric,
+            min_chars: w.minChars,
+            sort_order: writingOrder++,
+            status: publish ? ("published" as const) : ("draft" as const),
+          })),
+        )
+      : Promise.resolve({ error: null }),
   ]);
-  if (blocksResult.error || tasksResult.error) {
-    console.error("drafts: could not save", blocksResult.error ?? tasksResult.error);
+  const saveError = blocksResult.error ?? tasksResult.error ?? writingResult.error;
+  if (saveError) {
+    console.error("drafts: could not save", saveError);
     refresh();
     return fail(t.partlySaved);
   }

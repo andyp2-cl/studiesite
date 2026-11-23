@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { checkTaskAnswer } from "@/lib/tasks/answers";
-import { parseAngles, parseMomentDraft, parseMoreQuestions, parsePhotoDraft, sourcesForPrompt } from "./schema";
+import { MAX_WRITING_CHARS, MIN_WRITING_CHARS, parseAngles, parseMomentDraft, parseMoreQuestions, parsePhotoDraft, parseWriting, sourcesForPrompt } from "./schema";
 
 describe("sourcesForPrompt", () => {
   it("shares the space between sources and skips empty ones", () => {
@@ -153,5 +153,35 @@ describe("parsePhotoDraft", () => {
 
   it("returns null when the photo had no questions", () => {
     expect(parsePhotoDraft({ intro: "", sections: [], questions: [], skipped: [] })).toBeNull();
+  });
+});
+
+describe("parseWriting", () => {
+  it("keeps tasks with a prompt and a rubric", () => {
+    expect(
+      parseWriting({
+        writing: [
+          { prompt: " Förklara varför vi har årstider. ", rubric: "- Jordaxelns lutning", min_chars: 300 },
+          { prompt: "Utan bedömningsstöd", rubric: "", min_chars: 300 },
+        ],
+      }),
+    ).toEqual([{ prompt: "Förklara varför vi har årstider.", rubric: "- Jordaxelns lutning", minChars: 300 }]);
+  });
+
+  it("keeps the length within sensible limits", () => {
+    const [short, long, odd] = parseWriting({
+      writing: [
+        { prompt: "a", rubric: "b", min_chars: 10 },
+        { prompt: "c", rubric: "d", min_chars: 99_999 },
+      ],
+    }).concat(parseWriting({ writing: [{ prompt: "e", rubric: "f", min_chars: "x" }] }));
+    expect(short.minChars).toBe(MIN_WRITING_CHARS);
+    expect(long.minChars).toBe(MAX_WRITING_CHARS);
+    expect(odd.minChars).toBe(300);
+  });
+
+  it("returns nothing for a reply without tasks", () => {
+    expect(parseWriting(null)).toEqual([]);
+    expect(parseWriting({ writing: "nej" })).toEqual([]);
   });
 });

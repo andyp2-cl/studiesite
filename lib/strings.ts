@@ -172,7 +172,7 @@ export const strings = {
     drafts: {
       anglesTitle: "Skapa moment med AI",
       anglesHelp:
-        "AI läser källorna, delar upp området i 3–4 moment och skriver lästext och 8–12 frågor till varje (fritext, flerval och sant/falskt). Allt publiceras direkt så att eleverna kan börja. Du kan alltid ändra eller dölja i efterhand.",
+        "AI läser källorna, delar upp området i 3–4 moment och skriver lästext, 8–12 frågor (fritext, flerval och sant/falskt) och en skrivuppgift till varje. Allt publiceras direkt så att eleverna kan börja. Du kan alltid ändra eller dölja i efterhand.",
       anglesButton: "Skapa moment med frågor",
       anglesDone: (n: number) => `${n} nya moment skapade.`,
       fillEmpty: (n: number) => (n === 1 ? "Fyll det tomma momentet" : `Fyll de ${n} tomma momenten`),
@@ -185,7 +185,7 @@ export const strings = {
       workingArea: "AI skriver alla moment samtidigt … det tar 2–4 minuter. Stäng inte sidan.",
       momentTitle: "Fyll momentet med AI",
       momentHelp:
-        "AI läser områdets källor och skriver en sammanställning och 8–12 frågor om det viktigaste (fritext, flerval och sant/falskt). Allt blir utkast, och momentet döljs tills du har granskat och publicerat.",
+        "AI läser områdets källor och skriver en sammanställning, 8–12 frågor om det viktigaste (fritext, flerval och sant/falskt) och en skrivuppgift. Allt blir utkast, och momentet döljs tills du har granskat och publicerat.",
       momentButton: "Skapa utkast från källor",
       momentAgain: "Det finns redan innehåll. Nya utkast läggs till efter det som finns.",
       working: "AI skriver … det kan ta ett par minuter",
@@ -195,9 +195,17 @@ export const strings = {
       partlySaved: "Allt kunde inte sparas. Kontrollera momentet och försök igen.",
       cost: "Kostar ungefär 5 öre per gång.",
       sectionHint: (section: string) => `Svaret finns i avsnittet **${section}**.`,
+      writing: {
+        button: "Skapa skrivuppgift med AI",
+        help: "AI läser lästexten och skriver en uppgift där eleven förklarar något viktigt med egna ord, plus bedömningsstöd. Den publiceras direkt. Ändra eller dölj den nedan.",
+        working: "AI skriver en skrivuppgift …",
+        done: "Klart: skrivuppgiften är publicerad. Ladda om sidan för att se den.",
+        noReading: "Momentet behöver en lästext först.",
+        cost: "Kostar under 1 öre.",
+      },
       photo: {
         title: "Skapa från foto av frågor",
-        help: "Fota frågorna, t.ex. ett arbetsblad eller frågorna i slutet av ett kapitel. AI läser av frågorna, skriver en kort lästext där svaren finns och gör om frågorna till fritext, flerval eller sant/falskt. Finns det källor på området används de. Allt blir utkast, och momentet döljs tills du har granskat och publicerat.",
+        help: "Fota frågorna, t.ex. ett arbetsblad eller frågorna i slutet av ett kapitel. AI läser av frågorna, skriver en kort lästext där svaren finns gör om frågorna till fritext, flerval eller sant/falskt och lägger till en skrivuppgift. Finns det källor på området används de. Allt blir utkast, och momentet döljs tills du har granskat och publicerat.",
         take: "Fota eller välj bilder",
         more: "Lägg till fler bilder",
         remove: "Ta bort bild",

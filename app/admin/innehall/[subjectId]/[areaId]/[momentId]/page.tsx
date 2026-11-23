@@ -15,6 +15,7 @@ import {
 import { NodeForm } from "@/components/admin/node-form";
 import { PhotoDraftPanel } from "@/components/admin/photo-draft-panel";
 import { VocabImport } from "@/components/admin/vocab-import";
+import { WritingDraftButton } from "@/components/admin/writing-draft-button";
 import { MathMarkdown } from "@/components/math/markdown";
 import { SectionLabel } from "@/components/study/visuals";
 import { getAdminMoment } from "@/lib/admin/data";
@@ -178,6 +179,7 @@ export default async function AdminMomentPage({ params }: PageProps<"/admin/inne
             <section>
               <SectionLabel>{t.writing.title}</SectionLabel>
               <Help>{t.writing.help}</Help>
+              <WritingDraftButton momentId={moment.id} unavailable={ai.available ? null : strings.ai[ai.reason]} />
               <WritingTasksEditor momentId={moment.id} initial={moment.writing_tasks} />
             </section>
           </>
