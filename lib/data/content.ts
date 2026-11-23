@@ -9,6 +9,7 @@ import { levelProgress, REQUIRED_CORRECT } from "@/lib/progress";
 import { startOfStockholmDay } from "@/lib/time";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { writingsLeftToday } from "@/lib/writing/limits";
 
 // Read-side data access for student pages. Queries run as the signed-in user
 // (RLS applies) unless noted otherwise.
@@ -201,7 +202,7 @@ export async function getDailyGoal(profile: { daily_goal_xp: number | null }): P
 export async function getReadMomentExtras(momentId: string, areaId: string, userId: string) {
   const supabase = await createClient();
   const admin = createAdminClient();
-  const [{ data: progress }, { data: writing }, { data: links }, { data: pasted }] = await Promise.all([
+  const [{ data: progress }, { data: writing }, { data: links }, { data: pasted }, { data: submissions }, writingsLeft] = await Promise.all([
     supabase
       .from("moment_progress")
       .select("read_at, quiz_passed_at, writing_approved_at")
@@ -218,14 +219,31 @@ export async function getReadMomentExtras(momentId: string, areaId: string, user
     supabase.from("sources").select("id, title, url").eq("area_id", areaId).eq("status", "ready").not("url", "is", null).order("sort_order"),
     // Pasted texts have no link to send the student to, so their text is shown.
     supabase.from("sources").select("id, title, content").eq("area_id", areaId).eq("status", "ready").is("url", null).order("sort_order"),
+    supabase
+      .from("writing_submissions")
+      .select("writing_task_id, body, verdict, feedback_md, created_at")
+      .eq("user_id", userId)
+      .eq("moment_id", momentId)
+      .order("created_at", { ascending: false }),
+    writingsLeftToday(userId),
   ]);
+  // The latest text per task, so the student can see the feedback and improve it.
+  const latest = new Map<string, NonNullable<typeof submissions>[number]>();
+  for (const s of submissions ?? []) if (!latest.has(s.writing_task_id)) latest.set(s.writing_task_id, s);
   return {
     milestones: {
       read: Boolean(progress?.read_at),
       quiz: Boolean(progress?.quiz_passed_at),
       writing: Boolean(progress?.writing_approved_at),
     },
-    writingTasks: writing ?? [],
+    writingTasks: (writing ?? []).map((w) => {
+      const last = latest.get(w.id);
+      return {
+        ...w,
+        latest: last ? { body: last.body, verdict: last.verdict, feedback: last.feedback_md ?? "" } : null,
+      };
+    }),
+    writingsLeft,
     sources: [
       ...(links ?? []).map((s) => ({ id: s.id, title: s.title, url: s.url, content: null })),
       ...(pasted ?? []).map((s) => ({ id: s.id, title: s.title, url: null, content: s.content })),

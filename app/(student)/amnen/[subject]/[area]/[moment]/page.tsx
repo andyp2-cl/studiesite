@@ -53,6 +53,7 @@ export default async function MomentPage({ params }: PageProps<"/amnen/[subject]
             rounds={menu.rounds[1]}
             passCorrect={data.passCorrect}
             writingTasks={read.writingTasks}
+            writingsLeft={read.writingsLeft}
             sources={read.sources}
             milestones={read.milestones}
           />

@@ -1,7 +1,8 @@
-import { Check, ChevronDown, ExternalLink, PenLine } from "lucide-react";
+import { Check, ChevronDown, ExternalLink } from "lucide-react";
 import { MathMarkdown } from "@/components/math/markdown";
 import { MarkReadButton, QuizStart } from "@/components/study/read-controls";
 import { SectionLabel } from "@/components/study/visuals";
+import { WritingTask, type WritingTaskProps } from "@/components/study/writing-task";
 import type { ReadMilestones } from "@/lib/progress";
 import { strings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
@@ -16,7 +17,9 @@ export type ReadMomentProps = {
   /** Round sizes that still have questions this student has not answered. */
   rounds: number[];
   passCorrect: number;
-  writingTasks: { id: string; prompt_md: string; min_chars: number }[];
+  writingTasks: WritingTaskProps[];
+  /** AI feedback the student can still get today. */
+  writingsLeft: number;
   sources: { id: string; title: string; url: string | null; content: string | null }[];
   milestones: ReadMilestones;
 };
@@ -56,6 +59,7 @@ export function ReadMoment({
   rounds,
   passCorrect,
   writingTasks,
+  writingsLeft,
   sources,
   milestones,
 }: ReadMomentProps) {
@@ -98,25 +102,21 @@ export function ReadMoment({
         )}
       </section>
 
-      {writingTasks.length > 0 && (
-        <section id="skriv" className="scroll-mt-6">
-          <SectionLabel>{t.writing}</SectionLabel>
-          <p className="-mt-2 mb-4 text-sm text-muted-foreground">{t.writingHelp}</p>
-          <ul className="border border-border">
-            {writingTasks.map((w) => (
-              <li key={w.id} className="flex items-start gap-3 border-b border-border p-5 last:border-b-0">
-                <PenLine className="mt-1 size-4 shrink-0 text-primary" />
-                <div className="min-w-0 flex-1">
-                  <MathMarkdown>{w.prompt_md}</MathMarkdown>
-                  <p className="mt-2 font-mono text-[11px] text-muted-foreground">
-                    {t.minChars(w.min_chars)} · {t.writingSoon}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <section id="skriv" className="scroll-mt-6">
+        <SectionLabel>{t.writing}</SectionLabel>
+        {writingTasks.length === 0 ? (
+          <p className="border border-dashed border-border p-4 text-sm text-muted-foreground">{t.noWriting}</p>
+        ) : (
+          <>
+            <p className="-mt-2 mb-4 text-sm text-muted-foreground">{t.writingHelp}</p>
+            <ul className="border border-border">
+              {writingTasks.map((w) => (
+                <WritingTask key={w.id} task={w} left={writingsLeft} />
+              ))}
+            </ul>
+          </>
+        )}
+      </section>
 
       {sources.length > 0 && (
         <section>
