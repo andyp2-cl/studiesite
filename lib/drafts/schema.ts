@@ -252,3 +252,41 @@ export function parsePhotoDraft(json: unknown): PhotoDraft | null {
   if (!draft) return null;
   return { ...draft, skipped: list((json as { skipped?: unknown }).skipped, 30, 300) };
 }
+
+// ---------------------------------------------------------------------------
+// "Mer om det här": one new reading section with questions about it.
+// ---------------------------------------------------------------------------
+
+export const extensionSchema = {
+  type: "object",
+  properties: {
+    title: { type: "string" },
+    body: { type: "string" },
+    questions: momentDraftSchema.properties.questions,
+  },
+  required: ["title", "body", "questions"],
+  additionalProperties: false,
+};
+
+export type Extension = { title: string; body: string; questions: DraftQuestion[] };
+
+/** At least this many usable questions, or the extension is not worth a round. */
+export const MIN_EXTENSION_QUESTIONS = 3;
+
+/**
+ * A new section with questions about it. Null when the title clashes with an
+ * existing section, the text is too thin, or too few questions point at it.
+ */
+export function parseExtension(json: unknown, existingTitles: string[], existingQuestions: string[]): Extension | null {
+  const d = json as Record<string, unknown> | null;
+  const title = text(d?.title, 120);
+  const body = text(d?.body, 6000);
+  if (!title || body.length < 200) return null;
+  if (existingTitles.some((t) => t.toLowerCase() === title.toLowerCase())) return null;
+  const taken = new Set(existingQuestions.map((q) => q.trim().toLowerCase()));
+  const questions = parseMoreQuestions(d, [title])
+    .filter((q) => !taken.has(q.prompt.toLowerCase()))
+    .slice(0, 8);
+  if (questions.length < MIN_EXTENSION_QUESTIONS) return null;
+  return { title, body, questions };
+}

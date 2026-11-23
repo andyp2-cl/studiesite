@@ -1,9 +1,11 @@
 "use client";
 
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, LoaderCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { markRead } from "@/lib/read/actions";
+import { sectionAnchor } from "@/components/study/section-anchor";
+import { markRead, moreOnTopic } from "@/lib/read/actions";
+import type { ExtendResult } from "@/lib/read/extend";
 import { strings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
@@ -63,6 +65,48 @@ export function QuizStart({ momentId, sizes }: { momentId: string; sizes: number
       >
         {t.quizStart} <ArrowRight className="size-4" />
       </Link>
+    </div>
+  );
+}
+
+/** "Mer om det här": a new reading section and questions, once everything else is done. */
+export function MoreOnTopic({ momentId }: { momentId: string }) {
+  const m = t.more;
+  const [pending, startTransition] = useTransition();
+  const [result, setResult] = useState<ExtendResult | null>(null);
+  return (
+    <div className="flex flex-col gap-3 border border-dashed border-primary/40 p-4">
+      <p className="flex items-center gap-2 font-semibold">
+        <Sparkles className="size-4 text-primary" /> {m.title}
+      </p>
+      <p className="text-sm text-muted-foreground">{m.help}</p>
+      {!result?.ok && (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => startTransition(async () => setResult(await moreOnTopic(momentId)))}
+          className="flex h-11 w-full items-center justify-center gap-2 bg-primary px-5 font-mono text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60 sm:w-fit"
+        >
+          {pending ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+          {pending ? m.working : m.button}
+        </button>
+      )}
+      {result &&
+        (result.ok ? (
+          <div className="flex flex-col gap-2" role="status">
+            <p className="font-mono text-xs text-success">{m.done(result.questions)}</p>
+            <a
+              href={`#${sectionAnchor(result.sectionIndex)}`}
+              className="flex h-10 w-fit items-center gap-2 border border-border px-4 font-mono text-xs font-semibold hover:border-foreground"
+            >
+              {m.toSection} <ArrowRight className="size-4" />
+            </a>
+          </div>
+        ) : (
+          <p role="alert" className="font-mono text-xs text-destructive">
+            {result.error}
+          </p>
+        ))}
     </div>
   );
 }

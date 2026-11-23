@@ -511,6 +511,16 @@ export const strings = {
     writingHelp: "Skriv med egna ord. AI läser och ger feedback. En godkänd text ger en stjärna.",
     noWriting: "Inga skrivuppgifter här än.",
     minChars: (n: number) => `Minst ${n} tecken`,
+    more: {
+      title: "Vill du veta mer?",
+      help: "Du har klarat alla frågor. AI kan skriva ett nytt kort avsnitt om samma tema, med 5 nya frågor.",
+      button: "Mer om det här",
+      working: "AI skriver ett nytt avsnitt … det tar en halv minut",
+      done: (n: number) => `Klart! Läs det nya avsnittet och svara sedan på ${n} nya frågor.`,
+      toSection: "Läs det nya avsnittet",
+      failed: "Det gick inte att skriva något nytt just nu. Försök igen senare.",
+      notNow: "Det går inte att få mer just nu. Kanske i morgon!",
+    },
     write: {
       placeholder: "Skriv ditt svar här …",
       counter: (n: number, min: number) => `${n} / ${min} tecken`,

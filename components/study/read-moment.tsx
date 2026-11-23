@@ -1,6 +1,7 @@
 import { Check, ChevronDown, ExternalLink } from "lucide-react";
 import { MathMarkdown } from "@/components/math/markdown";
-import { MarkReadButton, QuizStart } from "@/components/study/read-controls";
+import { MarkReadButton, MoreOnTopic, QuizStart } from "@/components/study/read-controls";
+import { sectionAnchor } from "@/components/study/section-anchor";
 import { SectionLabel } from "@/components/study/visuals";
 import { WritingTask, type WritingTaskProps } from "@/components/study/writing-task";
 import type { ReadMilestones } from "@/lib/progress";
@@ -20,12 +21,12 @@ export type ReadMomentProps = {
   writingTasks: WritingTaskProps[];
   /** AI feedback the student can still get today. */
   writingsLeft: number;
+  /** The student has finished every question and may ask for a new section. */
+  canExtend: boolean;
   sources: { id: string; title: string; url: string | null; content: string | null }[];
   milestones: ReadMilestones;
 };
 
-/** Anchor of a reading section, so questions can point to it. */
-export const sectionAnchor = (index: number) => `avsnitt-${index + 1}`;
 
 function Steps({ milestones }: { milestones: ReadMilestones }) {
   const steps = [
@@ -60,6 +61,7 @@ export function ReadMoment({
   passCorrect,
   writingTasks,
   writingsLeft,
+  canExtend,
   sources,
   milestones,
 }: ReadMomentProps) {
@@ -98,6 +100,11 @@ export function ReadMoment({
               {t.quizHelp(questionCount, passCorrect)}
             </p>
             <QuizStart momentId={momentId} sizes={rounds} />
+          </div>
+        )}
+        {canExtend && (
+          <div className="mt-4">
+            <MoreOnTopic momentId={momentId} />
           </div>
         )}
       </section>

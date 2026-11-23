@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { checkTaskAnswer } from "@/lib/tasks/answers";
-import { MAX_WRITING_CHARS, MIN_WRITING_CHARS, parseAngles, parseMomentDraft, parseMoreQuestions, parsePhotoDraft, parseWriting, sourcesForPrompt } from "./schema";
+import { MAX_WRITING_CHARS, MIN_WRITING_CHARS, parseAngles, parseExtension, parseMomentDraft, parseMoreQuestions, parsePhotoDraft, parseWriting, sourcesForPrompt } from "./schema";
 
 describe("sourcesForPrompt", () => {
   it("shares the space between sources and skips empty ones", () => {
@@ -183,5 +183,41 @@ describe("parseWriting", () => {
   it("returns nothing for a reply without tasks", () => {
     expect(parseWriting(null)).toEqual([]);
     expect(parseWriting({ writing: "nej" })).toEqual([]);
+  });
+});
+
+describe("parseExtension", () => {
+  const q = (prompt: string, section = "Månens faser") => ({
+    type: "true_false",
+    prompt,
+    accepted: [],
+    keywords: [],
+    choices: [],
+    correct_index: 0,
+    correct_boolean: true,
+    section,
+    explanation: "",
+  });
+  const body = "Månen lyser inte själv. ".repeat(20);
+
+  it("keeps a new section with questions about it", () => {
+    const ext = parseExtension({ title: "Månens faser", body, questions: [q("A"), q("B"), q("C")] }, ["Solen"], []);
+    expect(ext?.title).toBe("Månens faser");
+    expect(ext?.questions.map((x) => x.prompt)).toEqual(["A", "B", "C"]);
+  });
+
+  it("drops repeated questions and questions about other sections", () => {
+    const ext = parseExtension(
+      { title: "Månens faser", body, questions: [q("A"), q("B"), q("C"), q("Gammal"), q("D", "Solen")] },
+      ["Solen"],
+      ["gammal"],
+    );
+    expect(ext?.questions.map((x) => x.prompt)).toEqual(["A", "B", "C"]);
+  });
+
+  it("rejects a reused title, a thin text or too few questions", () => {
+    expect(parseExtension({ title: "Solen", body, questions: [q("A", "Solen"), q("B", "Solen"), q("C", "Solen")] }, ["solen"], [])).toBeNull();
+    expect(parseExtension({ title: "Månens faser", body: "Kort.", questions: [q("A"), q("B"), q("C")] }, [], [])).toBeNull();
+    expect(parseExtension({ title: "Månens faser", body, questions: [q("A"), q("B")] }, [], [])).toBeNull();
   });
 });

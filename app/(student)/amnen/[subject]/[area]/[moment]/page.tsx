@@ -11,6 +11,7 @@ import { getMoment, getReadMomentExtras } from "@/lib/data/content";
 import { getGenerator } from "@/lib/generators";
 import type { Level } from "@/lib/generators/types";
 import { practiceMenu } from "@/lib/practice/actions";
+import { canExtend } from "@/lib/read/extend";
 import { passCorrectFor, suggestedLevel } from "@/lib/progress";
 import { searchLinks } from "@/lib/sources/wikipedia";
 import { strings } from "@/lib/strings";
@@ -25,6 +26,7 @@ export default async function MomentPage({ params }: PageProps<"/amnen/[subject]
 
   const { subject, area, moment, intro, deepenings, stars, levelStats } = data;
   const read = moment.mode === "read" ? await getReadMomentExtras(moment.id, area.id, profile.id) : null;
+  const extendable = read ? await canExtend(profile.id, moment.id) : false;
   // Generator moments can always be practised; task-bank moments need published tasks at the level.
   const learnMore = searchLinks(moment.name, /matem/i.test(subject.name));
   const menu = await practiceMenu(moment.id);
@@ -54,6 +56,7 @@ export default async function MomentPage({ params }: PageProps<"/amnen/[subject]
             passCorrect={data.passCorrect}
             writingTasks={read.writingTasks}
             writingsLeft={read.writingsLeft}
+            canExtend={extendable}
             sources={read.sources}
             milestones={read.milestones}
           />

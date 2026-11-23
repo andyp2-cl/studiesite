@@ -12,6 +12,7 @@ import { getGenerator } from "@/lib/generators";
 import { isLevel, LEVELS, type Figure, type Generator, type Level, type SolutionStep } from "@/lib/generators/types";
 import { checkAnswer, type CheckResult, type RetryReason } from "@/lib/math/check-answer";
 import { EXPLANATION_MIN_CHARS, EXPLANATION_XP, XP_FOR_LEVEL } from "@/lib/gamification";
+import { unseenBank } from "@/lib/practice/bank";
 import { offeredRounds, quizClosedKey, readingCanSupportMore, wordCount } from "@/lib/practice/rounds";
 import { levelProgress, passCorrectFor, WINDOW } from "@/lib/progress";
 import { createRng } from "@/lib/random";
@@ -109,25 +110,6 @@ async function loadPractice(momentId: unknown, level: unknown) {
 }
 
 type Practice = NonNullable<Awaited<ReturnType<typeof loadPractice>>>;
-
-/** Published tasks at this level that this student has not already answered. */
-async function unseenBank(userId: string, momentId: string, level: Level): Promise<number> {
-  const admin = createAdminClient();
-  const [{ data: tasks }, { data: attempts }] = await Promise.all([
-    admin.from("tasks").select("id").eq("moment_id", momentId).eq("level", level).eq("status", "published"),
-    admin
-      .from("attempts")
-      .select("task_id")
-      .eq("user_id", userId)
-      .eq("moment_id", momentId)
-      .eq("level", level)
-      .not("task_id", "is", null)
-      .order("created_at", { ascending: false })
-      .limit(1000),
-  ]);
-  const done = new Set((attempts ?? []).map((a) => a.task_id));
-  return (tasks ?? []).filter((t) => !done.has(t.id)).length;
-}
 
 /** Prompts this student has already been given, recreated from their seeds. */
 async function usedPrompts(userId: string, momentId: string, level: Level, generator: Generator): Promise<Set<string>> {
