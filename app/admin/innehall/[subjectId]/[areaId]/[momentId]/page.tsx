@@ -13,6 +13,7 @@ import {
   WritingTasksEditor,
 } from "@/components/admin/moment-editors";
 import { NodeForm } from "@/components/admin/node-form";
+import { PhotoDraftPanel } from "@/components/admin/photo-draft-panel";
 import { VocabImport } from "@/components/admin/vocab-import";
 import { MathMarkdown } from "@/components/math/markdown";
 import { SectionLabel } from "@/components/study/visuals";
@@ -108,7 +109,7 @@ function TaskList({ moment, base, read }: { moment: AdminMoment; base: string; r
 
 export default async function AdminMomentPage({ params }: PageProps<"/admin/innehall/[subjectId]/[areaId]/[momentId]">) {
   const { subjectId, areaId, momentId } = await params;
-  const [moment, ai] = await Promise.all([getAdminMoment(momentId), aiStatus("cheap")]);
+  const [moment, ai, aiSmart] = await Promise.all([getAdminMoment(momentId), aiStatus("cheap"), aiStatus("smart")]);
   if (!moment || moment.area.id !== areaId || moment.subject.id !== subjectId) notFound();
 
   const base = `/admin/innehall/${subjectId}/${areaId}/${momentId}`;
@@ -149,6 +150,8 @@ export default async function AdminMomentPage({ params }: PageProps<"/admin/inne
               unavailable={ai.available ? null : strings.ai[ai.reason]}
               hasContent={moment.readings.length > 0 || moment.tasks.length > 0}
             />
+
+            <PhotoDraftPanel momentId={moment.id} unavailable={aiSmart.available ? null : strings.ai[aiSmart.reason]} />
 
             {draftQuestions + draftWriting > 0 && (
               <DraftBulk momentId={moment.id} questions={draftQuestions} writing={draftWriting} />

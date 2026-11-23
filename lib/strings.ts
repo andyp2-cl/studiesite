@@ -195,6 +195,30 @@ export const strings = {
       partlySaved: "Allt kunde inte sparas. Kontrollera momentet och försök igen.",
       cost: "Kostar ungefär 5 öre per gång.",
       sectionHint: (section: string) => `Svaret finns i avsnittet **${section}**.`,
+      photo: {
+        title: "Skapa från foto av frågor",
+        help: "Fota frågorna, t.ex. ett arbetsblad eller frågorna i slutet av ett kapitel. AI läser av frågorna, skriver en kort lästext där svaren finns och gör om frågorna till fritext, flerval eller sant/falskt. Finns det källor på området används de. Allt blir utkast, och momentet döljs tills du har granskat och publicerat.",
+        take: "Fota eller välj bilder",
+        more: "Lägg till fler bilder",
+        remove: "Ta bort bild",
+        count: (n: number, max: number) => `${n} av ${max} bilder`,
+        notePlaceholder: "Valfritt: säg något om frågorna, t.ex. \"Kapitel 3 i SO-boken, om Gustav Vasa\"",
+        button: "Skapa lästext och frågor",
+        preparing: "Förbereder bilderna …",
+        working: "AI läser frågorna och skriver … det tar oftast 1–2 minuter",
+        cost: "Kostar ungefär 50 öre per gång.",
+        done: (sections: number, questions: number, skipped: string[]) =>
+          `Klart: ${sections} lästexter och ${questions} frågor som utkast.` +
+          (skipped.length ? ` Kunde inte använda: ${skipped.join("; ")}.` : ""),
+        noQuestions: "AI hittade inga frågor i bilden. Prova en skarpare bild där frågorna syns tydligt.",
+        errors: {
+          none: "Välj minst en bild.",
+          too_many: "Högst 4 bilder åt gången.",
+          bad_type: "Bara bilder (JPG, PNG eller WebP) fungerar.",
+          too_large: "En bild är för stor. Försök igen eller ta en ny bild.",
+          unreadable: "En bild gick inte att öppna. Prova att ta en ny bild.",
+        },
+      },
     },
     sources: {
       title: "Källor",

@@ -184,3 +184,28 @@ export function parseMomentDraft(json: unknown): MomentDraft | null {
   if (sections.length === 0 || questions.length === 0) return null;
   return { intro: text(d.intro, 2000), sections, questions };
 }
+
+// ---------------------------------------------------------------------------
+// A moment written around photographed questions.
+// ---------------------------------------------------------------------------
+
+export const photoDraftSchema = {
+  type: "object",
+  properties: {
+    ...momentDraftSchema.properties,
+    skipped: { type: "array", items: { type: "string" } },
+  },
+  required: [...momentDraftSchema.required, "skipped"],
+  additionalProperties: false,
+};
+
+export type PhotoDraft = MomentDraft & {
+  /** Questions in the photo the AI could not read or use. */
+  skipped: string[];
+};
+
+export function parsePhotoDraft(json: unknown): PhotoDraft | null {
+  const draft = parseMomentDraft(json);
+  if (!draft) return null;
+  return { ...draft, skipped: list((json as { skipped?: unknown }).skipped, 30, 300) };
+}

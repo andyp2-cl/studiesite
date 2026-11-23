@@ -6,6 +6,11 @@ const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   // Cache Components is left off: almost every page is personalised via the
   // Supabase session cookie, so a static shell would gain us very little.
+  experimental: {
+    // Photographed questions (shrunk in the browser to a few hundred KB each)
+    // are sent to a server action. Vercel caps request bodies at 4.5 MB.
+    serverActions: { bodySizeLimit: "4mb" },
+  },
   turbopack: {
     rules: {
       "*.css": {

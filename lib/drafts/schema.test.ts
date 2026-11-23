@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { checkTaskAnswer } from "@/lib/tasks/answers";
-import { parseAngles, parseMomentDraft, parseMoreQuestions, sourcesForPrompt } from "./schema";
+import { parseAngles, parseMomentDraft, parseMoreQuestions, parsePhotoDraft, sourcesForPrompt } from "./schema";
 
 describe("sourcesForPrompt", () => {
   it("shares the space between sources and skips empty ones", () => {
@@ -118,5 +118,40 @@ describe("parseMomentDraft", () => {
     expect(parseMomentDraft({ ...draft, sections: [] })).toBeNull();
     expect(parseMomentDraft({ ...draft, questions: [] })).toBeNull();
     expect(parseMomentDraft("inte json")).toBeNull();
+  });
+});
+
+describe("parsePhotoDraft", () => {
+  const draft = {
+    intro: "Om Vasa.",
+    sections: [{ title: "Kungen", body: "Gustav Vasa blev kung 1523." }],
+    questions: [
+      {
+        type: "short",
+        prompt: "Vilket år blev Gustav Vasa kung?",
+        accepted: ["1523"],
+        keywords: [],
+        choices: [],
+        correct_index: 0,
+        correct_boolean: false,
+        section: "Kungen",
+        explanation: "Han valdes 1523.",
+      },
+    ],
+  };
+
+  it("keeps the draft and the questions the AI could not use", () => {
+    const parsed = parsePhotoDraft({ ...draft, skipped: ["Fråga 4 (oläslig)", ""] });
+    expect(parsed?.questions).toHaveLength(1);
+    expect(parsed?.questions[0].section).toBe("Kungen");
+    expect(parsed?.skipped).toEqual(["Fråga 4 (oläslig)"]);
+  });
+
+  it("treats a missing skipped list as empty", () => {
+    expect(parsePhotoDraft(draft)?.skipped).toEqual([]);
+  });
+
+  it("returns null when the photo had no questions", () => {
+    expect(parsePhotoDraft({ intro: "", sections: [], questions: [], skipped: [] })).toBeNull();
   });
 });

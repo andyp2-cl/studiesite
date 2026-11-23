@@ -9,8 +9,18 @@ import { uniqueSlug } from "@/lib/slug";
 import { strings } from "@/lib/strings";
 import { curriculumFor, curriculumForPrompt } from "@/lib/curriculum";
 import { createClient } from "@/lib/supabase/server";
-import { anglesPrompt, momentPrompt } from "./prompts";
-import { anglesSchema, momentDraftSchema, parseAngles, parseMomentDraft, sourcesForPrompt } from "./schema";
+import { photosForAi } from "./photos";
+import { anglesPrompt, momentPrompt, photoPrompt } from "./prompts";
+import {
+  anglesSchema,
+  momentDraftSchema,
+  parseAngles,
+  parseMomentDraft,
+  parsePhotoDraft,
+  photoDraftSchema,
+  sourcesForPrompt,
+  type MomentDraft,
+} from "./schema";
 
 // AI drafts from an area's sources (SPEC 12): everything lands as drafts in
 // hidden moments, and the admin reviews and publishes. Writes go through the
@@ -164,6 +174,78 @@ async function fillMoment(adminId: string, momentId: string, publish: boolean): 
   const draft = parseMomentDraft(result.json);
   if (!draft) return fail(t.nothingUsable);
 
+  const saved = await saveDraft(momentId, draft, publish);
+  if (!saved.ok) return saved;
+  refresh();
+  return {
+    ok: true,
+    summary: publish
+      ? t.momentPublished(draft.sections.length, draft.questions.length)
+      : t.momentDone(draft.sections.length, draft.questions.length),
+  };
+}
+
+/**
+ * Writes a short reading text around questions the admin has photographed and
+ * turns the questions into quiz questions. FormData fields: "photos" (1–4
+ * images, shrunk in the browser) and an optional "note". Area sources are used
+ * when there are any; without them the AI relies on well-established facts,
+ * so everything lands as drafts for the admin to check.
+ */
+export async function draftFromPhoto(momentId: string, form: FormData): Promise<DraftResult> {
+  const admin = await requireAdmin();
+  const photos = await photosForAi(form.getAll("photos").filter((v): v is File => v instanceof File));
+  if (!photos.ok) return fail(t.photo.errors[photos.reason]);
+  const note = String(form.get("note") ?? "").trim().slice(0, 500);
+
+  const supabase = await createClient();
+  const { data: moment } = await supabase
+    .from("moments")
+    .select("id, name, description, area_id, areas(name, subjects(name))")
+    .eq("id", momentId)
+    .maybeSingle();
+  if (!moment?.areas?.subjects) return fail(strings.admin.errors.generic);
+
+  const { system, prompt } = photoPrompt({
+    subject: moment.areas.subjects.name,
+    area: moment.areas.name,
+    moment: moment.name,
+    description: moment.description ?? "",
+    note,
+    sources: await readySources(moment.area_id),
+    curriculum: await curriculum(moment.areas.subjects.name),
+  });
+  const result = await askClaude({
+    purpose: "draft_from_photo",
+    userId: admin.id,
+    tier: "smart",
+    system,
+    prompt,
+    images: photos.images,
+    maxTokens: 12_000,
+    jsonSchema: photoDraftSchema,
+    effort: "medium",
+    timeoutMs: 280_000,
+  });
+  if (!result.ok) return fail(strings.ai[result.reason]);
+
+  const draft = parsePhotoDraft(result.json);
+  if (!draft) return fail(t.photo.noQuestions);
+
+  const saved = await saveDraft(momentId, draft, false);
+  if (!saved.ok) return saved;
+  refresh();
+  return { ok: true, summary: t.photo.done(draft.sections.length, draft.questions.length, draft.skipped) };
+}
+
+/**
+ * Saves drafted reading sections and questions to a moment, after whatever it
+ * already has. Unpublished drafts hide the moment, since reading sections have
+ * no draft state of their own.
+ */
+async function saveDraft(momentId: string, draft: MomentDraft, publish: boolean): Promise<DraftResult> {
+  const supabase = await createClient();
+
   const { error: hideError } = await supabase
     .from("moments")
     .update({ is_hidden: !publish, mode: "read", source: "tasks" })
@@ -207,11 +289,5 @@ async function fillMoment(adminId: string, momentId: string, publish: boolean): 
     refresh();
     return fail(t.partlySaved);
   }
-  refresh();
-  return {
-    ok: true,
-    summary: publish
-      ? t.momentPublished(draft.sections.length, draft.questions.length)
-      : t.momentDone(draft.sections.length, draft.questions.length),
-  };
+  return { ok: true, summary: "" };
 }
