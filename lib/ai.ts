@@ -27,7 +27,26 @@ export type AiRequest = {
   effort?: "low" | "medium" | "high";
   /** Long drafts take a while; defaults to 60 s. */
   timeoutMs?: number;
+  /** Photos sent before the prompt, e.g. a photographed question sheet. */
+  images?: AiImage[];
 };
+
+export type AiImageType = "image/jpeg" | "image/png" | "image/webp" | "image/gif";
+export type AiImage = { mediaType: AiImageType; base64: string };
+
+/** The user message: any images first (Claude reads them best that way), then the text. */
+export function userContent(prompt: string, images: AiImage[] = []): string | Anthropic.ContentBlockParam[] {
+  if (images.length === 0) return prompt;
+  return [
+    ...images.map(
+      (image): Anthropic.ImageBlockParam => ({
+        type: "image",
+        source: { type: "base64", media_type: image.mediaType, data: image.base64 },
+      }),
+    ),
+    { type: "text", text: prompt },
+  ];
+}
 
 export type AiResult =
   | { ok: true; text: string; json: unknown; costUsd: number; callId: string | null }
@@ -140,7 +159,7 @@ export async function askClaude(req: AiRequest): Promise<AiResult> {
         model,
         max_tokens: req.maxTokens,
         system: req.system,
-        messages: [{ role: "user", content: req.prompt }],
+        messages: [{ role: "user", content: userContent(req.prompt, req.images) }],
         output_config: {
           effort: req.effort ?? (req.tier === "cheap" ? "low" : "medium"),
           ...(req.jsonSchema ? { format: { type: "json_schema", schema: req.jsonSchema } } : {}),

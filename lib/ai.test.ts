@@ -154,6 +154,21 @@ describe("askClaude", () => {
     expect(db.inserted).toHaveLength(2);
   });
 
+  it("sends images before the prompt text", async () => {
+    create.mockResolvedValue(reply());
+    await askClaude({ ...request, images: [{ mediaType: "image/jpeg", base64: "abc" }] });
+    expect(create.mock.calls[0][0].messages[0].content).toEqual([
+      { type: "image", source: { type: "base64", media_type: "image/jpeg", data: "abc" } },
+      { type: "text", text: "Hej" },
+    ]);
+  });
+
+  it("sends plain text when there are no images", async () => {
+    create.mockResolvedValue(reply());
+    await askClaude(request);
+    expect(create.mock.calls[0][0].messages[0].content).toBe("Hej");
+  });
+
   it("reports API errors without throwing", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     create.mockRejectedValue(new Error("network"));
