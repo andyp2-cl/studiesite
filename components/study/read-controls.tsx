@@ -3,6 +3,7 @@
 import { ArrowRight, Check, LoaderCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
+import { ReviewRounds } from "@/components/practice/practice-session";
 import { sectionAnchor } from "@/components/study/section-anchor";
 import { markRead, moreOnTopic } from "@/lib/read/actions";
 import type { ExtendResult } from "@/lib/read/extend";
@@ -37,7 +38,12 @@ export function MarkReadButton({ momentId, done }: { momentId: string; done: boo
 export function QuizStart({ momentId, sizes }: { momentId: string; sizes: number[] }) {
   const [count, setCount] = useState(sizes.includes(10) ? 10 : (sizes.at(-1) ?? 10));
   if (sizes.length === 0) {
-    return <p className="text-sm text-muted-foreground">{p.noMore}</p>;
+    return (
+      <div className="flex flex-col gap-4">
+        <p className="text-sm text-muted-foreground">{p.noMore}</p>
+        <ReviewRounds momentId={momentId} highlight />
+      </div>
+    );
   }
   return (
     <div className="flex flex-wrap items-center gap-3">

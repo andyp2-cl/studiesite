@@ -1,13 +1,13 @@
 import { notFound, redirect } from "next/navigation";
 import { PracticeSession } from "@/components/practice/practice-session";
 import { isLevel, type Level } from "@/lib/generators/types";
-import { nextTask, prepareRound } from "@/lib/practice/actions";
+import { nextTask, prepareRound, reviewRoundSize } from "@/lib/practice/actions";
 import { searchLinks } from "@/lib/sources/wikipedia";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function PracticePage({ params, searchParams }: PageProps<"/ova/[momentId]">) {
   const { momentId } = await params;
-  const { niva, antal } = await searchParams;
+  const { niva, antal, repetera } = await searchParams;
   const level: Level = isLevel(Number(niva)) ? (Number(niva) as Level) : 1;
   const requested = Number(antal);
 
@@ -22,9 +22,12 @@ export default async function PracticePage({ params, searchParams }: PageProps<"
   const momentHref = `/amnen/${moment.areas.subjects.slug}/${moment.areas.slug}/${moment.slug}`;
   // A round is only as long as the new questions we can actually give.
   const read = moment.mode === "read";
-  const roundSize = await prepareRound(moment.id, read ? 1 : level, Number.isInteger(requested) ? requested : 10);
+  // "Repetera": questions already answered, the missed ones first ("Läs och svara" only).
+  const review = read && repetera === "1";
+  const size = Number.isInteger(requested) ? requested : 10;
+  const roundSize = review ? await reviewRoundSize(moment.id, 1, size) : await prepareRound(moment.id, read ? 1 : level, size);
   if (!roundSize) redirect(momentHref);
-  const firstTask = await nextTask(moment.id, read ? 1 : level);
+  const firstTask = await nextTask(moment.id, read ? 1 : level, [], review);
   if (!firstTask) redirect(momentHref);
 
   // "Läs och svara": the reading text can be opened while answering.
@@ -46,6 +49,7 @@ export default async function PracticePage({ params, searchParams }: PageProps<"
       momentHref={momentHref}
       firstTask={firstTask}
       roundSize={roundSize}
+      review={review}
       readings={readings ? readings.map((r) => ({ title: r.title ?? "", body: r.body_md })) : null}
       helpLinks={searchLinks(moment.name, /matem/i.test(moment.areas.subjects.name))}
     />

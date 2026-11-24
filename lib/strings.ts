@@ -589,6 +589,12 @@ export const strings = {
     start: (n: number) => `Starta ${n} frågor`,
     newRound: (n: number) => `${n} nya frågor`,
     noMore: "Inga fler nya frågor här. Det som finns är redan använt.",
+    review: {
+      title: "Repetera",
+      help: "Öva på frågorna igen för att se att du kan allt. De du svarade fel på kommer först. Frågor du rättar till ger XP som vanligt, frågor du redan kunde ger ingen XP.",
+      round: (n: number) => `Repetera ${n}`,
+      correctAgain: "Rätt igen!",
+    },
     loading: "Hämtar frågor …",
     moreTitle: "Öva mer",
     sameLevel: "nu",

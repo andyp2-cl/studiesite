@@ -13,6 +13,7 @@ import { isLevel, LEVELS, type Figure, type Generator, type Level, type Solution
 import { checkAnswer, type CheckResult, type RetryReason } from "@/lib/math/check-answer";
 import { EXPLANATION_MIN_CHARS, EXPLANATION_XP, XP_FOR_LEVEL } from "@/lib/gamification";
 import { unseenBank } from "@/lib/practice/bank";
+import { latestResults, pickReviewTask } from "@/lib/practice/review";
 import { offeredRounds, quizClosedKey, readingCanSupportMore, wordCount } from "@/lib/practice/rounds";
 import { levelProgress, passCorrectFor, WINDOW } from "@/lib/progress";
 import { createRng } from "@/lib/random";
@@ -29,7 +30,7 @@ import { awardXp, type XpAward } from "@/lib/xp";
 // tasks: the client gets the prompt (and shuffled choices) and the task id; the
 // key is read from the tasks table, which students cannot read.
 
-import type { TaskRef } from "./ref";
+import { ROUND_SIZES, type TaskRef } from "./ref";
 
 export type { TaskRef };
 
@@ -63,6 +64,8 @@ export type SubmitResult =
       xp: XpAward | null;
       /** Cards won because this answer finished an area milestone. */
       cards: Card[];
+      /** A question already answered right before: a check only, nothing recorded or awarded. */
+      repeat: boolean;
     }
   | { status: "error" };
 
@@ -163,7 +166,7 @@ async function pickGeneratedTask(practice: Practice, seen: Set<string>): Promise
 }
 
 /** A published task the student has not answered. Never falls back to one they have already had. */
-async function pickBankTask(practice: Practice, seen: Set<string>): Promise<PublicTask | null> {
+async function pickBankTask(practice: Practice, seen: Set<string>, review = false): Promise<PublicTask | null> {
   const { data: tasks } = await createAdminClient()
     .from("tasks")
     .select("id, type, prompt_md, choices, hint_md")
@@ -174,17 +177,24 @@ async function pickBankTask(practice: Practice, seen: Set<string>): Promise<Publ
 
   const { data: attempts } = await createAdminClient()
     .from("attempts")
-    .select("task_id")
+    .select("task_id, correct")
     .eq("user_id", practice.profile.id)
     .eq("moment_id", practice.moment.id)
     .eq("level", practice.level)
     .not("task_id", "is", null)
     .order("created_at", { ascending: false })
     .limit(1000);
-  const attempted = new Set((attempts ?? []).map((a) => a.task_id));
-  const pool = tasks.filter((t) => !seen.has(`t${t.id}`) && !attempted.has(t.id));
-  if (!pool.length) return null;
-  const task = pool[randomInt(0, pool.length)];
+  const seenIds = new Set(tasks.filter((t) => seen.has(`t${t.id}`)).map((t) => t.id));
+  let task: (typeof tasks)[number] | null;
+  if (review) {
+    // Questions already answered, the missed ones first.
+    task = pickReviewTask(tasks, latestResults(attempts ?? []), seenIds, randomInt(0, 1_000_000) / 1_000_000);
+  } else {
+    const attempted = new Set((attempts ?? []).map((a) => a.task_id));
+    const pool = tasks.filter((t) => !seenIds.has(t.id) && !attempted.has(t.id));
+    task = pool.length ? pool[randomInt(0, pool.length)] : null;
+  }
+  if (!task) return null;
 
   const rng = createRng(randomInt(0, MAX_SEED));
   const choices = Array.isArray(task.choices)
@@ -200,12 +210,29 @@ async function pickBankTask(practice: Practice, seen: Set<string>): Promise<Publ
   };
 }
 
-/** `seen`: refKeys already shown this round, so a round never repeats a task. */
-export async function nextTask(momentId: string, level: Level, seen: string[] = []): Promise<PublicTask | null> {
+/**
+ * `seen`: refKeys already shown this round, so a round never repeats a task.
+ * `review`: a "Repetera" round of questions already answered (task banks only).
+ */
+export async function nextTask(momentId: string, level: Level, seen: string[] = [], review = false): Promise<PublicTask | null> {
   const practice = await loadPractice(momentId, level);
   if (!practice) return null;
   const seenSet = new Set(Array.isArray(seen) ? seen.slice(0, 20).map(String) : []);
-  return practice.generator ? pickGeneratedTask(practice, seenSet) : pickBankTask(practice, seenSet);
+  return practice.generator ? pickGeneratedTask(practice, seenSet) : pickBankTask(practice, seenSet, review === true);
+}
+
+/** Size of a "Repetera" round: as asked, but never more than the moment's questions. Null for generator moments. */
+export async function reviewRoundSize(momentId: string, level: Level, requested: number): Promise<number | null> {
+  const practice = await loadPractice(momentId, level);
+  if (!practice || practice.generator) return null;
+  const { count } = await createAdminClient()
+    .from("tasks")
+    .select("id", { count: "exact", head: true })
+    .eq("moment_id", momentId)
+    .eq("level", level)
+    .eq("status", "published");
+  if (!count) return null;
+  return Math.min(count, ROUND_SIZES.includes(requested as (typeof ROUND_SIZES)[number]) ? requested : 10);
 }
 
 export type PracticeMenu = {
@@ -432,7 +459,22 @@ export async function submitAnswer(input: {
   let attemptId: string | null = null;
   let xp: XpAward | null = null;
   let newCorrect = false;
-  if (task.record.generator_seed !== null) {
+  // A bank question this student has already answered right (a "Repetera"
+  // round) is just a check: not recorded, so no XP, no cards and no effect on
+  // the star. Questions they missed before count as usual when they get them right.
+  let repeat = false;
+  if (task.record.task_id !== null) {
+    const { count } = await admin
+      .from("attempts")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", profile.id)
+      .eq("task_id", task.record.task_id)
+      .eq("correct", true);
+    repeat = (count ?? 0) > 0;
+  }
+  if (repeat) {
+    // Nothing to record.
+  } else if (task.record.generator_seed !== null) {
     const { data: existing } = await admin
       .from("attempts")
       .select("id")
@@ -444,7 +486,7 @@ export async function submitAnswer(input: {
     attemptId = existing?.id ?? null;
   }
 
-  if (!attemptId) {
+  if (!attemptId && !repeat) {
     const durationMs =
       Number.isInteger(input.durationMs) && input.durationMs! >= 0 ? Math.min(input.durationMs!, 3_600_000) : null;
     const { data: inserted, error } = await admin
@@ -516,6 +558,7 @@ export async function submitAnswer(input: {
     stars,
     xp,
     cards,
+    repeat,
   };
 }
 

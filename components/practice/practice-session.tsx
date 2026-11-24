@@ -45,6 +45,7 @@ function outcomeLabel(o: Outcome): string {
 export function PracticeSession({
   firstTask,
   roundSize,
+  review = false,
   readings,
   mix,
   ...firstMoment
@@ -56,6 +57,8 @@ export function PracticeSession({
   momentHref: string;
   firstTask: PublicTask;
   roundSize: number;
+  /** A "Repetera" round: questions already answered, the missed ones first. */
+  review?: boolean;
   /** "Läs och svara": the reading text, openable while answering. Null for level moments. */
   readings: { title: string; body: string }[] | null;
   /** Free study sites searched for this moment, offered after two misses in a row. */
@@ -167,7 +170,7 @@ export function PracticeSession({
     if (answered >= roundSize) return finishRound();
     const target = mix?.[answered] ?? { momentId, level };
     startTransition(async () => {
-      const upcoming = await nextTask(target.momentId, target.level, seen);
+      const upcoming = await nextTask(target.momentId, target.level, seen, review && !mix);
       if (!upcoming) {
         const menu = await practiceMenu(momentId);
         setRounds(menu.rounds);
@@ -264,6 +267,7 @@ export function PracticeSession({
                   withLevels={!readings}
                   rounds={rounds}
                 />
+                {readings && <ReviewRounds momentId={momentId} highlight={rounds[1].length === 0} />}
                 <Link
                   href={momentHref}
                   className="flex h-12 items-center justify-center border border-border font-mono text-sm text-muted-foreground hover:text-foreground"
@@ -356,12 +360,12 @@ export function PracticeSession({
             status === "revealed" && "border-amber-400/60",
           )}
         >
-          {result?.status === "correct" && result.xp && (
+          {result?.status === "correct" && (result.xp || result.repeat) && (
             <span
               aria-live="polite"
               className="pointer-events-none absolute top-3 right-4 animate-xp-float font-mono text-sm font-semibold text-primary"
             >
-              {p.xpGained(result.xp.xp)}
+              {result.xp ? p.xpGained(result.xp.xp) : p.review.correctAgain}
             </span>
           )}
           <MathMarkdown>{task.prompt}</MathMarkdown>
@@ -690,6 +694,30 @@ function MoreRounds({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+/** "Repetera 5 / 10": questions already answered, for a "Läs och svara" moment. */
+export function ReviewRounds({ momentId, highlight }: { momentId: string; highlight: boolean }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">{p.review.title}</p>
+      <p className="text-sm text-muted-foreground">{p.review.help}</p>
+      <div className="grid grid-cols-2 gap-2">
+        {[5, 10].map((n) => (
+          <a
+            key={n}
+            href={`/ova/${momentId}?antal=${n}&repetera=1`}
+            className={cn(
+              "flex h-12 items-center justify-center gap-2 font-mono text-sm font-semibold",
+              highlight && n === 10 ? "bg-primary text-primary-foreground" : "border border-border hover:border-foreground",
+            )}
+          >
+            <RotateCcw className="size-4" /> {p.review.round(n)}
+          </a>
+        ))}
+      </div>
     </div>
   );
 }
