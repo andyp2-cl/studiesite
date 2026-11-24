@@ -21,7 +21,7 @@ export type ReadMomentProps = {
   writingTasks: WritingTaskProps[];
   /** AI feedback the student can still get today. */
   writingsLeft: number;
-  /** The student has finished every question and may ask for a new section. */
+  /** The student has answered every question and may ask for a new section. */
   canExtend: boolean;
   sources: { id: string; title: string; url: string | null; content: string | null }[];
   milestones: ReadMilestones;

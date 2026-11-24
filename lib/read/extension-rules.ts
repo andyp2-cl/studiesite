@@ -1,6 +1,8 @@
 // When a student may ask the AI for "Mer om det här": a new reading section
-// with questions. It is only for a student who has finished everything the
-// moment offers, and it is capped so the moment and the AI bill stay small.
+// with questions. It is for a student who has answered every question the
+// moment has, passed or not: without it, a student who missed the pass mark
+// on a short quiz would have nothing left to practise on. Capped so the
+// moment and the AI bill stay small.
 
 /** Reading sections a moment can grow to through extensions. */
 export const MAX_READING_SECTIONS = 10;
@@ -8,7 +10,6 @@ export const MAX_READING_SECTIONS = 10;
 export const EXTENSIONS_PER_DAY = 3;
 
 export type ExtensionState = {
-  quizPassed: boolean;
   /** Published questions this student has not answered yet. */
   unseen: number;
   readingSections: number;
@@ -18,7 +19,6 @@ export type ExtensionState = {
 
 export function extensionAllowed(s: ExtensionState): boolean {
   return (
-    s.quizPassed &&
     s.unseen === 0 &&
     s.readingSections > 0 &&
     s.readingSections < MAX_READING_SECTIONS &&

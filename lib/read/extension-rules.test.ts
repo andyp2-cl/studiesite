@@ -1,15 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { EXTENSIONS_PER_DAY, extensionAllowed, MAX_READING_SECTIONS, type ExtensionState } from "./extension-rules";
 
-const ready: ExtensionState = { quizPassed: true, unseen: 0, readingSections: 3, usedToday: 0, aiAvailable: true };
+const ready: ExtensionState = { unseen: 0, readingSections: 3, usedToday: 0, aiAvailable: true };
 
 describe("extensionAllowed", () => {
   it("allows more when the student has finished everything", () => {
     expect(extensionAllowed(ready)).toBe(true);
   });
 
-  it("waits until the quiz is passed and every question is used", () => {
-    expect(extensionAllowed({ ...ready, quizPassed: false })).toBe(false);
+  it("waits until every question is used, passed or not", () => {
     expect(extensionAllowed({ ...ready, unseen: 2 })).toBe(false);
   });
 

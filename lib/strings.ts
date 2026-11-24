@@ -513,7 +513,7 @@ export const strings = {
     minChars: (n: number) => `Minst ${n} tecken`,
     more: {
       title: "Vill du veta mer?",
-      help: "Du har klarat alla frågor. AI kan skriva ett nytt kort avsnitt om samma tema, med 5 nya frågor.",
+      help: "Du har svarat på alla frågor. AI kan skriva ett nytt kort avsnitt om samma tema, med 5 nya frågor.",
       button: "Mer om det här",
       working: "AI skriver ett nytt avsnitt … det tar en halv minut",
       done: (n: number) => `Klart! Läs det nya avsnittet och svara sedan på ${n} nya frågor.`,

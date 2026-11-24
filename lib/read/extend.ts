@@ -14,8 +14,7 @@ const PURPOSE = "more_on_topic";
 /** Whether this student may ask for "Mer om det här" on the moment right now. */
 export async function canExtend(userId: string, momentId: string): Promise<boolean> {
   const admin = createAdminClient();
-  const [{ data: progress }, unseen, { count: sections }, { count: usedToday }, ai] = await Promise.all([
-    admin.from("moment_progress").select("quiz_passed_at").eq("user_id", userId).eq("moment_id", momentId).maybeSingle(),
+  const [unseen, { count: sections }, { count: usedToday }, ai] = await Promise.all([
     unseenBank(userId, momentId, 1),
     admin.from("content_blocks").select("id", { count: "exact", head: true }).eq("moment_id", momentId).eq("type", "reading"),
     admin
@@ -27,7 +26,6 @@ export async function canExtend(userId: string, momentId: string): Promise<boole
     aiStatus("cheap"),
   ]);
   return extensionAllowed({
-    quizPassed: Boolean(progress?.quiz_passed_at),
     unseen,
     readingSections: sections ?? 0,
     usedToday: usedToday ?? 0,
